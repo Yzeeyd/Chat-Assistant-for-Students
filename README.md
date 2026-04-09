@@ -1,62 +1,53 @@
 # 🎓 Student Assistant System (AI-Powered)
-
-An intelligent AI-powered assistant designed to support students throughout their academic journey — from schedule management to academic planning and smart recommendations.
-
----
+# 🇬🇧 English Version
 
 ## 🚀 Project Vision
 
-This system is not فقط لإدارة الجداول، بل منصة ذكية تساعد الطالب في:
+This project is not only for schedule management. It is an **AI-powered Student Assistant System** designed to support students throughout their academic journey using a simple conversational interface.
 
-* 📅 إدارة الجدول الدراسي
-* 🔔 التذكير بالمحاضرات والواجبات
-* 📚 متابعة الخطة الدراسية
-* 🤖 تقديم توصيات ذكية للتسجيل
-* 📝 رفع وتسليم الواجبات
-* 📖 فهم الأنظمة واللوائح الجامعية
+The system aims to help students with:
+
+* 📅 Schedule management
+* 🔔 Smart reminders and notifications
+* 📚 Academic plan tracking
+* 🤖 Course recommendations
+* 📤 Assignment uploads
+* 📖 University rules and regulations
 
 ---
 
-## 🧠 Core Features
+## ✅ Current Features
 
-### ✅ Current Features
-
-* 🔐 Authentication system (JWT)
-* 💬 Chat-based AI interface
-* 📅 Schedule parsing (Arabic & English)
+* 🔐 JWT-based authentication system
+* 💬 Chat-based interface similar to ChatGPT
+* 📅 Arabic and English schedule parsing
 * 🗂️ Save and retrieve student schedules
-* 📸 Display classroom images
+* 📸 Classroom image display
+* 🧠 Automatic extraction of structured schedule data from unorganized text
 
 ---
 
-### 🔥 Upcoming Features (Next Phase)
+## 🔥 Upcoming Goals
 
-#### 1️⃣ Academic Plan & Notifications
+### 1) Academic Plan + Notifications + Assignment Uploads
 
-* 📊 Student academic plan tracking
-* 🔔 Smart reminders (classes, assignments)
-* 📤 Assignment upload system
+* Track the student's academic plan
+* Send reminders for classes and tasks
+* Support assignment uploads
 
-#### 2️⃣ Smart Course Recommendation
+### 2) Smart Course Recommendation
 
-* 🤖 Suggest courses for next semester
-* 📈 Analyze student progress
-* 🎯 Recommend optimal study plan
+* Analyze student academic progress
+* Suggest courses for the next semester
+* Help students make better registration decisions
 
----
+### After Two Weeks
 
-### 📅 Future Expansion (After 2 Weeks)
+* Academic planning
+* Smart notifications
+* University rules and regulations support
 
-* 📚 Academic plan integration
-* 🔔 Notifications system
-* 📖 University rules & regulations assistant
-
----
-
-## 🗓️ Important Timeline
-
-* 📌 Next Development Phase: After 2 weeks
-* 📅 Team Meeting: **22-04-2026**
+📅 **Meeting Date:** 22-04-2026
 
 ---
 
@@ -64,138 +55,113 @@ This system is not فقط لإدارة الجداول، بل منصة ذكية �
 
 * **Backend:** FastAPI
 * **Database:** MySQL
-* **Authentication:** JWT (OAuth2)
-* **AI:** OpenAI API (Function Calling)
+* **Authentication:** JWT / OAuth2
+* **AI Integration:** OpenAI API
 * **Language:** Python
 
 ---
 
 ## 📂 Project Structure
 
-```id="tree1"
-app/
+```text
+student_bot/
 │
-├── main.py                # Entry point
+├── app/
+│   ├── main.py              # Project entry point
+│   ├── ai.py                # AI logic and tool calling
+│   ├── auth.py              # Authentication logic
+│   ├── crud.py              # Database operations
+│   ├── db.py                # Database connection
+│   ├── models.py            # Database models
+│   ├── schemas.py           # Pydantic schemas
+│   └── utils.py             # Helper functions
 │
-├── core/                 # Config & security
-│   ├── config.py
-│   └── security.py
-│
-├── db/                   # Database
-│   ├── database.py
-│   └── models.py
-│
-├── api/                  # Endpoints
-│   ├── auth.py
-│   ├── chat.py
-│   └── schedule.py
-│
-├── services/             # Business logic
-│   ├── ai_service.py
-│   └── schedule_service.py
-│
-├── schemas/              # Validation
-│   ├── user.py
-│   └── schedule.py
-│
-├── utils/                # Helpers
-│   └── helpers.py
+├── uploads/                 # Uploaded files
+├── web/                     # Frontend files if available
+├── .env.example             # Example environment variables
+├── .gitignore               # Ignored files
+├── requirements.txt         # Project dependencies
+└── README.md                # Project documentation
 ```
 
 ---
 
 ## ⚙️ Installation
 
-```bash id="install1"
+### 1) Clone the repository
+
+```bash
 git clone https://github.com/Yzeeyd/Chat-Assistant-for-Students.git
 cd Student_bot
 ```
 
-### Create virtual environment
+### 2) Create a virtual environment
 
-```bash id="install2"
+```bash
 python -m venv .venv
 ```
 
-### Activate
+### 3) Activate the environment
 
-```bash id="install3"
+```bash
 .venv\Scripts\activate
 ```
 
-### Install dependencies
+### 4) Install dependencies
 
-```bash id="install4"
+```bash
 pip install -r requirements.txt
 ```
 
----
+### 5) Configure environment variables
 
-## 🔐 Environment Variables
+Copy `.env.example` to `.env` and fill in your own values.
 
-Create `.env` from example:
+### 6) Run the project
 
-```bash id="env1"
-cp .env.example .env
-```
-
-Fill in your values.
-
----
-
-## ▶️ Run the Project
-
-```bash id="run1"
+```bash
 python -m uvicorn app.main:app --reload
 ```
 
-Swagger Docs:
-👉 http://127.0.0.1:8000/docs
-
 ---
 
-## 🔐 Authentication Flow
+## 🌐 API Documentation
 
-1. Register
-2. Login → get token
-3. Use token for protected routes
+After running the project, open:
+
+```text
+http://127.0.0.1:8000/docs
+```
 
 ---
 
 ## 🤖 AI Capabilities
 
-The system uses AI to:
+The system can:
 
-* Understand messy schedules (Arabic/English)
-* Extract structured data
-* Automatically store schedules
-* Answer student queries:
+* Understand messy input text
+* Extract:
+
+  * Course name
+  * Day
+  * Lecture time
+  * Room number
+* Automatically save schedules
+* Answer questions such as:
 
   * "What do I have today?"
+  * "What do I have tomorrow?"
   * "What should I register next semester?"
 
 ---
 
-## 👥 Team Distribution
+## 🧠 Architecture
 
-| Member    | Responsibility   |
-| --------- | ---------------- |
-| Student 1 | Authentication   |
-| Student 2 | Database         |
-| Student 3 | CRUD             |
-| Student 4 | AI Integration   |
-| Student 5 | Schedule Parsing |
-| Student 6 | API & Testing    |
+The project is designed using a layered architecture:
 
----
-
-## 💡 Architecture
-
-We designed the system using layered architecture:
-
-* API Layer (Endpoints)
-* Service Layer (Logic)
-* Database Layer
+* **API Layer**
+* **Service / Logic Layer**
+* **Database Layer**
 
 This ensures:
 
@@ -205,14 +171,27 @@ This ensures:
 
 ---
 
-## 🔥 Future Vision
+## 👥 Team Distribution
 
-The system can evolve into:
+| Member    | Responsibility            |
+| --------- | ------------------------- |
+| Student 1 | Authentication            |
+| Student 2 | Database                  |
+| Student 3 | CRUD Operations           |
+| Student 4 | AI Integration            |
+| Student 5 | Schedule Parsing          |
+| Student 6 | API Testing & Integration |
 
-* 🎓 Full student assistant platform
-* 📱 Mobile application
-* 🧠 AI academic advisor
-* 🔗 Integration with university systems
+---
+
+## 🔮 Future Vision
+
+The system can later evolve into:
+
+* A full student support platform
+* An AI academic advisor
+* A mobile application
+* A system integrated with university services
 
 ---
 
