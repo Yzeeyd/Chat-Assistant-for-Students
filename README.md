@@ -1,8 +1,14 @@
-# 🎓 Student Assistant System (AI-Powered)
-# 🇬🇧 English Version
-🌐 Language:
-- 🇬🇧 English (Current)
-- 🇸🇦 [العربية](./README_ar.md)
+<p align="center">
+  <a href="./README.md">🇬🇧 English</a> | <a href="./README_ar.md">🇸🇦 العربية</a>
+</p>
+
+<h1 align="center">🎓 Student Assistant System</h1>
+
+<p align="center">
+  AI-powered assistant for students: schedules, academic planning, reminders, recommendations, and university guidance.
+</p>
+
+---
 ## 🚀 Project Vision
 
 This project is not only for schedule management. It is an **AI-powered Student Assistant System** designed to support students throughout their academic journey using a simple conversational interface.
