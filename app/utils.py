@@ -9,6 +9,8 @@ def normalize_room_text(room_text: str) -> str:
     if not room_text:
         return ""
 
+    if room_text == "online" or room_text == "اونلاين" or room_text == "Online":
+        return room_text
     room_text = room_text.strip()
     room_text = room_text.translate(str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789"))
 
