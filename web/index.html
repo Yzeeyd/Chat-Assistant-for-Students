@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Student Chat</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    body{margin:0;background:#0b0f1a;color:#e5e7eb}
+    .app{height:100vh;display:flex}
+    .side{width:280px;background:#0f172a;border-right:1px solid rgba(255,255,255,.08);padding:14px;display:flex;flex-direction:column;gap:10px}
+    .brand{font-weight:800;font-size:18px}
+    .muted{color:#94a3b8;font-size:12px}
+    .btn{border:0;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
+    .btnP{background:#2563eb;color:#fff}
+    .btnS{background:rgba(255,255,255,.08);color:#fff}
+    .btnD{background:rgba(239,68,68,.15);color:#fecaca}
+    .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px}
+    input{width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#fff;outline:none}
+    .row{display:flex;gap:10px}
+    .main{flex:1;display:flex;flex-direction:column}
+    .top{height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08);background:#0b0f1a}
+    .chat{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+    .msg{max-width:820px;padding:12px 14px;border-radius:14px;line-height:1.55;white-space:pre-wrap;unicode-bidi:plaintext}
+    .user{align-self:flex-end;background:#1f2937;border:1px solid rgba(255,255,255,.10)}
+    .bot{align-self:flex-start;background:#0f172a;border:1px solid rgba(255,255,255,.10)}
+    .composer{padding:14px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:10px}
+    .composer input{flex:1}
+    .hide{display:none}
+
+    /* schedule cards */
+    .sched{margin-top:10px;display:grid;gap:10px}
+    .item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .meta{display:flex;flex-direction:column;gap:3px}
+    .pill{display:inline-block;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);padding:3px 8px;border-radius:999px;font-size:12px;color:#e5e7eb}
+    .view{background:#22c55e;color:#052e16;border-radius:10px;padding:8px 10px;font-weight:800;border:0;cursor:pointer}
+    .noimg{color:#94a3b8;font-size:12px}
+
+    /* modal */
+    .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:18px}
+    .modal{width:min(900px,95vw);background:#0b0f1a;border:1px solid rgba(255,255,255,.10);border-radius:14px;overflow:hidden}
+    .mhead{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#0f172a}
+    .mbody{padding:14px}
+    .mbody img{width:100%;height:auto;border-radius:12px;display:block}
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- AUTH -->
+  <div class="side" id="authView">
+    <div class="brand">Student Chat</div>
+    <div class="muted">تسجيل دخول ثم شات فقط</div>
+
+    <div class="card">
+      <div style="font-weight:800;margin-bottom:8px;">إنشاء حساب</div>
+      <input id="suName" placeholder="الاسم"/>
+      <div style="height:8px"></div>
+      <input id="suEmail" placeholder="البريد"/>
+      <div style="height:8px"></div>
+      <input id="suPass" type="password" placeholder="كلمة المرور"/>
+      <div style="height:10px"></div>
+      <button class="btn btnS" id="signupBtn">إنشاء</button>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:800;margin-bottom:8px;">تسجيل دخول</div>
+      <input id="liEmail" placeholder="البريد"/>
+      <div style="height:8px"></div>
+      <input id="liPass" type="password" placeholder="كلمة المرور"/>
+      <div style="height:10px"></div>
+      <button class="btn btnP" id="loginBtn">دخول</button>
+    </div>
+
+    <div class="muted" id="authMsg"></div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="main hide" id="chatView">
+    <div class="top">
+      <div style="font-weight:800">المحادثة</div>
+      <button class="btn btnD" id="logoutBtn">Logout</button>
+    </div>
+
+    <div class="chat" id="chatList"></div>
+
+    <div class="composer">
+      <input id="chatInput" placeholder="اكتب سؤالك… مثل: وش عندي اليوم؟ أو الصق جدولك كامل" />
+      <button class="btn btnP" id="sendBtn">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="backdrop" id="backdrop">
+  <div class="modal">
+    <div class="mhead">
+      <div style="font-weight:900" id="mTitle">Room</div>
+      <button class="btn btnS" id="closeBtn">Close</button>
+    </div>
+    <div class="mbody">
+      <img id="mImg" alt="room"/>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script>
+  const $ = (id)=>document.getElementById(id);
+  const BASE = window.location.origin;
+  const tokenKey = "token";
+
+  function getToken(){ return localStorage.getItem(tokenKey) || ""; }
+  function setToken(t){ t ? localStorage.setItem(tokenKey,t) : localStorage.removeItem(tokenKey); }
+  function authHeaders(){ const t=getToken(); return t?{"Authorization":"Bearer "+t}:{ }; }
+
+  async function api(path, opts={}){
+    const res = await fetch(BASE+path, opts);
+    const txt = await res.text();
+    let data=null;
+    try{ data = txt?JSON.parse(txt):null }catch{ data=txt; }
+    if(!res.ok) throw new Error(data?.detail || "Request failed");
+    return data;
+  }
+
+  function showAuth(msg=""){
+    $("authView").classList.remove("hide");
+    $("chatView").classList.add("hide");
+    $("authMsg").textContent = msg;
+  }
+  function showChat(){
+    $("authView").classList.add("hide");
+    $("chatView").classList.remove("hide");
+  }
+
+  function addMessage(role, text, meta){
+    const box = document.createElement("div");
+    box.className = "msg " + (role==="user" ? "user":"bot");
+    box.textContent = text || "";
+
+    // render schedule cards if meta contains items
+    let items = null;
+    try{
+      if(meta && meta.items) items = meta.items;
+    }catch(e){}
+
+    if(items && items.length){
+      const wrap = document.createElement("div");
+      wrap.className = "sched";
+      items.forEach(it=>{
+        const row = document.createElement("div");
+        row.className = "item";
+        const left = document.createElement("div");
+        left.className = "meta";
+        left.innerHTML = `
+          <div style="font-weight:900">${escapeHtml(it.course_name || "")}</div>
+          <div class="muted">${escapeHtml((it.start_time||"")+"–"+(it.end_time||""))}</div>
+          <div><span class="pill">ROOM: ${escapeHtml(it.room_text||"")}</span></div>
+        `;
+
+        const right = document.createElement("div");
+        if(it.image_url){
+          const b = document.createElement("button");
+          b.className = "view";
+          b.textContent = "View";
+          b.onclick = ()=>openModal(it.room_text, BASE+it.image_url);
+          right.appendChild(b);
+        }else{
+          const s = document.createElement("div");
+          s.className = "noimg";
+          s.textContent = "No image";
+          right.appendChild(s);
+        }
+
+        row.appendChild(left);
+        row.appendChild(right);
+        wrap.appendChild(row);
+      });
+      box.appendChild(wrap);
+    }
+
+    $("chatList").appendChild(box);
+    $("chatList").scrollTop = $("chatList").scrollHeight;
+  }
+
+  function escapeHtml(s){
+    return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+
+  async function loadHistory(){
+    $("chatList").innerHTML = "";
+    const hist = await api("/chat/history", {headers: authHeaders()});
+    hist.forEach(m=>{
+      let meta = null;
+      if(m.meta_json){
+        try{ meta = JSON.parse(m.meta_json); }catch(e){}
+      }
+      addMessage(m.role, m.content, meta);
+    });
+    if(!hist.length){
+      addMessage("assistant", "هلا 👋 عطِني سؤالك أو الصق جدولك كامل وأنا أرتّبه لك.", null);
+    }
+  }
+
+  // Modal
+  function openModal(title, src){
+    $("mTitle").textContent = "Room " + (title || "");
+    $("mImg").src = src;
+    $("backdrop").style.display = "flex";
+  }
+  function closeModal(){
+    $("backdrop").style.display = "none";
+    $("mImg").src = "";
+  }
+  $("closeBtn").onclick = closeModal;
+  $("backdrop").onclick = (e)=>{ if(e.target === $("backdrop")) closeModal(); };
+
+  // Auth actions
+  $("signupBtn").onclick = async ()=>{
+    try{
+      $("authMsg").textContent = "… جاري إنشاء الحساب";
+      await api("/auth/signup", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({name:$("suName").value, email:$("suEmail").value, password:$("suPass").value})
+      });
+      $("authMsg").textContent = "✅ تم إنشاء الحساب — الآن سجّل دخول";
+    }catch(e){
+      $("authMsg").textContent = "❌ " + e.message;
+    }
+  };
+
+  $("loginBtn").onclick = async ()=>{
+    try{
+      $("authMsg").textContent = "… جاري تسجيل الدخول";
+      const data = await api("/auth/login", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({email:$("liEmail").value, password:$("liPass").value})
+      });
+      setToken(data.access_token);
+      showChat();
+      await loadHistory();
+    }catch(e){
+      $("authMsg").textContent = "❌ " + e.message;
+    }
+  };
+
+  $("logoutBtn").onclick = ()=>{
+    setToken("");
+    showAuth("تم تسجيل الخروج");
+  };
+
+  // Chat send
+  async function send(){
+    const msg = $("chatInput").value.trim();
+    if(!msg) return;
+    $("chatInput").value = "";
+
+    addMessage("user", msg, null);
+
+    try{
+      const data = await api("/chat", {
+        method:"POST",
+        headers: {"Content-Type":"application/json", ...authHeaders()},
+        body: JSON.stringify({message: msg})
+      });
+
+      // assistant message + meta (items)
+      const meta = (data.items && data.items.length) ? {items: data.items} : null;
+      addMessage("assistant", data.text || "", meta);
+
+    }catch(e){
+      addMessage("assistant", "❌ خطأ: " + e.message, null);
+    }
+  }
+
+  $("sendBtn").onclick = send;
+  $("chatInput").addEventListener("keydown", (e)=>{ if(e.key==="Enter") send(); });
+
+  // Init
+  if(getToken()){
+    showChat();
+    loadHistory().catch(()=>showAuth("انتهت الجلسة، سجّل دخول مرة ثانية"));
+  }else{
+    showAuth();
+  }
+</script>
+</body>
+</html>
