@@ -105,6 +105,7 @@ https://www.mysql.com/
 ```
 and create database in quiry using this command
 ```
+
 ```bash
 create database name_your_dataBase_Here
 ```
