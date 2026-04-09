@@ -1,17 +1,62 @@
-# 🎓 Student Assistant Chatbot
+# 🎓 Student Assistant System (AI-Powered)
 
-An AI-powered chat assistant designed to help students manage their academic schedules using a simple conversational interface.
+An intelligent AI-powered assistant designed to support students throughout their academic journey — from schedule management to academic planning and smart recommendations.
 
 ---
 
-## 🚀 Features
+## 🚀 Project Vision
 
-* 🔐 User Authentication (JWT-based login system)
-* 💬 Chat-based interface (like ChatGPT)
-* 📅 Save and manage student schedules
-* 📸 Room image retrieval (based on room number)
-* 🧠 AI-powered schedule understanding (Arabic & English)
-* ⚡ FastAPI backend for high performance
+This system is not فقط لإدارة الجداول، بل منصة ذكية تساعد الطالب في:
+
+* 📅 إدارة الجدول الدراسي
+* 🔔 التذكير بالمحاضرات والواجبات
+* 📚 متابعة الخطة الدراسية
+* 🤖 تقديم توصيات ذكية للتسجيل
+* 📝 رفع وتسليم الواجبات
+* 📖 فهم الأنظمة واللوائح الجامعية
+
+---
+
+## 🧠 Core Features
+
+### ✅ Current Features
+
+* 🔐 Authentication system (JWT)
+* 💬 Chat-based AI interface
+* 📅 Schedule parsing (Arabic & English)
+* 🗂️ Save and retrieve student schedules
+* 📸 Display classroom images
+
+---
+
+### 🔥 Upcoming Features (Next Phase)
+
+#### 1️⃣ Academic Plan & Notifications
+
+* 📊 Student academic plan tracking
+* 🔔 Smart reminders (classes, assignments)
+* 📤 Assignment upload system
+
+#### 2️⃣ Smart Course Recommendation
+
+* 🤖 Suggest courses for next semester
+* 📈 Analyze student progress
+* 🎯 Recommend optimal study plan
+
+---
+
+### 📅 Future Expansion (After 2 Weeks)
+
+* 📚 Academic plan integration
+* 🔔 Notifications system
+* 📖 University rules & regulations assistant
+
+---
+
+## 🗓️ Important Timeline
+
+* 📌 Next Development Phase: After 2 weeks
+* 📅 Team Meeting: **22-04-2026**
 
 ---
 
@@ -20,146 +65,157 @@ An AI-powered chat assistant designed to help students manage their academic sch
 * **Backend:** FastAPI
 * **Database:** MySQL
 * **Authentication:** JWT (OAuth2)
-* **AI Integration:** OpenAI API (Function Calling)
-* **Environment:** Python (venv)
+* **AI:** OpenAI API (Function Calling)
+* **Language:** Python
 
 ---
 
 ## 📂 Project Structure
 
-```
-student_bot/
+```id="tree1"
+app/
 │
-├── app/
-│   ├── main.py          # Entry point (FastAPI app)
-│   ├── models.py        # Database models
-│   ├── db.py            # Database connection
-│   ├── auth.py          # Authentication logic
-│   ├── crud.py          # Database operations
-│   ├── schemas.py       # Pydantic schemas
-│   ├── utils.py         # Helper functions
-│   ├── ai.py            # AI logic & tool calling
+├── main.py                # Entry point
 │
-├── uploads/             # Uploaded schedules/images
-├── .env                 # Environment variables
-├── requirements.txt
-└── README.md
+├── core/                 # Config & security
+│   ├── config.py
+│   └── security.py
+│
+├── db/                   # Database
+│   ├── database.py
+│   └── models.py
+│
+├── api/                  # Endpoints
+│   ├── auth.py
+│   ├── chat.py
+│   └── schedule.py
+│
+├── services/             # Business logic
+│   ├── ai_service.py
+│   └── schedule_service.py
+│
+├── schemas/              # Validation
+│   ├── user.py
+│   └── schedule.py
+│
+├── utils/                # Helpers
+│   └── helpers.py
 ```
 
 ---
 
 ## ⚙️ Installation
 
-```bash
+```bash id="install1"
 git clone https://github.com/Yzeeyd/Chat-Assistant-for-Students.git
 cd Student_bot
 ```
 
 ### Create virtual environment
 
-```bash
+```bash id="install2"
 python -m venv .venv
 ```
 
-### Activate it
+### Activate
 
-```bash
+```bash id="install3"
 .venv\Scripts\activate
 ```
 
 ### Install dependencies
 
-```bash
+```bash id="install4"
 pip install -r requirements.txt
 ```
 
 ---
 
+## 🔐 Environment Variables
+
+Create `.env` from example:
+
+```bash id="env1"
+cp .env.example .env
+```
+
+Fill in your values.
+
+---
+
 ## ▶️ Run the Project
 
-```bash
+```bash id="run1"
 python -m uvicorn app.main:app --reload
 ```
 
-Then open:
+Swagger Docs:
 👉 http://127.0.0.1:8000/docs
 
 ---
 
 ## 🔐 Authentication Flow
 
-1. Register a user
-2. Login → get access token
-3. Use token for protected endpoints
+1. Register
+2. Login → get token
+3. Use token for protected routes
 
 ---
 
 ## 🤖 AI Capabilities
 
-The chatbot can:
+The system uses AI to:
 
-* Understand schedule text (Arabic/English)
-* Extract:
-
-  * Course name
-  * Time
-  * Day
-  * Room
-* Save data automatically
-* Answer:
+* Understand messy schedules (Arabic/English)
+* Extract structured data
+* Automatically store schedules
+* Answer student queries:
 
   * "What do I have today?"
-  * "What do I have tomorrow?"
+  * "What should I register next semester?"
 
 ---
 
-## 📸 Room Images
+## 👥 Team Distribution
 
-Room images are stored locally and returned when:
-
-* User asks about a class
-* Room is available in database
-
----
-
-## 🧠 Smart Parsing
-
-Custom normalization handles:
-
-* Arabic text
-* Mixed formatting
-* Irregular tables
+| Member    | Responsibility   |
+| --------- | ---------------- |
+| Student 1 | Authentication   |
+| Student 2 | Database         |
+| Student 3 | CRUD             |
+| Student 4 | AI Integration   |
+| Student 5 | Schedule Parsing |
+| Student 6 | API & Testing    |
 
 ---
 
-## 👥 Team Work Distribution
+## 💡 Architecture
 
-| Member    | Responsibility            |
-| --------- | ------------------------- |
-| Student 1 | Authentication (JWT)      |
-| Student 2 | Database (MySQL + Models) |
-| Student 3 | CRUD Operations           |
-| Student 4 | AI Integration            |
-| Student 5 | Schedule Parsing          |
-| Student 6 | API Integration & Testing |
+We designed the system using layered architecture:
 
----
+* API Layer (Endpoints)
+* Service Layer (Logic)
+* Database Layer
 
-## 📌 Future Improvements
+This ensures:
 
-* Frontend UI (React)
-* Mobile app
-* Notifications
-* Calendar integration
+* Scalability ✅
+* Maintainability ✅
+* Clean code structure ✅
 
 ---
 
-## 💡 Notes
+## 🔥 Future Vision
 
-This project is designed with scalability in mind and can be extended into a production-level student assistant system.
+The system can evolve into:
+
+* 🎓 Full student assistant platform
+* 📱 Mobile application
+* 🧠 AI academic advisor
+* 🔗 Integration with university systems
 
 ---
 
-## 🏁 Author
+## 🏁 Authors
 
-Developed by CS-AI Students 🎓
+Developed by Computer Science (AI) Students 🎓
