@@ -93,6 +93,21 @@ student_bot/
 ```
 
 ---
+## ⚙️ Requierments Before Installation
+
+### 1) Download Mysql database
+
+```
+https://www.mysql.com/
+```
+### 2) setup Mysql database
+
+```
+and create database in quiry using this command
+```
+```bash
+create database name_your_dataBase_Here
+```
 
 ## ⚙️ Installation
 
