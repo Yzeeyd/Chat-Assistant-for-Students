@@ -32,21 +32,10 @@ app.add_middleware(
 
 UPLOADS_DIR = os.path.join(os.getcwd(), "uploads")
 ROOMS_DIR = os.path.join(UPLOADS_DIR, "rooms")
-
 os.makedirs(ROOMS_DIR, exist_ok=True) #ينشاء ملف للصور ويتاكد انه موجود
 app.mount("/static", StaticFiles(directory=UPLOADS_DIR), name="static")
 
 CHAT_MEMORY = int(os.getenv("CHAT_MEMORY_MESSAGES", "20"))
-#دالة ايجاد الصور
-def find_room_image(room_text: str) -> str | None:
-    room_text = normalize_room_text(room_text)
-
-    for ext in (".png", ".jpg", ".jpeg"):
-        filename = f"{room_text}{ext}"
-        path = os.path.join(ROOMS_DIR, filename)
-        if os.path.exists(path):
-            return f"/static/rooms/{filename}"
-    return None
 
 # -------- AUTH --------
 @app.post("/auth/signup")
@@ -90,6 +79,7 @@ def chat_history(db: Session = Depends(get_db), user: models.User = Depends(get_
 # -------- CHAT --------
 @app.post("/chat", response_model=schemas.ChatResponse)
 def chat(payload: schemas.ChatRequest, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    
     user_text = (payload.message or "").strip()
     if not user_text:
         return schemas.ChatResponse(text="اكتب رسالتك 🙂", items=[])
@@ -101,73 +91,7 @@ def chat(payload: schemas.ChatRequest, db: Session = Depends(get_db), user: mode
     msgs = crud.get_last_chat_messages(db, user_id=user.id, limit=CHAT_MEMORY)
     history = [{"role": m.role, "content": m.content} for m in msgs]
 
-    # أدوات الجدول
-    def tool_add_class(course_name: str, day_of_week: int, start_time: str, end_time: str, room_text: str):
-        st = datetime.strptime(start_time, "%H:%M").time()
-        et = datetime.strptime(end_time, "%H:%M").time()
-        room = normalize_room_text(room_text)
-        crud.add_schedule_item(db, user_id=user.id, course_name=course_name.strip(),
-                              day_of_week=int(day_of_week), start_time=st, end_time=et, room_text=room)
-        return {"ok": True}
-
-    def tool_bulk_add_classes(items: list[dict]):
-        added = 0
-        for it in items:
-            try:
-                tool_add_class(
-                    course_name=str(it["course_name"]),
-                    day_of_week=int(it["day_of_week"]),
-                    start_time=str(it["start_time"]),
-                    end_time=str(it["end_time"]),
-                    room_text=str(it["room_text"]),
-                )
-                added += 1
-            except Exception:
-                continue
-        return {"ok": True, "added": added}
-
-    def tool_get_today_schedule():
-        dow = today_dow_1_to_7()
-        sessions = crud.get_schedule_for_day(db, user_id=user.id, day_of_week=dow)
-        items = []
-        for s in sessions:
-            img = find_room_image(s.room_text)
-            items.append({
-                "course_name": s.course_name,
-                "start_time": str(s.start_time)[:5],
-                "end_time": str(s.end_time)[:5],
-                "room_text": s.room_text,
-                "image_url": img,
-            })
-        return {"ok": True, "items": items}
-
-    def tool_get_schedule_for_day(day_of_week: int):
-        sessions = crud.get_schedule_for_day(db, user_id=user.id, day_of_week=int(day_of_week))
-        items = []
-        for s in sessions:
-            img = find_room_image(s.room_text)
-            items.append({
-                "course_name": s.course_name,
-                "start_time": str(s.start_time)[:5],
-                "end_time": str(s.end_time)[:5],
-                "room_text": s.room_text,
-                "image_url": img,
-            })
-        return {"ok": True, "items": items}
-
-    def tool_clear_schedule():
-        deleted = crud.delete_all_schedule(db, user_id=user.id)
-        return {"ok": True, "deleted": deleted}
-
-    tool_handlers = {
-        "add_class": tool_add_class,
-        "bulk_add_classes": tool_bulk_add_classes,
-        "get_today_schedule": tool_get_today_schedule,
-        "get_schedule_for_day": tool_get_schedule_for_day,
-        "clear_schedule": tool_clear_schedule,
-    }
-
-    assistant_text, last_items = run_agent(history, tool_handlers)
+    assistant_text, last_items = run_agent(history, max_rounds=6, db=db, user=user)
 
     # جهّز items للواجهة + خزّنها في meta_json عشان تظهر في history
     items_out = []

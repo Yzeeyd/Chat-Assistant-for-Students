@@ -1,6 +1,14 @@
 import os
 import json
 from openai import OpenAI
+from sqlalchemy.orm import Session
+from fastapi import Depends
+from datetime import datetime
+
+from .db import Base, engine, get_db
+from . import models, schemas, crud
+from .auth import hash_password, verify_password, create_access_token, get_current_user
+from .utils import today_dow_1_to_7, normalize_room_text,find_room_image
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")
@@ -184,45 +192,83 @@ TOOLS = [
     },
 ]
 
-SUCCESS_MESSAGES_AR = {
-    "add_class": "تمت إضافة الحصة إلى جدولك.",
-    "bulk_add_classes": "تم حفظ جدولك.",
-    "clear_schedule": "تم مسح جدولك.",
-}
-
-SUCCESS_MESSAGES_EN = {
-    "add_class": "The class was added to your schedule.",
-    "bulk_add_classes": "Your schedule has been saved.",
-    "clear_schedule": "Your schedule has been cleared.",
-}
-
-
-def _looks_arabic(text: str) -> bool:
-    return any("\u0600" <= ch <= "\u06FF" for ch in (text or ""))
-
-
-def _success_message(tool_name: str, history_messages: list[dict]) -> str:
-    last_user_text = ""
-    for msg in reversed(history_messages):
-        if msg.get("role") == "user":
-            last_user_text = msg.get("content", "")
-            break
-
-    is_ar = _looks_arabic(last_user_text)
-    if is_ar:
-        return SUCCESS_MESSAGES_AR.get(tool_name, "تم تنفيذ الطلب.")
-    return SUCCESS_MESSAGES_EN.get(tool_name, "Done.")
-
-
-def run_agent(history_messages: list[dict], tool_handlers: dict, max_rounds: int = 6):
+def run_agent(history_messages: list[dict], max_rounds: int = 6, db: Session = None, user: models.User = None):
     if not os.getenv("OPENAI_API_KEY"):
         return ("OpenAI API key not set (OPENAI_API_KEY).", None)
 
     input_list = list(history_messages)
     last_items = None
     last_write_tool = None
+    # أدوات الجدول
+    def tool_add_class(course_name: str, day_of_week: int, start_time: str, end_time: str, room_text: str):
 
-    for _ in range(max_rounds):
+        st = datetime.strptime(start_time, "%H:%M").time()
+        et = datetime.strptime(end_time, "%H:%M").time()
+        room = normalize_room_text(room_text)
+
+        crud.add_schedule_item(db, user_id=user.id, course_name=course_name.strip(),
+                              day_of_week=int(day_of_week), start_time=st, end_time=et, room_text=room)
+        
+        return {"ok": True}
+
+    def tool_bulk_add_classes(items: list[dict]):
+        added = 0
+        for it in items:
+            try:
+                tool_add_class(
+                    course_name=str(it["course_name"]),
+                    day_of_week=int(it["day_of_week"]),
+                    start_time=str(it["start_time"]),
+                    end_time=str(it["end_time"]),
+                    room_text=str(it["room_text"]),
+                )
+                added += 1
+            except Exception:
+                continue
+        return {"ok": True, "added": added}
+
+    def tool_get_today_schedule():
+        dow = today_dow_1_to_7()
+        sessions = crud.get_schedule_for_day(db, user_id=user.id, day_of_week=dow)
+        items = []
+        for s in sessions:
+            img = find_room_image(s.room_text)
+            items.append({
+                "course_name": s.course_name,
+                "start_time": str(s.start_time)[:5],
+                "end_time": str(s.end_time)[:5],
+                "room_text": s.room_text,
+                "image_url": img,
+            })
+        return {"ok": True, "items": items}
+
+    def tool_get_schedule_for_day(day_of_week: int):
+        sessions = crud.get_schedule_for_day(db, user_id=user.id, day_of_week=int(day_of_week))
+        items = []
+        for s in sessions:
+            img = find_room_image(s.room_text)
+            items.append({
+                "course_name": s.course_name,
+                "start_time": str(s.start_time)[:5],
+                "end_time": str(s.end_time)[:5],
+                "room_text": s.room_text,
+                "image_url": img,
+            })
+        return {"ok": True, "items": items}
+
+    def tool_clear_schedule():
+        deleted = crud.delete_all_schedule(db, user_id=user.id)
+        return {"ok": True, "deleted": deleted}
+    
+    tool_handlers = {
+        "add_class": tool_add_class,
+        "bulk_add_classes": tool_bulk_add_classes,
+        "get_today_schedule": tool_get_today_schedule,
+        "get_schedule_for_day": tool_get_schedule_for_day,
+        "clear_schedule": tool_clear_schedule,
+    }
+    
+    for i in range(max_rounds):
         resp = client.responses.create(
             model=MODEL,
             instructions=DEVELOPER_INSTRUCTIONS,
@@ -238,17 +284,12 @@ def run_agent(history_messages: list[dict], tool_handlers: dict, max_rounds: int
         # no tool call -> normal assistant reply
         if not tool_calls:
             text = (resp.output_text or "").strip()
-
-            # if a write tool already succeeded, do not expose raw JSON/text accidentally
-            if last_write_tool:
-                return (_success_message(last_write_tool, history_messages), last_items)
-
             return (text, last_items)
-
+        # tool call -> function execution and next round
         for call in tool_calls:
             name = call.name
             args = json.loads(call.arguments or "{}")
-
+            # function execution and error handling
             if name not in tool_handlers:
                 result = {"error": f"Unknown tool: {name}"}
             else:
@@ -256,7 +297,7 @@ def run_agent(history_messages: list[dict], tool_handlers: dict, max_rounds: int
                     result = tool_handlers[name](**args) or {"ok": True}
                 except Exception as e:
                     result = {"error": str(e)}
-
+            #
             if name in ("get_today_schedule", "get_schedule_for_day"):
                 if isinstance(result, dict):
                     last_items = result.get("items")
@@ -270,8 +311,4 @@ def run_agent(history_messages: list[dict], tool_handlers: dict, max_rounds: int
                 "call_id": call.call_id,
                 "output": json.dumps(result, ensure_ascii=False),
             })
-
-    if last_write_tool:
-        return (_success_message(last_write_tool, history_messages), last_items)
-
     return ("عذرًا، حصلت محاولة أدوات كثيرة. حاول مرة ثانية بصياغة أبسط.", last_items)
