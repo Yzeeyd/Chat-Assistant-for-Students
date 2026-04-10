@@ -4,11 +4,11 @@ from sqlalchemy import func, text
 from . import models
 
 # -------- USERS --------
-async def get_user_by_email(db: Session, email: str):
+def get_user_by_email(db: Session, email: str):
     email = email.strip().lower()
     return db.query(models.User).filter(func.lower(models.User.email) == email).first()
 
-async def create_user(db: Session, name: str, email: str, password_hash: str):
+def create_user(db: Session, name: str, email: str, password_hash: str):
     user = models.User(name=name, email=email, password_hash=password_hash)
     db.add(user)
     db.commit()
@@ -17,7 +17,7 @@ async def create_user(db: Session, name: str, email: str, password_hash: str):
 
 # -------- SCHEDULE --------
 # إضافة عنصر جديد إلى الجدول مع منع التكرار
-async def add_schedule_item(db: Session, user_id: int, course_code: str, course_name: str, day_of_week: int, start_time, end_time, room_text: str, instructor: str | None ,credits: int):
+def add_schedule_item(db: Session, user_id: int, course_code: str, course_name: str, day_of_week: int, start_time, end_time, room_text: str, instructor: str | None ,credits: int):
     # منع التكرار
     exists = (
         db.query(models.Schedule)
@@ -53,7 +53,7 @@ async def add_schedule_item(db: Session, user_id: int, course_code: str, course_
     db.refresh(item)
     return item
 # جلب جميع العناصر لليوم المحدد
-async def get_schedule_for_day(db: Session, user_id: int, day_of_week: int):
+def get_schedule_for_day(db: Session, user_id: int, day_of_week: int):
     return (
         db.query(models.Schedule)
         .filter(models.Schedule.user_id == user_id, models.Schedule.day_of_week == day_of_week)
@@ -61,7 +61,7 @@ async def get_schedule_for_day(db: Session, user_id: int, day_of_week: int):
         .all()
     )
 # جلب جميع العناصر للمستخدم
-async def get_all_schedule(db: Session, user_id: int):
+def get_all_schedule(db: Session, user_id: int):
     return (
         db.query(models.Schedule)
         .filter(models.Schedule.user_id == user_id)
@@ -69,7 +69,7 @@ async def get_all_schedule(db: Session, user_id: int):
         .all()
     )
 # تحديث عنصر في الجدول بناءً على معرف الدورة التدريبية
-async def update_schedule_item(
+def update_schedule_item(
     db: Session,
     course_id: int,
     user_id: int,
@@ -91,7 +91,7 @@ async def update_schedule_item(
     db.refresh(item)
     return item
 # حذف عنصر واحد من الجدول بناءً على معرف الدورة التدريبية
-async def delete_one_schedule_item(db: Session, course_id: int, user_id: int) -> bool:
+def delete_one_schedule_item(db: Session, course_id: int, user_id: int) -> bool:
     item = db.query(models.Schedule).filter(models.Schedule.id == course_id, models.Schedule.user_id == user_id).first()
     if not item:
         return False
@@ -99,13 +99,13 @@ async def delete_one_schedule_item(db: Session, course_id: int, user_id: int) ->
     db.commit()
     return True
 # حذف جميع العناصر في الجدول للمستخدم
-async def delete_all_schedule(db: Session, user_id: int) -> int:
+def delete_all_schedule(db: Session, user_id: int) -> int:
     count = db.query(models.Schedule).filter(models.Schedule.user_id == user_id).delete()
     db.commit()
     return count
 
 # -------- CHAT MEMORY --------
-async def add_chat_message(db: Session, user_id: int, role: str, content: str, meta: dict | None = None):
+def add_chat_message(db: Session, user_id: int, role: str, content: str, meta: dict | None = None):
     meta_json = json.dumps(meta, ensure_ascii=False) if meta else None
     msg = models.ChatMessage(user_id=user_id, role=role, content=content, meta_json=meta_json)
     db.add(msg)
@@ -113,7 +113,7 @@ async def add_chat_message(db: Session, user_id: int, role: str, content: str, m
     db.refresh(msg)
     return msg
 
-async def get_last_chat_messages(db: Session, user_id: int, limit: int):
+def get_last_chat_messages(db: Session, user_id: int, limit: int):
     return (
         db.query(models.ChatMessage)
         .filter(models.ChatMessage.user_id == user_id)
@@ -122,7 +122,7 @@ async def get_last_chat_messages(db: Session, user_id: int, limit: int):
         .all()[::-1]
     )
 
-async def trim_chat_messages(db: Session, user_id: int, keep_limit: int):
+def trim_chat_messages(db: Session, user_id: int, keep_limit: int):
     db.execute(text("""
         DELETE FROM chat_messages
         WHERE user_id = :uid
