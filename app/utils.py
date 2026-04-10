@@ -2,8 +2,18 @@ import re
 from datetime import datetime
 import os
 
+DOW_MAP = {
+    0: 2,
+    1: 3,
+    2: 4,
+    3: 5,
+    4: 6,
+    5: 7,
+    6: 1
+}
+
 def today_dow_1_to_7() -> int:
-    return ((datetime.now().weekday() + 1) % 7) + 1
+    return DOW_MAP[datetime.now().weekday()]
 
 def normalize_room_text(room_text: str) -> str:
     if not room_text:

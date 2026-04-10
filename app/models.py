@@ -16,12 +16,14 @@ class Schedule(Base):
     __tablename__ = "schedule"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    course_code = Column(String(200), nullable=False)
     course_name = Column(String(200), nullable=False)
     day_of_week = Column(Integer, nullable=False)  # 1=Sun ... 7=Sat
-    start_time = Column(Time, nullable=False)
-    end_time = Column(Time, nullable=False)
+    start_time = Column(Time, nullable=True)
+    end_time = Column(Time, nullable=True)
     room_text = Column(String(60), nullable=False)
-
+    instructor = Column(String(200), nullable=True)
+    
     user = relationship("User", back_populates="schedule_items")
 
 class ChatMessage(Base):

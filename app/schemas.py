@@ -18,10 +18,13 @@ class ChatRequest(BaseModel):
     message: str
 
 class ScheduleItemOut(BaseModel):
+    course_code: str
     course_name: str
-    start_time: str
-    end_time: str
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
     room_text: str
+    credits: int
+    instructor: Optional[str] = None
     image_url: Optional[str] = None
 
 class ChatResponse(BaseModel):

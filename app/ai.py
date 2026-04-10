@@ -151,13 +151,16 @@ TOOLS = [
         "parameters": {
             "type": "object",
             "properties": {
+                "course_code": {"type": "string"},
                 "course_name": {"type": "string"},
                 "day_of_week": {"type": "integer", "minimum": 1, "maximum": 7},
                 "start_time": {"type": "string", "description": "HH:MM 24-hour"},
                 "end_time": {"type": "string", "description": "HH:MM 24-hour"},
+                "credits": {"type": "integer"},
+                "instructor": {"type": "string"},
                 "room_text": {"type": "string", "description": "e.g. 046-1-518"},
             },
-            "required": ["course_name", "day_of_week", "start_time", "end_time", "room_text"],
+            "required": ["course_code","course_name", "day_of_week", "start_time", "end_time", "credits", "instructor", "room_text"],
             "additionalProperties": False,
         },
         "strict": True,
@@ -174,13 +177,16 @@ TOOLS = [
                     "items": {
                         "type": "object",
                         "properties": {
+                            "course_code": {"type": "string"},
                             "course_name": {"type": "string"},
                             "day_of_week": {"type": "integer", "minimum": 1, "maximum": 7},
                             "start_time": {"type": "string", "description": "HH:MM 24-hour"},
                             "end_time": {"type": "string", "description": "HH:MM 24-hour"},
+                            "credits": {"type": "integer"},
+                            "instructor": {"type": "string"},
                             "room_text": {"type": "string"},
                         },
-                        "required": ["course_name", "day_of_week", "start_time", "end_time", "room_text"],
+                        "required": ["course_code","course_name", "day_of_week", "start_time", "end_time", "credits", "instructor", "room_text"],
                         "additionalProperties": False,
                     },
                 }
@@ -217,8 +223,56 @@ TOOLS = [
     },
     {
         "type": "function",
+        "name": "get_all_schedule",
+        "description": "Get the entire schedule for the student.",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": False
+        },
+        "strict": True,
+    },
+    {
+        "type": "function",
+        "name": "update_class",
+        "description": "Update an existing class session in the student's schedule.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "course_id": {"type": "integer"},
+                "course_code": {"type": "string"},
+                "course_name": {"type": "string"},
+                "day_of_week": {"type": "integer", "minimum": 1, "maximum": 7},
+                "start_time": {"type": "string", "description": "HH:MM 24-hour"},
+                "end_time": {"type": "string", "description": "HH:MM 24-hour"},
+                "room_text": {"type": "string"},
+                "instructor": {"type": "string"},
+                "credits": {"type": "integer"}
+            },
+            "required": ["course_id"],
+            "additionalProperties": False,
+        },
+        "strict": True,
+
+    },
+    {
+        "type": "function",
+        "name": "delete_class",
+        "description": "Delete a specific class session from the student's schedule.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "course_id": {"type": "integer"}
+            },
+            "required": ["course_id"],
+            "additionalProperties": False
+        },
+        "strict": True,
+    },
+    {
+        "type": "function",
         "name": "clear_schedule",
-        "description": "Delete all schedule items for the student.",
+        "description": "Delete all class sessions from the student's schedule.",
         "parameters": {
             "type": "object",
             "properties": {},
@@ -236,14 +290,14 @@ def run_agent(history_messages: list[dict], max_rounds: int = 6, db: Session = N
     last_items = None
     last_write_tool = None
     # أدوات الجدول
-    def tool_add_class(course_name: str, day_of_week: int, start_time: str, end_time: str, room_text: str):
+    def tool_add_class(course_code: str, course_name: str, day_of_week: int, start_time: str, end_time: str, room_text: str ,instructor: str, credits: int):
 
         st = datetime.strptime(start_time, "%H:%M").time()
         et = datetime.strptime(end_time, "%H:%M").time()
         room = normalize_room_text(room_text)
 
-        crud.add_schedule_item(db, user_id=user.id, course_name=course_name.strip(),
-                              day_of_week=int(day_of_week), start_time=st, end_time=et, room_text=room)
+        crud.add_schedule_item(db, user_id=user.id, course_code=course_code, course_name=course_name.strip(),
+                              day_of_week=int(day_of_week), start_time=st, end_time=et, room_text=room, instructor=instructor, credits=credits)
         
         return {"ok": True}
 
@@ -252,11 +306,14 @@ def run_agent(history_messages: list[dict], max_rounds: int = 6, db: Session = N
         for it in items:
             try:
                 tool_add_class(
+                    course_code=str(it["course_code"]),
                     course_name=str(it["course_name"]),
                     day_of_week=int(it["day_of_week"]),
                     start_time=str(it["start_time"]),
                     end_time=str(it["end_time"]),
                     room_text=str(it["room_text"]),
+                    instructor=str(it["instructor"]) if it.get("instructor") else None,
+                    credits=int(it["credits"]) if it.get("credits") else 0
                 )
                 added += 1
             except Exception:
@@ -270,11 +327,14 @@ def run_agent(history_messages: list[dict], max_rounds: int = 6, db: Session = N
         for s in sessions:
             img = find_room_image(s.room_text)
             items.append({
+                "course_code": s.course_code,
                 "course_name": s.course_name,
                 "start_time": str(s.start_time)[:5],
                 "end_time": str(s.end_time)[:5],
                 "room_text": s.room_text,
                 "image_url": img,
+                "instructor": s.instructor,
+                "credits": s.credits
             })
         return {"ok": True, "items": items}
 
@@ -284,13 +344,69 @@ def run_agent(history_messages: list[dict], max_rounds: int = 6, db: Session = N
         for s in sessions:
             img = find_room_image(s.room_text)
             items.append({
+                "course_code": s.course_code,
                 "course_name": s.course_name,
                 "start_time": str(s.start_time)[:5],
                 "end_time": str(s.end_time)[:5],
                 "room_text": s.room_text,
                 "image_url": img,
+                "instructor": s.instructor,
+                "credits": s.credits
             })
         return {"ok": True, "items": items}
+
+    def tool_get_all_schedule():
+        sessions = crud.get_all_schedule(db, user_id=user.id)
+        items = []
+        for s in sessions:
+            img = find_room_image(s.room_text)
+            items.append({
+                "course_code": s.course_code,
+                "course_name": s.course_name,
+                "day_of_week": s.day_of_week,
+                "start_time": str(s.start_time)[:5],
+                "end_time": str(s.end_time)[:5],
+                "room_text": s.room_text,
+                "image_url": img,
+                "instructor": s.instructor,
+                "credits": s.credits
+            })
+        return {"ok": True, "items": items}
+
+    def tool_update_class(course_id: int ,course_code: str|None, course_name: str|None, day_of_week: int|None, start_time: str|None, end_time: str|None, room_text: str|None ,instructor: str|None, credits: int|None):
+        data = {}
+
+        if course_code:
+            data["course_code"] = course_code
+        
+        if course_name:
+            data["course_name"] = course_name.strip()
+        
+        if day_of_week:
+            data["day_of_week"] = int(day_of_week)
+        
+        if start_time:
+            data["start_time"] = datetime.strptime(start_time, "%H:%M").time()
+        
+        if end_time:
+            data["end_time"] = datetime.strptime(end_time, "%H:%M").time()
+        
+        if room_text:
+            data["room_text"] = normalize_room_text(room_text)
+        
+        if instructor is not None:
+            data["instructor"] = instructor
+        
+        if credits is not None:
+            data["credits"] = int(credits)
+
+        crud.update_schedule_item(db, user_id=user.id, course_id=course_id, **data)
+        
+        return {"Updated Course": True}
+    
+    def tool_delete_class(course_id: int):
+        crud.delete_one_schedule_item(db, user_id=user.id, course_id=course_id)
+        return {"Deleted Course": True}
 
     def tool_clear_schedule():
         deleted = crud.delete_all_schedule(db, user_id=user.id)
@@ -301,6 +417,9 @@ def run_agent(history_messages: list[dict], max_rounds: int = 6, db: Session = N
         "bulk_add_classes": tool_bulk_add_classes,
         "get_today_schedule": tool_get_today_schedule,
         "get_schedule_for_day": tool_get_schedule_for_day,
+        "get_all_schedule": tool_get_all_schedule,
+        "update_class": tool_update_class,
+        "delete_class": tool_delete_class,
         "clear_schedule": tool_clear_schedule,
     }
     # Agent loop
