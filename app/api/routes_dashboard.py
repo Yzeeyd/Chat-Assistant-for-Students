@@ -1,0 +1,104 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.core.security import get_current_user
+from app.db import crud, models
+from app.db.session import get_db
+from app.utils.schedule import find_room_image
+
+router = APIRouter(prefix='/dashboard', tags=['dashboard'])
+
+DAY_NAMES_AR = {
+    1: 'الأحد',
+    2: 'الاثنين',
+    3: 'الثلاثاء',
+    4: 'الأربعاء',
+    5: 'الخميس',
+    6: 'الجمعة',
+    7: 'السبت',
+}
+
+STUDY_WEEK_DAYS = [1, 2, 3, 4, 5]
+
+
+def _serialize_schedule(items: list[models.ScheduleItem]) -> list[dict]:
+    ordered = sorted(items, key=lambda item: ((item.start_time.strftime('%H:%M') if item.start_time else '99:99'), item.course_name or ''))
+    return [
+        {
+            'course_id': item.id,
+            'course_code': item.course_code,
+            'course_name': item.course_name,
+            'day_of_week': item.day_of_week,
+            'day_name_ar': DAY_NAMES_AR.get(item.day_of_week, str(item.day_of_week)),
+            'start_time': item.start_time.strftime('%H:%M') if item.start_time else None,
+            'end_time': item.end_time.strftime('%H:%M') if item.end_time else None,
+            'room_text': item.room_text,
+            'credits': item.credits,
+            'instructor': item.instructor,
+            'image_url': find_room_image(item.room_text),
+        }
+        for item in ordered
+    ]
+
+
+@router.get('/summary')
+def summary(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)) -> dict:
+    all_items = crud.get_all_schedule(db, user.id)
+    reminders = crud.list_reminders(db, user.id, include_done=False)
+    plan_items = crud.list_academic_plan_items(db, user.id)
+
+    completed = [x for x in plan_items if (x.status or '').strip().lower() == 'completed']
+    active = [x for x in plan_items if (x.status or '').strip().lower() != 'completed']
+
+    week_days = []
+    week_classes_count = 0
+    for day_num in STUDY_WEEK_DAYS:
+        day_items = [item for item in all_items if item.day_of_week == day_num]
+        week_classes_count += len(day_items)
+        week_days.append(
+            {
+                'day_of_week': day_num,
+                'day_name_ar': DAY_NAMES_AR.get(day_num, str(day_num)),
+                'items': _serialize_schedule(day_items),
+            }
+        )
+
+    return {
+        'student': {
+            'name': user.name,
+            'email': user.email,
+        },
+        'counts': {
+            'week_classes': week_classes_count,
+            'all_classes': len(all_items),
+            'active_reminders': len(reminders),
+            'plan_items': len(plan_items),
+            'completed_courses': len(completed),
+            'active_courses': len(active),
+        },
+        'week_schedule': {
+            'days': week_days,
+        },
+        'recent_reminders': [
+            {
+                'reminder_id': r.id,
+                'title': r.title,
+                'remind_at_text': r.remind_at_text,
+                'notes': r.notes,
+                'is_done': bool(r.is_done),
+            }
+            for r in reminders[:6]
+        ],
+        'academic_plan': [
+            {
+                'item_id': x.id,
+                'course_code': x.course_code,
+                'course_name': x.course_name,
+                'credits': x.credits,
+                'semester': x.semester,
+                'status': x.status,
+                'notes': x.notes,
+            }
+            for x in plan_items[:8]
+        ],
+    }
