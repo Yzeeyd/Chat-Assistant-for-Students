@@ -1,289 +1,730 @@
 <!doctype html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Student Chat</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Student Assistant System</title>
   <style>
-    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    body{margin:0;background:#0b0f1a;color:#e5e7eb}
-    .app{height:100vh;display:flex}
-    .side{width:280px;background:#0f172a;border-right:1px solid rgba(255,255,255,.08);padding:14px;display:flex;flex-direction:column;gap:10px}
-    .brand{font-weight:800;font-size:18px}
-    .muted{color:#94a3b8;font-size:12px}
-    .btn{border:0;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
-    .btnP{background:#2563eb;color:#fff}
-    .btnS{background:rgba(255,255,255,.08);color:#fff}
-    .btnD{background:rgba(239,68,68,.15);color:#fecaca}
-    .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px}
-    input{width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#fff;outline:none}
-    .row{display:flex;gap:10px}
-    .main{flex:1;display:flex;flex-direction:column}
-    .top{height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08);background:#0b0f1a}
-    .chat{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
-    .msg{max-width:820px;padding:12px 14px;border-radius:14px;line-height:1.55;white-space:pre-wrap;unicode-bidi:plaintext}
-    .user{align-self:flex-end;background:#1f2937;border:1px solid rgba(255,255,255,.10)}
-    .bot{align-self:flex-start;background:#0f172a;border:1px solid rgba(255,255,255,.10)}
-    .composer{padding:14px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:10px}
-    .composer input{flex:1}
-    .hide{display:none}
-
-    /* schedule cards */
-    .sched{margin-top:10px;display:grid;gap:10px}
-    .item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px;display:flex;justify-content:space-between;gap:12px;align-items:center}
-    .meta{display:flex;flex-direction:column;gap:3px}
-    .pill{display:inline-block;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);padding:3px 8px;border-radius:999px;font-size:12px;color:#e5e7eb}
-    .view{background:#22c55e;color:#052e16;border-radius:10px;padding:8px 10px;font-weight:800;border:0;cursor:pointer}
-    .noimg{color:#94a3b8;font-size:12px}
-
-    /* modal */
-    .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:18px}
-    .modal{width:min(900px,95vw);background:#0b0f1a;border:1px solid rgba(255,255,255,.10);border-radius:14px;overflow:hidden}
-    .mhead{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#0f172a}
-    .mbody{padding:14px}
-    .mbody img{width:100%;height:auto;border-radius:12px;display:block}
+    :root{
+      --bg:#0b1020; --panel:#121933; --panel2:#0f1630; --line:rgba(255,255,255,.08);
+      --text:#edf2ff; --muted:#95a3c7; --brand:#4f7cff; --brand2:#8a5cff; --ok:#22c55e; --warn:#f59e0b;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#08101f,#0b1020 30%,#0a1226);color:var(--text)}
+    .layout{min-height:100vh;display:grid;grid-template-columns:280px 1fr}
+    .sidebar{background:rgba(12,19,39,.94);border-left:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px}
+    .brand{padding:14px;border-radius:18px;background:linear-gradient(135deg,rgba(79,124,255,.2),rgba(138,92,255,.15));border:1px solid var(--line)}
+    .brand h1{margin:0 0 6px;font-size:20px}
+    .brand p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
+    .nav{display:flex;flex-direction:column;gap:8px}
+    .nav button{width:100%;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--text);padding:12px 14px;border-radius:14px;text-align:right;cursor:pointer;font-weight:700}
+    .nav button.active{background:linear-gradient(135deg,rgba(79,124,255,.25),rgba(138,92,255,.15));border-color:rgba(79,124,255,.45)}
+    .auth-card,.quick-box{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:18px;padding:14px}
+    .quick-box h3,.auth-card h3{margin:0 0 10px;font-size:15px}
+    .muted{color:var(--muted);font-size:13px}
+    .quick-actions{display:grid;gap:8px}
+    .quick-actions button,.btn{border:0;border-radius:12px;padding:10px 12px;font-weight:800;cursor:pointer}
+    .btn-primary{background:var(--brand);color:#fff}
+    .btn-soft{background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--line)}
+    .btn-danger{background:rgba(239,68,68,.16);color:#fecaca;border:1px solid rgba(239,68,68,.22)}
+    .main{padding:20px;display:flex;flex-direction:column;gap:16px}
+    .hero{display:flex;justify-content:space-between;align-items:center;gap:16px;background:linear-gradient(135deg,rgba(79,124,255,.14),rgba(138,92,255,.1));border:1px solid var(--line);border-radius:22px;padding:18px}
+    .hero h2{margin:0 0 8px;font-size:24px}
+    .hero p{margin:0;color:var(--muted);line-height:1.7}
+    .status{display:flex;gap:10px;flex-wrap:wrap}
+    .badge{padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted);font-size:12px}
+    .view{display:none}
+    .view.active{display:block}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+    .card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:20px;padding:16px}
+    .metric .k{color:var(--muted);font-size:13px}
+    .metric .v{font-size:28px;font-weight:900;margin-top:6px}
+    .split{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-top:14px}
+    .section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .section-title h3{margin:0;font-size:17px}
+    .list{display:grid;gap:10px}
+    .item{border:1px solid var(--line);border-radius:16px;padding:12px;background:rgba(255,255,255,.02)}
+    .item strong{display:block;margin-bottom:4px}
+    .item small{color:var(--muted)}
+    .chat-shell{display:grid;grid-template-rows:1fr auto;gap:14px;height:calc(100vh - 170px)}
+    .chat-box{overflow:auto;padding:4px;display:flex;flex-direction:column;gap:12px}
+    .msg{max-width:85%;padding:14px 16px;border-radius:18px;line-height:1.7;border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.12)}
+    .msg.user{align-self:flex-start;background:#18213d}
+    .msg.assistant{align-self:flex-end;background:#0f1630}
+    .message-text{white-space:pre-wrap;word-break:break-word}
+    .composer{display:flex;gap:10px;align-items:flex-end}
+    textarea,input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--text);border-radius:14px;padding:12px 14px;outline:none}
+    .composer-main{flex:1;display:grid;gap:8px}
+    .composer-side{display:flex;gap:10px;align-items:stretch}
+    .attach-badge{display:none;padding:8px 12px;border-radius:12px;background:rgba(79,124,255,.14);border:1px solid rgba(79,124,255,.28);font-size:12px;color:#dbe6ff}
+    .attach-badge.show{display:inline-flex;align-items:center;gap:8px}
+    .icon-btn{min-width:54px}
+    textarea{resize:none;min-height:64px;max-height:160px}
+    .auth-wrap{display:grid;gap:12px}
+    .auth-wrap.hidden{display:none}
+    .app-wrap.hidden{display:none}
+    .meta-group{margin-top:10px;display:grid;gap:8px}
+    .meta-card{padding:10px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+    .meta-card h4{margin:0 0 6px;font-size:14px}
+    .row-line{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:13px}
+    .time-range{direction:ltr;unicode-bidi:isolate;display:inline-flex;gap:6px;align-items:center}
+    .room-preview{display:grid;gap:8px;margin-top:8px}
+    .room-preview img{width:100%;max-height:150px;object-fit:cover;border-radius:12px;border:1px solid var(--line)}
+    .course-code{font-size:12px;color:var(--muted);margin-bottom:4px}
+    .empty{color:var(--muted);padding:10px 0}
+    .help{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.7}
+    .week-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:14px}
+    .day-card{border:1px solid var(--line);border-radius:18px;padding:12px;background:rgba(255,255,255,.02);min-height:180px}
+    .day-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .day-head strong{font-size:15px}
+    .day-pill{font-size:11px;color:var(--muted);padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+    .mini-list{display:grid;gap:8px}
+    .mini-item{padding:10px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.06);display:grid;gap:6px}
+    .mini-item strong{display:block;margin-bottom:0;font-size:14px}
+    .mini-item small{color:var(--muted);display:block;line-height:1.6}
+    .mini-action-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+    .mini-link-btn{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);border-radius:10px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer}
+    .mini-link-btn:hover{background:rgba(79,124,255,.12);border-color:rgba(79,124,255,.35)}
+    .preview-modal{position:fixed;inset:0;background:rgba(5,10,20,.74);display:none;align-items:center;justify-content:center;padding:20px;z-index:1000}
+    .preview-modal.show{display:flex}
+    .preview-card{width:min(900px,95vw);max-height:90vh;overflow:auto;background:#0f1630;border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+    .preview-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+    .preview-head h3{margin:0;font-size:18px}
+    .preview-close{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);border-radius:12px;padding:8px 12px;font-weight:800;cursor:pointer}
+    .preview-image{width:100%;max-height:72vh;object-fit:contain;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+    @media (max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}.layout{grid-template-columns:1fr}.sidebar{border-left:0;border-bottom:1px solid var(--line)}.week-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width:700px){.grid{grid-template-columns:1fr}.hero{flex-direction:column;align-items:flex-start}.composer{flex-direction:column}.chat-shell{height:auto;min-height:70vh}.week-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-<div class="app">
-  <!-- AUTH -->
-  <div class="side" id="authView">
-    <div class="brand">Student Chat</div>
-    <div class="muted">تسجيل دخول ثم شات فقط</div>
-
-    <div class="card">
-      <div style="font-weight:800;margin-bottom:8px;">إنشاء حساب</div>
-      <input id="suName" placeholder="الاسم"/>
-      <div style="height:8px"></div>
-      <input id="suEmail" placeholder="البريد"/>
-      <div style="height:8px"></div>
-      <input id="suPass" type="password" placeholder="كلمة المرور"/>
-      <div style="height:10px"></div>
-      <button class="btn btnS" id="signupBtn">إنشاء</button>
-    </div>
-
-    <div class="card">
-      <div style="font-weight:800;margin-bottom:8px;">تسجيل دخول</div>
-      <input id="liEmail" placeholder="البريد"/>
-      <div style="height:8px"></div>
-      <input id="liPass" type="password" placeholder="كلمة المرور"/>
-      <div style="height:10px"></div>
-      <button class="btn btnP" id="loginBtn">دخول</button>
-    </div>
-
-    <div class="muted" id="authMsg"></div>
-  </div>
-
-  <!-- CHAT -->
-  <div class="main hide" id="chatView">
-    <div class="top">
-      <div style="font-weight:800">المحادثة</div>
-      <button class="btn btnD" id="logoutBtn">Logout</button>
-    </div>
-
-    <div class="chat" id="chatList"></div>
-
-    <div class="composer">
-      <input id="chatInput" placeholder="اكتب سؤالك… مثل: وش عندي اليوم؟ أو الصق جدولك كامل" />
-      <button class="btn btnP" id="sendBtn">Send</button>
+  <div class="auth-wrap" id="authWrap">
+    <div style="max-width:980px;margin:40px auto;padding:18px;display:grid;grid-template-columns:1.1fr .9fr;gap:16px">
+      <div class="brand" style="min-height:100%">
+        <h1>Student Assistant System</h1>
+        <p>
+          مشروع واحد فقط: الواجهة + الـ API + الـ Agent + قاعدة البيانات.
+          مناسب كبداية لمشروعك الجامعي، ويمكن تطويره لاحقًا بدون فصل الواجهة عن النظام.
+        </p>
+        <div class="help">
+          أمثلة: “وش جدولي الأسبوعي؟” — “أضف واجب AI كتذكير الأربعاء 11 مساءً” — “اقترح علي مواد الفصل الجاي”
+        </div>
+      </div>
+      <div style="display:grid;gap:12px">
+        <div class="auth-card">
+          <h3>إنشاء حساب</h3>
+          <input id="suName" placeholder="الاسم" />
+          <div style="height:8px"></div>
+          <input id="suEmail" placeholder="البريد الإلكتروني" />
+          <div style="height:8px"></div>
+          <input id="suPass" type="password" placeholder="كلمة المرور" />
+          <div style="height:10px"></div>
+          <button class="btn btn-soft" id="signupBtn">إنشاء الحساب</button>
+        </div>
+        <div class="auth-card">
+          <h3>تسجيل الدخول</h3>
+          <input id="liEmail" placeholder="البريد الإلكتروني" />
+          <div style="height:8px"></div>
+          <input id="liPass" type="password" placeholder="كلمة المرور" />
+          <div style="height:10px"></div>
+          <button class="btn btn-primary" id="loginBtn">دخول</button>
+          <div class="help" id="authMsg"></div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Modal -->
-<div class="backdrop" id="backdrop">
-  <div class="modal">
-    <div class="mhead">
-      <div style="font-weight:900" id="mTitle">Room</div>
-      <button class="btn btnS" id="closeBtn">Close</button>
-    </div>
-    <div class="mbody">
-      <img id="mImg" alt="room"/>
+  <div class="app-wrap hidden" id="appWrap">
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <h1>Student Assistant</h1>
+          <p id="studentLabel">جاهز</p>
+        </div>
+
+        <div class="nav">
+          <button class="tabBtn active" data-view="dashboardView">Dashboard</button>
+          <button class="tabBtn" data-view="chatView">Chat</button>
+        </div>
+
+        <div class="quick-box">
+          <h3>أوامر سريعة</h3>
+          <div class="quick-actions">
+            <button class="btn btn-soft quickPrompt" data-prompt="وش عندي اليوم؟">جدول اليوم</button>
+            <button class="btn btn-soft quickPrompt" data-prompt="اعرض كل جدولي">كل الجدول</button>
+            <button class="btn btn-soft quickPrompt" data-prompt="اعرض التذكيرات الحالية">التذكيرات</button>
+            <button class="btn btn-soft quickPrompt" data-prompt="اعرض خطتي الأكاديمية">الخطة الأكاديمية</button>
+            <button class="btn btn-soft quickPrompt" data-prompt="اقترح علي مواد مناسبة للفصل الجاي">اقتراح مواد</button>
+          </div>
+        </div>
+
+        <div class="quick-box">
+          <h3>الحساب</h3>
+          <div class="muted">الواجهة داخل نفس المشروع مبدئيًا.</div>
+          <div style="height:10px"></div>
+          <button class="btn btn-danger" id="logoutBtn">تسجيل الخروج</button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="hero">
+          <div>
+            <h2>Student Assistant System</h2>
+            <p>واجهة موحّدة داخل نفس المشروع. تعرض ملخص الطالب، وتوفر شات Agentic مربوط بالأدوات والبيانات.</p>
+          </div>
+          <div class="status">
+            <span class="badge" id="healthBadge">API Ready</span>
+            <span class="badge">FastAPI</span>
+            <span class="badge">JWT</span>
+            <span class="badge">Agentic Tools</span>
+          </div>
+        </section>
+
+        <section class="view active" id="dashboardView">
+          <div class="grid" id="metricsGrid">
+            <div class="card metric"><div class="k">حصص الأسبوع الدراسي</div><div class="v" id="mWeek">0</div></div>
+            <div class="card metric"><div class="k">كل الحصص</div><div class="v" id="mAll">0</div></div>
+            <div class="card metric"><div class="k">التذكيرات النشطة</div><div class="v" id="mRem">0</div></div>
+            <div class="card metric"><div class="k">مواد الخطة</div><div class="v" id="mPlan">0</div></div>
+          </div>
+
+          <div class="split">
+            <div class="card">
+              <div class="section-title">
+                <h3 id="weekTitle">جدول الأسبوع الدراسي</h3>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button class="btn btn-soft openInChatBtn" data-prompt="اعرض جدولي الأسبوعي من الأحد إلى الخميس">فتح في الشات</button>
+                  <button class="btn btn-primary" id="uploadScheduleBtn">رفع صورة الجدول</button>
+                </div>
+              </div>
+              <input id="scheduleImageInput" type="file" accept="image/*" style="display:none" />
+              <div class="help">ارفع صورة واضحة لجدولك، وسيحاول النظام استخراج المواد وحفظها مباشرة.</div>
+              <div class="week-grid" id="weekGrid"></div>
+            </div>
+
+            <div style="display:grid;gap:14px">
+              <div class="card">
+                <div class="section-title">
+                  <h3>التذكيرات والواجبات</h3>
+                  <button class="btn btn-soft quickPrompt" data-prompt="اعرض التذكيرات الحالية">عرض</button>
+                </div>
+                <div class="list" id="remList"></div>
+              </div>
+
+              <div class="card">
+                <div class="section-title">
+                  <h3>الخطة الأكاديمية</h3>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button class="btn btn-soft quickPrompt" data-prompt="اعرض خطتي الأكاديمية">عرض</button>
+                    <button class="btn btn-primary" id="uploadPlanBtn">رفع صورة الخطة</button>
+                  </div>
+                </div>
+                <input id="planImageInput" type="file" accept="image/*" style="display:none" />
+                <div class="help">ارفع صورة الخطة الأكاديمية، وسيحاول النظام حفظ المواد الواضحة مع حالتها الحالية.</div>
+                <div class="list" id="planList"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="chatView">
+          <div class="card chat-shell">
+            <div class="chat-box" id="chatList"></div>
+            <div>
+              <div class="composer">
+                <div class="composer-main">
+                  <textarea id="chatInput" placeholder="اكتب سؤالك، أو أرفق صورة واسأل عنها مباشرة..."></textarea>
+                  <input id="chatImageInput" type="file" accept="image/*" style="display:none" />
+                  <div class="attach-badge" id="chatAttachmentBadge"></div>
+                </div>
+                <div class="composer-side">
+                  <button class="btn btn-soft icon-btn" id="attachImageBtn" title="إرفاق صورة">📎</button>
+                  <button class="btn btn-primary" id="sendBtn">إرسال</button>
+                </div>
+              </div>
+              <div class="help">تقدر الآن ترسل في الشات: نص فقط، أو صورة فقط، أو نص + صورة معًا. وإذا كانت صورة جدول يقدر يستخرجها أو يشرحها حسب سؤالك.</div>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   </div>
-</div>
 
-<!-- Scripts -->
-<script>
-  const $ = (id)=>document.getElementById(id);
-  const BASE = window.location.origin;
-  const tokenKey = "token";
+  <div class="preview-modal" id="imagePreviewModal">
+    <div class="preview-card">
+      <div class="preview-head">
+        <h3 id="imagePreviewTitle">صورة المكان</h3>
+        <button class="preview-close" id="closeImagePreviewBtn">إغلاق</button>
+      </div>
+      <img class="preview-image" id="imagePreviewImg" alt="صورة المكان" />
+    </div>
+  </div>
 
-  function getToken(){ return localStorage.getItem(tokenKey) || ""; }
-  function setToken(t){ t ? localStorage.setItem(tokenKey,t) : localStorage.removeItem(tokenKey); }
-  function authHeaders(){ const t=getToken(); return t?{"Authorization":"Bearer "+t}:{ }; }
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const BASE = window.location.origin;
+    const TOKEN_KEY = 'student_assistant_token';
 
-  async function api(path, opts={}){
-    const res = await fetch(BASE+path, opts);
-    const txt = await res.text();
-    let data=null;
-    try{ data = txt?JSON.parse(txt):null }catch{ data=txt; }
-    if(!res.ok) throw new Error(data?.detail || "Request failed");
-    return data;
-  }
+    const state = {
+      token: localStorage.getItem(TOKEN_KEY) || '',
+      isSending: false,
+      lastSendSignature: '',
+      lastSendAt: 0,
+    };
 
-  function showAuth(msg=""){
-    $("authView").classList.remove("hide");
-    $("chatView").classList.add("hide");
-    $("authMsg").textContent = msg;
-  }
-  function showChat(){
-    $("authView").classList.add("hide");
-    $("chatView").classList.remove("hide");
-  }
-
-  function addMessage(role, text, meta){
-    const box = document.createElement("div");
-    box.className = "msg " + (role==="user" ? "user":"bot");
-    box.textContent = text || "";
-
-    // render schedule cards if meta contains items
-    let items = null;
-    try{
-      if(meta && meta.items) items = meta.items;
-    }catch(e){}
-
-    if(items && items.length){
-      const wrap = document.createElement("div");
-      wrap.className = "sched";
-      items.forEach(it=>{
-        const row = document.createElement("div");
-        row.className = "item";
-        const left = document.createElement("div");
-        left.className = "meta";
-        left.innerHTML = `
-          <div style="font-weight:900">${escapeHtml(it.course_name || "")}</div>
-          <div class="muted">${escapeHtml((it.start_time||"")+"–"+(it.end_time||""))}</div>
-          <div><span class="pill">ROOM: ${escapeHtml(it.room_text||"")}</span></div>
-        `;
-
-        const right = document.createElement("div");
-        if(it.image_url){
-          const b = document.createElement("button");
-          b.className = "view";
-          b.textContent = "View";
-          b.onclick = ()=>openModal(it.room_text, BASE+it.image_url);
-          right.appendChild(b);
-        }else{
-          const s = document.createElement("div");
-          s.className = "noimg";
-          s.textContent = "No image";
-          right.appendChild(s);
-        }
-
-        row.appendChild(left);
-        row.appendChild(right);
-        wrap.appendChild(row);
-      });
-      box.appendChild(wrap);
+    function setToken(token){
+      state.token = token || '';
+      if(token) localStorage.setItem(TOKEN_KEY, token);
+      else localStorage.removeItem(TOKEN_KEY);
     }
 
-    $("chatList").appendChild(box);
-    $("chatList").scrollTop = $("chatList").scrollHeight;
-  }
+    function headers(extra={}){
+      const out = {...extra};
+      if(state.token) out['Authorization'] = `Bearer ${state.token}`;
+      return out;
+    }
 
-  function escapeHtml(s){
-    return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
-  }
+    async function api(path, options={}){
+      const res = await fetch(BASE + path, options);
+      const txt = await res.text();
+      let data = null;
+      try { data = txt ? JSON.parse(txt) : null; } catch { data = txt; }
+      if(!res.ok) throw new Error(data?.detail || 'Request failed');
+      return data;
+    }
 
-  async function loadHistory(){
-    $("chatList").innerHTML = "";
-    const hist = await api("/chat/history", {headers: authHeaders()});
-    hist.forEach(m=>{
-      let meta = null;
-      if(m.meta_json){
-        try{ meta = JSON.parse(m.meta_json); }catch(e){}
+    function showAuth(msg=''){
+      $('authWrap').classList.remove('hidden');
+      $('appWrap').classList.add('hidden');
+      $('authMsg').textContent = msg;
+    }
+
+    function showApp(){
+      $('authWrap').classList.add('hidden');
+      $('appWrap').classList.remove('hidden');
+    }
+
+    function switchView(viewId){
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.tabBtn').forEach(b => b.classList.remove('active'));
+      $(viewId).classList.add('active');
+      document.querySelector(`.tabBtn[data-view="${viewId}"]`)?.classList.add('active');
+    }
+
+    function esc(s){
+      return String(s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+    }
+
+    function emptyState(text){
+      return `<div class="empty">${esc(text)}</div>`;
+    }
+
+    function renderSimpleList(targetId, items, renderFn, emptyText){
+      const el = $(targetId);
+      el.innerHTML = items.length ? items.map(renderFn).join('') : emptyState(emptyText);
+    }
+
+    function roomPreviewHtml(imageUrl, roomText){
+      if(!imageUrl) return roomText ? `<small>${esc(roomText)}</small>` : '';
+      return `
+        <div class="room-preview">
+          <small>${esc(roomText || 'صورة المكان')}</small>
+          <img src="${esc(imageUrl)}" alt="${esc(roomText || 'قاعة المحاضرة')}" loading="lazy" />
+        </div>
+      `;
+    }
+
+    function openImagePreview(imageUrl, title='صورة المكان'){
+      $('imagePreviewImg').src = imageUrl;
+      $('imagePreviewImg').alt = title;
+      $('imagePreviewTitle').textContent = title;
+      $('imagePreviewModal').classList.add('show');
+    }
+
+    function closeImagePreview(){
+      $('imagePreviewModal').classList.remove('show');
+      $('imagePreviewImg').src = '';
+    }
+
+    function roomButtonHtml(imageUrl, roomText, courseName){
+      if(!imageUrl) return '';
+      const title = roomText || courseName || 'صورة المكان';
+      return `<div class="mini-action-row"><button type="button" class="mini-link-btn room-open-btn" data-image-url="${esc(imageUrl)}" data-title="${esc(title)}">عرض المكان</button></div>`;
+    }
+
+    function renderWeekSchedule(days){
+      const el = $('weekGrid');
+      if(!Array.isArray(days) || !days.length){
+        el.innerHTML = emptyState('لا يوجد جدول محفوظ بعد.');
+        return;
       }
-      addMessage(m.role, m.content, meta);
+      el.innerHTML = days.map(day => `
+        <div class="day-card">
+          <div class="day-head">
+            <strong>${esc(day.day_name_ar)}</strong>
+            <span class="day-pill">${Array.isArray(day.items) ? day.items.length : 0} مادة</span>
+          </div>
+          <div class="mini-list">
+            ${(Array.isArray(day.items) && day.items.length) ? day.items.map(item => `
+              <div class="mini-item">
+                ${item.course_code ? `<div class="course-code">${esc(item.course_code)}</div>` : ''}
+                <strong>${esc(item.course_name)}</strong>
+                <small class="time-range"><span>${esc(item.start_time || '--:--')}</span><span>→</span><span>${esc(item.end_time || '--:--')}</span></small>
+                <small>${esc(item.room_text || 'بدون قاعة')}</small>
+                ${roomButtonHtml(item.image_url, item.room_text, item.course_name)}
+              </div>
+            `).join('') : `<div class="empty">لا توجد محاضرات.</div>`}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderDashboard(data){
+      $('studentLabel').textContent = `${data.student.name} — ${data.student.email}`;
+      $('mWeek').textContent = data.counts.week_classes;
+      $('mAll').textContent = data.counts.all_classes;
+      $('mRem').textContent = data.counts.active_reminders;
+      $('mPlan').textContent = data.counts.plan_items;
+
+      renderWeekSchedule(data.week_schedule?.days || []);
+
+      renderSimpleList('remList', data.recent_reminders, item => `
+        <div class="item">
+          <strong>${esc(item.title)}</strong>
+          <div class="row-line">
+            <span>${esc(item.remind_at_text)}</span>
+            <span>${item.is_done ? 'منجز' : 'نشط'}</span>
+          </div>
+          <small>${esc(item.notes || '')}</small>
+        </div>
+      `, 'لا توجد تذكيرات أو واجبات حالية.');
+
+      renderSimpleList('planList', data.academic_plan, item => `
+        <div class="item">
+          <strong>${esc(item.course_name)}</strong>
+          <div class="row-line">
+            <span>${esc(item.course_code || '')}</span>
+            <span>${esc(item.status || 'planned')}</span>
+          </div>
+          <small>${esc(item.semester || '')}${item.notes ? ' — ' + esc(item.notes) : ''}</small>
+        </div>
+      `, 'لا توجد مواد في الخطة بعد.');
+    }
+
+    function renderMeta(meta){
+      if(!meta) return '';
+      let html = '<div class="meta-group">';
+
+      if(Array.isArray(meta.items) && meta.items.length){
+        html += meta.items.map(it => `
+          <div class="meta-card">
+            ${it.course_code ? `<div class="course-code">${esc(it.course_code)}</div>` : ''}
+            <h4>${esc(it.course_name)}</h4>
+            <div class="row-line"><span class="time-range"><span>${esc(it.start_time || '--:--')}</span><span>→</span><span>${esc(it.end_time || '--:--')}</span></span><span>${esc(it.room_text || '')}</span></div>
+            ${roomPreviewHtml(it.image_url, it.room_text)}
+          </div>
+        `).join('');
+      }
+
+      if(Array.isArray(meta.reminders) && meta.reminders.length){
+        html += meta.reminders.map(it => `
+          <div class="meta-card">
+            <h4>${esc(it.title)}</h4>
+            <div class="row-line"><span>${esc(it.remind_at_text)}</span><span>${it.is_done ? 'منجز' : 'نشط'}</span></div>
+          </div>
+        `).join('');
+      }
+
+      if(Array.isArray(meta.academic_plan) && meta.academic_plan.length){
+        html += meta.academic_plan.map(it => `
+          <div class="meta-card">
+            <h4>${esc(it.course_name)}</h4>
+            <div class="row-line"><span>${esc(it.course_code || '')}</span><span>${esc(it.status || '')}</span></div>
+          </div>
+        `).join('');
+      }
+
+      if(Array.isArray(meta.rules) && meta.rules.length){
+        html += meta.rules.map(it => `
+          <div class="meta-card">
+            <h4>${esc(it.title)}</h4>
+            <div>${esc(it.body || '')}</div>
+            <div class="row-line"><span>${esc(it.category || '')}</span><span>${esc(it.source || '')}</span></div>
+          </div>
+        `).join('');
+      }
+
+      if(typeof meta.added === 'number' || Array.isArray(meta.skipped)){
+        html += `
+          <div class="meta-card">
+            <h4>ملخص الاستيراد</h4>
+            <div class="row-line"><span>المضاف</span><span>${esc(meta.added ?? 0)}</span></div>
+            ${Array.isArray(meta.skipped) && meta.skipped.length ? `<small>تم تخطي ${esc(meta.skipped.length)} صفوف غير واضحة.</small>` : ''}
+          </div>
+        `;
+      }
+
+      html += '</div>';
+      return html === '<div class="meta-group"></div>' ? '' : html;
+    }
+
+    function addMessage(role, text, meta=null){
+      const el = document.createElement('div');
+      el.className = `msg ${role}`;
+      el.innerHTML = `<div class="message-text">${esc(text || '')}</div>${renderMeta(meta)}`;
+      $('chatList').appendChild(el);
+      $('chatList').scrollTop = $('chatList').scrollHeight;
+    }
+
+    async function loadHistory(){
+      $('chatList').innerHTML = '';
+      const hist = await api('/chat/history', { headers: headers() });
+      if(!hist.length){
+        addMessage('assistant', 'هلا 👋 أرسل سؤالك، الصق جدولك، أو ارفع صورة الجدول وأنا أرتبه لك.', null);
+        return;
+      }
+      hist.forEach(m => {
+        let meta = null;
+        if(m.meta_json){
+          try { meta = JSON.parse(m.meta_json); } catch {}
+        }
+        addMessage(m.role === 'user' ? 'user' : 'assistant', m.content, meta);
+      });
+    }
+
+    async function loadDashboard(){
+      const data = await api('/dashboard/summary', { headers: headers() });
+      renderDashboard(data);
+    }
+
+    function setChatAttachment(file){
+      const badge = $('chatAttachmentBadge');
+      if(file){
+        badge.textContent = `مرفق: ${file.name}`;
+        badge.classList.add('show');
+      }else{
+        badge.textContent = '';
+        badge.classList.remove('show');
+      }
+    }
+
+    function prefillChatPrompt(prompt=''){
+      switchView('chatView');
+      $('chatInput').value = prompt || '';
+      $('chatInput').focus();
+      $('chatInput').setSelectionRange($('chatInput').value.length, $('chatInput').value.length);
+    }
+
+    function setSending(isSending){
+      state.isSending = isSending;
+      $('sendBtn').disabled = isSending;
+      $('attachImageBtn').disabled = isSending;
+      $('sendBtn').textContent = isSending ? 'جارٍ الإرسال...' : 'إرسال';
+    }
+
+    function buildSendSignature(msg, file){
+      return `${(msg || '').trim()}||${file?.name || ''}||${file?.size || 0}`;
+    }
+
+    function shouldSuppressDuplicate(signature){
+      const now = Date.now();
+      if(signature === state.lastSendSignature && (now - state.lastSendAt) < 1500){
+        return true;
+      }
+      state.lastSendSignature = signature;
+      state.lastSendAt = now;
+      return false;
+    }
+
+    async function sendMessage(message){
+      if(state.isSending) return;
+      const file = $('chatImageInput').files?.[0] || null;
+      const raw = message ?? $('chatInput').value;
+      const msg = (raw || '').trim();
+      if(!msg && !file) return;
+
+      const signature = buildSendSignature(msg, file);
+      if(shouldSuppressDuplicate(signature)) return;
+
+      $('chatInput').value = '';
+      setChatAttachment(null);
+      switchView('chatView');
+      setSending(true);
+
+      if(file){
+        addMessage('user', msg ? `${msg}
+[image: ${file.name}]` : `رفعت صورة في الشات: ${file.name}`);
+        try{
+          const form = new FormData();
+          form.append('message', msg);
+          form.append('file', file);
+          const data = await api('/chat/with-image', {
+            method:'POST',
+            headers: headers(),
+            body: form,
+          });
+          addMessage('assistant', data.text || '', data.meta || null);
+          await Promise.all([loadDashboard().catch(()=>{}), loadHistory().catch(()=>{})]);
+        }catch(e){
+          addMessage('assistant', `خطأ: ${e.message}`);
+        }finally{
+          $('chatImageInput').value = '';
+          setChatAttachment(null);
+          setSending(false);
+        }
+        return;
+      }
+
+      addMessage('user', msg);
+      try{
+        const data = await api('/chat', {
+          method:'POST',
+          headers: headers({ 'Content-Type':'application/json' }),
+          body: JSON.stringify({ message: msg })
+        });
+        addMessage('assistant', data.text || '', data.meta || null);
+        await loadDashboard().catch(()=>{});
+      }catch(e){
+        addMessage('assistant', `خطأ: ${e.message}`);
+      }finally{
+        setSending(false);
+      }
+    }
+
+    document.querySelectorAll('.tabBtn').forEach(btn => btn.onclick = () => switchView(btn.dataset.view));
+    document.querySelectorAll('.quickPrompt').forEach(btn => btn.onclick = () => sendMessage(btn.dataset.prompt));
+    document.querySelectorAll('.openInChatBtn').forEach(btn => btn.onclick = () => prefillChatPrompt(btn.dataset.prompt));
+    $('sendBtn').onclick = () => sendMessage();
+    $('attachImageBtn').onclick = () => $('chatImageInput').click();
+    $('chatImageInput').addEventListener('change', (e) => setChatAttachment(e.target.files?.[0] || null));
+    $('uploadScheduleBtn').onclick = () => $('scheduleImageInput').click();
+    $('uploadPlanBtn').onclick = () => $('planImageInput').click();
+    $('scheduleImageInput').addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if(!file) return;
+      addMessage('user', `رفعت صورة جدول: ${file.name}`);
+      switchView('chatView');
+      try{
+        const form = new FormData();
+        form.append('file', file);
+        const data = await api('/chat/upload-schedule-image', {
+          method:'POST',
+          headers: headers(),
+          body: form,
+        });
+        addMessage('assistant', data.text || '', data.meta || null);
+        await Promise.all([loadDashboard().catch(()=>{}), loadHistory().catch(()=>{})]);
+      }catch(e){
+        addMessage('assistant', `خطأ في رفع الصورة: ${e.message}`);
+      }finally{
+        e.target.value = '';
+      }
     });
-    if(!hist.length){
-      addMessage("assistant", "هلا 👋 عطِني سؤالك أو الصق جدولك كامل وأنا أرتّبه لك.", null);
+    $('planImageInput').addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if(!file) return;
+      addMessage('user', `رفعت صورة خطة أكاديمية: ${file.name}`);
+      switchView('chatView');
+      try{
+        const form = new FormData();
+        form.append('file', file);
+        const data = await api('/chat/upload-plan-image', {
+          method:'POST',
+          headers: headers(),
+          body: form,
+        });
+        addMessage('assistant', data.text || '', data.meta || null);
+        await Promise.all([loadDashboard().catch(()=>{}), loadHistory().catch(()=>{})]);
+      }catch(e){
+        addMessage('assistant', `خطأ في رفع صورة الخطة: ${e.message}`);
+      }finally{
+        e.target.value = '';
+      }
+    });
+    $('chatInput').addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' && !e.shiftKey){
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.room-open-btn');
+      if(btn){
+        openImagePreview(btn.dataset.imageUrl, btn.dataset.title || 'صورة المكان');
+      }
+    });
+    $('closeImagePreviewBtn').onclick = closeImagePreview;
+    $('imagePreviewModal').addEventListener('click', (e) => {
+      if(e.target === $('imagePreviewModal')) closeImagePreview();
+    });
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape') closeImagePreview();
+    });
+
+    $('signupBtn').onclick = async () => {
+      try{
+        $('authMsg').textContent = 'جاري إنشاء الحساب...';
+        await api('/auth/signup', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({
+            name: $('suName').value,
+            email: $('suEmail').value,
+            password: $('suPass').value,
+          })
+        });
+        $('authMsg').textContent = 'تم إنشاء الحساب. الآن سجّل دخول.';
+      }catch(e){
+        $('authMsg').textContent = e.message;
+      }
+    };
+
+    $('loginBtn').onclick = async () => {
+      try{
+        $('authMsg').textContent = 'جاري تسجيل الدخول...';
+        const data = await api('/auth/login', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({
+            email: $('liEmail').value,
+            password: $('liPass').value,
+          })
+        });
+        setToken(data.access_token);
+        showApp();
+        await Promise.all([loadHistory(), loadDashboard()]);
+      }catch(e){
+        $('authMsg').textContent = e.message;
+      }
+    };
+
+    $('logoutBtn').onclick = () => {
+      setToken('');
+      showAuth('تم تسجيل الخروج');
+    };
+
+    async function init(){
+      try{
+        const health = await api('/health');
+        $('healthBadge').textContent = health.status === 'ok' ? 'API Ready' : 'API Error';
+      }catch{
+        $('healthBadge').textContent = 'API Unreachable';
+      }
+      if(state.token){
+        showApp();
+        try{
+          await Promise.all([loadHistory(), loadDashboard()]);
+        }catch{
+          setToken('');
+          showAuth('انتهت الجلسة، سجّل دخول من جديد');
+        }
+      }else{
+        showAuth('');
+      }
     }
-  }
 
-  // Modal
-  function openModal(title, src){
-    $("mTitle").textContent = "Room " + (title || "");
-    $("mImg").src = src;
-    $("backdrop").style.display = "flex";
-  }
-  function closeModal(){
-    $("backdrop").style.display = "none";
-    $("mImg").src = "";
-  }
-  $("closeBtn").onclick = closeModal;
-  $("backdrop").onclick = (e)=>{ if(e.target === $("backdrop")) closeModal(); };
-
-  // Auth actions
-  $("signupBtn").onclick = async ()=>{
-    try{
-      $("authMsg").textContent = "… جاري إنشاء الحساب";
-      await api("/auth/signup", {
-        method:"POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({name:$("suName").value, email:$("suEmail").value, password:$("suPass").value})
-      });
-      $("authMsg").textContent = "✅ تم إنشاء الحساب — الآن سجّل دخول";
-    }catch(e){
-      $("authMsg").textContent = "❌ " + e.message;
-    }
-  };
-
-  $("loginBtn").onclick = async ()=>{
-    try{
-      $("authMsg").textContent = "… جاري تسجيل الدخول";
-      const data = await api("/auth/login", {
-        method:"POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({email:$("liEmail").value, password:$("liPass").value})
-      });
-      setToken(data.access_token);
-      showChat();
-      await loadHistory();
-    }catch(e){
-      $("authMsg").textContent = "❌ " + e.message;
-    }
-  };
-
-  $("logoutBtn").onclick = ()=>{
-    setToken("");
-    showAuth("تم تسجيل الخروج");
-  };
-
-  // Chat send
-  async function send(){
-    const msg = $("chatInput").value.trim();
-    if(!msg) return;
-    $("chatInput").value = "";
-
-    addMessage("user", msg, null);
-
-    try{
-      const data = await api("/chat", {
-        method:"POST",
-        headers: {"Content-Type":"application/json", ...authHeaders()},
-        body: JSON.stringify({message: msg})
-      });
-
-      // assistant message + meta (items)
-      const meta = (data.items && data.items.length) ? {items: data.items} : null;
-      addMessage("assistant", data.text || "", meta);
-
-    }catch(e){
-      addMessage("assistant", "❌ خطأ: " + e.message, null);
-    }
-  }
-
-  $("sendBtn").onclick = send;
-  $("chatInput").addEventListener("keydown", (e)=>{ if(e.key==="Enter") send(); });
-
-  // Init
-  if(getToken()){
-    showChat();
-    loadHistory().catch(()=>showAuth("انتهت الجلسة، سجّل دخول مرة ثانية"));
-  }else{
-    showAuth();
-  }
-</script>
+    init();
+  </script>
 </body>
 </html>

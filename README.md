@@ -115,110 +115,28 @@ create database name_your_dataBase_Here
 ### 1) Clone the repository
 
 ```bash
-git clone https://github.com/Yzeeyd/Chat-Assistant-for-Students.git
+git clone <your-repo>
 cd Student_bot
-```
-
-### 2) Create a virtual environment
-
-```bash
 python -m venv .venv
-```
-
-### 3) Activate the environment
-
-```bash
 .venv\Scripts\activate
-```
-
-### 4) Install dependencies
-
-```bash
 pip install -r requirements.txt
-```
-
-### 5) Configure environment variables
-
-Copy `.env.example` to `.env` and fill in your own values.
-
-### 6) Run the project
-
-```bash
+copy .env.example .env
 python -m uvicorn app.main:app --reload
 ```
 
----
+Open:
+- App: http://127.0.0.1:8000/
+- Docs: http://127.0.0.1:8000/docs
 
-## 🌐 API Documentation
-
-After running the project, open:
-
-```text
-http://127.0.0.1:8000/docs
+## Default database
+By default, this version uses SQLite:
+```env
+DATABASE_URL=sqlite+pysqlite:///./student_assistant.db
 ```
 
----
+You can move to MySQL later without changing the project structure.
 
-## 🤖 AI Capabilities
-
-The system can:
-
-* Understand messy input text
-* Extract:
-
-  * Course name
-  * Day
-  * Lecture time
-  * Room number
-* Automatically save schedules
-* Answer questions such as:
-
-  * "What do I have today?"
-  * "What do I have tomorrow?"
-  * "What should I register next semester?"
-
----
-
-## 🧠 Architecture
-
-The project is designed using a layered architecture:
-
-* **API Layer**
-* **Service / Logic Layer**
-* **Database Layer**
-
-This ensures:
-
-* Scalability ✅
-* Maintainability ✅
-* Clean code structure ✅
-
----
-
-## 👥 Team Distribution
-
-| Member    | Responsibility            |
-| --------- | ------------------------- |
-| Student 1 | Authentication            |
-| Student 2 | Database                  |
-| Student 3 | CRUD Operations           |
-| Student 4 | AI Integration            |
-| Student 5 | Schedule Parsing          |
-| Student 6 | API Testing & Integration |
-
----
-
-## 🔮 Future Vision
-
-The system can later evolve into:
-
-* A full student support platform
-* An AI academic advisor
-* A mobile application
-* A system integrated with university services
-
----
-
-## 🏁 Authors
-
-Developed by Computer Science (AI) Students 🎓
+## Notes
+- Add your OpenAI API key in `.env`
+- Put classroom photos inside `uploads/rooms`
+- The chat is grounded through tools to reduce hallucination for saved student data
