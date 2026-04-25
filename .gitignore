@@ -1,8 +1,5 @@
 .venv/
-app/__pycache__/*
 app/__pycache__/
 .env
 *.pyc
-*.pyd
 note.txt
-app/__pycache__/crud.cpython-313.pyc
