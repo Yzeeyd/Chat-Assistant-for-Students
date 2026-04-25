@@ -1,5 +1,4 @@
 .venv/
 app/__pycache__/
-.env
 *.pyc
 note.txt
