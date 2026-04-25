@@ -1,33 +1,119 @@
-# Student Assistant System — Same Project Version
+<p align="center">
+  <a href="./README.md">🇬🇧 English</a> | <a href="./README_ar.md">🇸🇦 العربية</a>
+</p>
 
-This version keeps everything in **one project**:
-- FastAPI backend
-- Web interface served by FastAPI
-- JWT authentication
-- Agentic AI orchestration with tool calls
-- SQLite by default, easy to switch later
+<h1 align="center">🎓 Student Assistant System</h1>
 
-## What is included
-- Signup / login
-- Chat interface
-- Dashboard summary
-- Schedule tools
-- Reminder tools
-- Academic plan tools
-- University rules search tools
-- Assignments listing tool
-- Room images support from `/uploads/rooms`
+<p align="center">
+  AI-powered assistant for students: schedules, academic planning, reminders, recommendations, and university guidance.
+</p>
 
-## Why this version
-This is the best starting point for a graduation or course project when you want:
-- one codebase
-- easy local setup
-- less integration complexity
-- a visible UI for demos
+---
+## 🚀 Project Vision
 
-Later, you can split the frontend into React or mobile if needed.
+This project is not only for schedule management. It is an **AI-powered Student Assistant System** designed to support students throughout their academic journey using a simple conversational interface.
 
-## Run
+The system aims to help students with:
+
+* 📅 Schedule management
+* 🔔 Smart reminders and notifications
+* 📚 Academic plan tracking
+* 🤖 Course recommendations
+* 📤 Assignment uploads
+* 📖 University rules and regulations
+
+---
+
+## ✅ Current Features
+
+* 🔐 JWT-based authentication system
+* 💬 Chat-based interface similar to ChatGPT
+* 📅 Arabic and English schedule parsing
+* 🗂️ Save and retrieve student schedules
+* 📸 Classroom image display
+* 🧠 Automatic extraction of structured schedule data from unorganized text
+
+---
+
+## 🔥 Upcoming Goals
+
+### 1) Academic Plan + Notifications + Assignment Uploads
+
+* Track the student's academic plan
+* Send reminders for classes and tasks
+* Support assignment uploads
+
+### 2) Smart Course Recommendation
+
+* Analyze student academic progress
+* Suggest courses for the next semester
+* Help students make better registration decisions
+
+### After Two Weeks
+
+* Academic planning
+* Smart notifications
+* University rules and regulations support
+
+📅 **Meeting Date:** 22-04-2026
+
+---
+
+## 🧱 Tech Stack
+
+* **Backend:** FastAPI
+* **Database:** MySQL
+* **Authentication:** JWT / OAuth2
+* **AI Integration:** OpenAI API
+* **Language:** Python
+
+---
+
+## 📂 Project Structure
+
+```text
+student_bot/
+│
+├── app/
+│   ├── main.py              # Project entry point
+│   ├── ai.py                # AI logic and tool calling
+│   ├── auth.py              # Authentication logic
+│   ├── crud.py              # Database operations
+│   ├── db.py                # Database connection
+│   ├── models.py            # Database models
+│   ├── schemas.py           # Pydantic schemas
+│   └── utils.py             # Helper functions
+│
+├── uploads/                 # Uploaded files
+├── web/                     # Frontend files if available
+├── .env.example             # Example environment variables
+├── .gitignore               # Ignored files
+├── requirements.txt         # Project dependencies
+└── README.md                # Project documentation
+```
+
+---
+## ⚙️ Requierments Before Installation
+
+### 1) Download Mysql database
+
+```
+https://www.mysql.com/
+```
+### 2) setup Mysql database
+
+```
+and create database in quiry using this command
+```
+
+```bash
+create database name_your_dataBase_Here
+```
+
+## ⚙️ Installation
+
+### 1) Clone the repository
+
 ```bash
 git clone <your-repo>
 cd Student_bot
