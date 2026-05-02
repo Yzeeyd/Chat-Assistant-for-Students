@@ -1,4 +1,6 @@
 .venv/
 app/__pycache__/
 *.pyc
-note.txt
+student_assistant.db
+exmples
+.claude

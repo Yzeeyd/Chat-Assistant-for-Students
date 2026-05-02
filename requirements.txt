@@ -8,3 +8,6 @@ python-jose[cryptography]
 openai
 pymysql
 python-multipart
+pydantic[email]
+pypdf
+pymupdf
