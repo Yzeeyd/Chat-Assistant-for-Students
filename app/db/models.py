@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text, Time, func
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, Time, func
 from sqlalchemy.orm import relationship
 
 from app.db.session import Base
@@ -22,9 +22,6 @@ class User(Base):
 
 class ScheduleItem(Base):
     __tablename__ = 'schedule_items'
-    __table_args__ = (
-        Index('ix_schedule_items_user_day', 'user_id', 'day_of_week'),
-    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
@@ -43,9 +40,6 @@ class ScheduleItem(Base):
 
 class ChatMessage(Base):
     __tablename__ = 'chat_messages'
-    __table_args__ = (
-        Index('ix_chat_messages_user_created', 'user_id', 'id'),
-    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
@@ -59,9 +53,6 @@ class ChatMessage(Base):
 
 class Reminder(Base):
     __tablename__ = 'reminders'
-    __table_args__ = (
-        Index('ix_reminders_user_done', 'user_id', 'is_done'),
-    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
@@ -76,9 +67,6 @@ class Reminder(Base):
 
 class AcademicPlanItem(Base):
     __tablename__ = 'academic_plan_items'
-    __table_args__ = (
-        Index('ix_academic_plan_user_status', 'user_id', 'status'),
-    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
@@ -106,9 +94,6 @@ class UniversityRule(Base):
 
 class Assignment(Base):
     __tablename__ = 'assignments'
-    __table_args__ = (
-        Index('ix_assignments_user_id', 'user_id'),
-    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)

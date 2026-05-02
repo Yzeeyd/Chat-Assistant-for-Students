@@ -11,7 +11,7 @@ class SignupRequest(BaseModel):
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=1, max_length=128)
+    password: str
 
 
 class TokenResponse(BaseModel):
@@ -20,7 +20,7 @@ class TokenResponse(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    message: str = Field(min_length=1, max_length=4000)
+    message: str
 
 
 class ChatResponse(BaseModel):
