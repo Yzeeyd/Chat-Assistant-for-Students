@@ -146,12 +146,3 @@ python -m uvicorn app.main:app --reload
 ## University Documents
 
 Place PDF files (regulations, student charter, code of conduct) inside the `doc/` folder. The university rules agent reads and searches them automatically — no database seeding required.
-
----
-
-## Notes
-
-- Default database is SQLite — no MySQL setup needed to get started
-- Add classroom photos to `uploads/rooms/` (filename should match room text, e.g. `046-1-13.jpg`)
-- The chat is grounded through tools to prevent hallucination on saved student data
-- To switch to MySQL: update `DATABASE_URL` in `.env` to a MySQL connection string
