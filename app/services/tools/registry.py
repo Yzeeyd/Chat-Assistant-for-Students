@@ -4,6 +4,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.db import crud, models
+from app.services.schedule_parser import parse_row
 from app.utils.schedule import find_room_image, normalize_room_text, today_dow_1_to_7
 
 
@@ -296,11 +297,53 @@ TOOL_DEFINITIONS = [
         },
         'strict': True,
     },
+    {
+        'type': 'function',
+        'name': 'save_raw_schedule',
+        'description': (
+            'Save schedule sessions extracted from an image. '
+            'Pass values EXACTLY as they appear in the image — Arabic day names, Arabic AM/PM times (ص/م). '
+            'The system converts everything. Do NOT convert times yourself.'
+        ),
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'rows': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'object',
+                        'properties': {
+                            'course_code': {'type': 'string', 'description': 'e.g. "CS 461"'},
+                            'course_name': {'type': 'string', 'description': 'Exact name from image'},
+                            'day_ar': {'type': 'string', 'description': 'Arabic day name as in image: الأحد, الاثنين, الثلاثاء, الأربعاء, الخميس, الجمعة, السبت — or a digit 1-7'},
+                            'start_time_ar': {'type': 'string', 'description': 'Start time exactly as in image, e.g. "8:00 ص" or "1:00 م"'},
+                            'end_time_ar': {'type': 'string', 'description': 'End time exactly as in image, e.g. "8:50 ص"'},
+                            'room': {'type': 'string', 'description': 'Room text exactly as in image'},
+                            'instructor': _nullable_string('Instructor name or null'),
+                            'credits': _nullable_integer(),
+                        },
+                        'required': ['course_code', 'course_name', 'day_ar', 'start_time_ar', 'end_time_ar', 'room', 'instructor', 'credits'],
+                        'additionalProperties': False,
+                    },
+                },
+            },
+            'required': ['rows'],
+            'additionalProperties': False,
+        },
+        'strict': True,
+    },
 ]
 
 
 def _time_or_none(value: str | None):
-    return datetime.strptime(value, '%H:%M').time() if value else None
+    if not value:
+        return None
+    t = datetime.strptime(value.strip(), '%H:%M').time()
+    # University sessions run 06:00–21:00. PM/AM confusion produces hours like 20-23 for morning
+    # classes or hours < 6. Reject silently so the model retries with correct data.
+    if t.hour < 6 or t.hour > 21:
+        raise ValueError(f'Time {value} is outside valid university hours (06:00–21:00). Check ص/م conversion.')
+    return t
 
 
 def _serialize_schedule_items(items: list[models.ScheduleItem]) -> list[dict[str, Any]]:
@@ -484,5 +527,44 @@ def execute_tool(name: str, args: dict[str, Any], db: Session, user: models.User
 
     if name == 'search_university_rules':
         items = crud.search_university_rules(db, str(args['query']))
-        return {'ok': True, 'rules': _serialize_rules(items)}
+        if items:
+            return {'ok': True, 'rules': _serialize_rules(items)}
+        from app.services.docs import search_in_docs
+        doc_hits = search_in_docs(str(args['query']))
+        rules = [
+            {
+                'rule_id': i + 1,
+                'title': r.get('source', 'university_docs'),
+                'body': r['body'],
+                'source': r.get('source', 'university_docs'),
+                'category': 'university_document',
+            }
+            for i, r in enumerate(doc_hits)
+        ]
+        return {'ok': True, 'rules': rules}
+
+    if name == 'save_raw_schedule':
+        rows = args.get('rows', [])
+        added_items: list[dict[str, Any]] = []
+        skipped: list[dict[str, Any]] = []
+        for idx, raw in enumerate(rows, start=1):
+            try:
+                parsed = parse_row(raw)
+                item = crud.add_schedule_item(
+                    db=db,
+                    user_id=user.id,
+                    course_code=parsed['course_code'],
+                    course_name=parsed['course_name'],
+                    day_of_week=parsed['day_of_week'],
+                    start_time=parsed['start_time'],
+                    end_time=parsed['end_time'],
+                    room_text=normalize_room_text(parsed['room_text']),
+                    instructor=parsed['instructor'],
+                    credits=parsed['credits'],
+                )
+                added_items.append(_serialize_schedule_items([item])[0])
+            except Exception as exc:
+                skipped.append({'index': idx, 'raw': raw, 'error': str(exc)})
+        return {'ok': True, 'added': len(added_items), 'items': added_items, 'skipped': skipped}
+
     return {'ok': False, 'error': f'Unknown tool: {name}'}

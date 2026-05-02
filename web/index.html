@@ -415,7 +415,7 @@
       if(!meta) return '';
       let html = '<div class="meta-group">';
 
-      if(Array.isArray(meta.items) && meta.items.length){
+      if(Array.isArray(meta.items) && meta.items.length && !(Array.isArray(meta.rules) && meta.rules.length)){
         html += meta.items.map(it => `
           <div class="meta-card">
             ${it.course_code ? `<div class="course-code">${esc(it.course_code)}</div>` : ''}
@@ -444,15 +444,6 @@
         `).join('');
       }
 
-      if(Array.isArray(meta.rules) && meta.rules.length){
-        html += meta.rules.map(it => `
-          <div class="meta-card">
-            <h4>${esc(it.title)}</h4>
-            <div>${esc(it.body || '')}</div>
-            <div class="row-line"><span>${esc(it.category || '')}</span><span>${esc(it.source || '')}</span></div>
-          </div>
-        `).join('');
-      }
 
       if(typeof meta.added === 'number' || Array.isArray(meta.skipped)){
         html += `

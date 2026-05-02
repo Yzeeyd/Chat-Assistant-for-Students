@@ -8,7 +8,9 @@ from sqlalchemy.orm import Session
 from app.db import models
 
 
+# ---------------------------------------------------------------------------
 # users
+# ---------------------------------------------------------------------------
 
 def get_user_by_id(db: Session, user_id: int) -> models.User | None:
     return db.query(models.User).filter(models.User.id == user_id).first()
@@ -26,7 +28,9 @@ def create_user(db: Session, name: str, email: str, password_hash: str) -> model
     return user
 
 
+# ---------------------------------------------------------------------------
 # chat memory
+# ---------------------------------------------------------------------------
 
 def add_chat_message(db: Session, user_id: int, role: str, content: str, meta: dict | None = None) -> models.ChatMessage:
     msg = models.ChatMessage(
@@ -61,7 +65,9 @@ def trim_chat_messages(db: Session, user_id: int, keep_limit: int) -> None:
     db.commit()
 
 
+# ---------------------------------------------------------------------------
 # schedule
+# ---------------------------------------------------------------------------
 
 def add_schedule_item(
     db: Session,
@@ -160,7 +166,9 @@ def delete_all_schedule(db: Session, user_id: int) -> int:
     return count
 
 
+# ---------------------------------------------------------------------------
 # reminders
+# ---------------------------------------------------------------------------
 
 def create_reminder(db: Session, user_id: int, title: str, remind_at_text: str, notes: str | None) -> models.Reminder:
     item = models.Reminder(user_id=user_id, title=title, remind_at_text=remind_at_text, notes=notes)
@@ -173,12 +181,16 @@ def create_reminder(db: Session, user_id: int, title: str, remind_at_text: str, 
 def list_reminders(db: Session, user_id: int, include_done: bool = False) -> list[models.Reminder]:
     q = db.query(models.Reminder).filter(models.Reminder.user_id == user_id)
     if not include_done:
-        q = q.filter(models.Reminder.is_done == False)
+        q = q.filter(models.Reminder.is_done.is_(False))
     return q.order_by(models.Reminder.id.desc()).all()
 
 
 def mark_reminder_done(db: Session, reminder_id: int, user_id: int) -> models.Reminder | None:
-    item = db.query(models.Reminder).filter(models.Reminder.id == reminder_id, models.Reminder.user_id == user_id).first()
+    item = (
+        db.query(models.Reminder)
+        .filter(models.Reminder.id == reminder_id, models.Reminder.user_id == user_id)
+        .first()
+    )
     if not item:
         return None
     item.is_done = True
@@ -187,7 +199,9 @@ def mark_reminder_done(db: Session, reminder_id: int, user_id: int) -> models.Re
     return item
 
 
+# ---------------------------------------------------------------------------
 # academic plan
+# ---------------------------------------------------------------------------
 
 def add_academic_plan_item(
     db: Session,
@@ -202,7 +216,7 @@ def add_academic_plan_item(
     normalized_code = (course_code or '').strip() or None
     normalized_name = (course_name or '').strip()
 
-    item = None
+    item: models.AcademicPlanItem | None = None
     if normalized_code:
         item = (
             db.query(models.AcademicPlanItem)
@@ -246,7 +260,6 @@ def add_academic_plan_item(
     return item
 
 
-
 def clear_academic_plan(db: Session, user_id: int) -> int:
     deleted = db.query(models.AcademicPlanItem).filter(models.AcademicPlanItem.user_id == user_id).delete()
     db.commit()
@@ -257,7 +270,7 @@ def list_academic_plan_items(db: Session, user_id: int) -> list[models.AcademicP
     return (
         db.query(models.AcademicPlanItem)
         .filter(models.AcademicPlanItem.user_id == user_id)
-        .order_by(models.AcademicPlanItem.id.desc())
+        .order_by(models.AcademicPlanItem.semester, models.AcademicPlanItem.course_code)
         .all()
     )
 
@@ -269,13 +282,19 @@ def recommend_courses_from_plan(db: Session, user_id: int, limit: int = 3) -> li
     return planned[:max(limit, 1)]
 
 
-# rules
+# ---------------------------------------------------------------------------
+# university rules
+# ---------------------------------------------------------------------------
+
+def _escape_like(value: str) -> str:
+    return value.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+
 
 def search_university_rules(db: Session, query: str) -> list[models.UniversityRule]:
     q = (query or '').strip()
     if not q:
         return []
-    like = f'%{q}%'
+    like = f'%{_escape_like(q)}%'
     return (
         db.query(models.UniversityRule)
         .filter(
@@ -291,7 +310,9 @@ def search_university_rules(db: Session, query: str) -> list[models.UniversityRu
     )
 
 
+# ---------------------------------------------------------------------------
 # assignments
+# ---------------------------------------------------------------------------
 
 def list_assignments(db: Session, user_id: int) -> list[models.Assignment]:
     return (
