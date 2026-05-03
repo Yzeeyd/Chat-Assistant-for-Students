@@ -1,5 +1,6 @@
 import base64
 import json
+from datetime import date, datetime
 from typing import Any
 
 from openai import OpenAI
@@ -7,13 +8,30 @@ from sqlalchemy.orm import Session
 
 from app.core.config import OPENAI_API_KEY, OPENAI_MODEL, VISION_MODEL
 from app.db import models
+from app.services.docs import get_plan_text
 from app.services.tools.registry import TOOL_DEFINITIONS, execute_tool
 
 client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
-SYSTEM_INSTRUCTIONS = """
+def _build_system_instructions(user: models.User | None = None) -> str:
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+    now_str = now.strftime('%Y-%m-%dT%H:%M:%S')
+
+    profile_lines: list[str] = []
+    if user:
+        if user.college:
+            profile_lines.append(f'- الكلية: {user.college}')
+        if user.major:
+            profile_lines.append(f'- التخصص: {user.major}')
+        if user.track:
+            profile_lines.append(f'- المسار: {user.track}')
+    profile_section = ('\n\nStudent profile:\n' + '\n'.join(profile_lines)) if profile_lines else ''
+
+    return f"""
 You are the Student Assistant System.
 Answer in the same language as the student.
+Current date and time: {now_str} (use this exact time when computing remind_at).{profile_section}
 
 Grounding rules:
 - Never invent schedule items, reminders, academic plan items, or rules.
@@ -25,13 +43,18 @@ Grounding rules:
 
 Routing policy:
 - Schedule questions -> schedule tools.
-- Deadline, task, exam, homework reminders -> reminder tools.
+- Deadline, task, exam, homework, project tracking -> use assignment tools (create_assignment, list_assignments, update_assignment).
+- Reminder / notification for an event -> reminder tools. ALWAYS pass remind_at as ISO datetime. Current time is {now_str} — use it to calculate offsets (e.g. "بعد 10 دقائق" → add 10 min to current time, "الساعة 5 مساءً" → {today}T17:00:00, "غداً الساعة 9" → next day at 09:00:00). This is critical for popup notifications to fire on time.
+- Student records an absence -> call add_absence. Student asks about their absences -> call get_absences first.
+- Student records a grade -> call add_grade. Student asks for grades or GPA -> call list_grades or get_gpa.
 - What should I take next / academic progress -> academic plan tools.
+- If student says "احفظ الجدول" / "تأكيد" / "confirm" / "save schedule" after a schedule preview -> call confirm_save_schedule.
 - ANY question that mentions absences (غياب / غيابات / غيابي), attendance, barring (حرمان), grading, withdrawal, warnings, student rights, or any university policy -> follow these steps in order:
-  1. Call get_schedule to find how many sessions per week the mentioned course actually has (do NOT guess from credit hours).
-  2. Call search_university_rules with keyword "غياب" to get the official absence limit.
-  3. Using the real sessions/week from the schedule and today's date (semester started 2026-01-18, today is 2026-05-02 = ~15 teaching weeks), calculate: total sessions held = weeks × sessions_per_week, absence percentage = (absences ÷ total) × 100, remaining safe absences = floor(total × 0.25) - absences.
-  4. Give the student a direct, plain answer with the percentage and how many more absences are allowed. No assumptions, no asking the student to calculate themselves.
+  1. Call get_absences (filter by course name if mentioned) to check DB-recorded absences first.
+  2. Call get_all_schedule to find how many sessions per week the mentioned course has (do NOT guess from credit hours).
+  3. Call search_university_rules with keyword "غياب" to get the official absence limit.
+  4. Use total_absences from get_absences (or the number the student stated if not recorded). Using sessions/week from the schedule and today's date (semester started 2026-01-18, {today} = ~15 teaching weeks), calculate: total sessions held = weeks × sessions_per_week, absence percentage = (absences ÷ total) × 100, remaining safe absences = (total × 0.25) - absences.
+  5. Give the student a direct, plain answer with the percentage and how many more absences are allowed. No assumptions, no asking the student to calculate themselves.
 
 Response style:
 - Friendly, brief, practical.
@@ -101,16 +124,19 @@ You are importing a student's academic degree plan from a single uploaded image.
 The image is a color-coded degree roadmap / study plan, not a weekly timetable. Each colored cell is a course.
 
 Color → status mapping (a legend is often shown at the bottom of the image):
-- Green (خضراء / مجتازة) => completed
+- Green (خضراء / مجتازة) => completed — SKIP these, do NOT save them.
 - Dark red / maroon (داكنة / متبقية) => planned
 - Light blue / pale blue (فاتحة / جدول الطالب) => in_progress
 - If no color is visible or cell is white/gray => planned (default)
 
+⚠️ CRITICAL: Green cells mean already-completed courses. They are NOT needed. Skip every green cell entirely.
+Focus ONLY on planned (dark/red) and in_progress (light blue) cells — these are what the student still needs.
+
 Structure rules:
 - Side labels (الأول, الثاني, الثالث … or الفصل الأول/الثاني) are semester labels — use them as the semester field for all courses in that row/block.
 - Summary numbers at the bottom (عدد الساعات, المجتازة, المتبقية) are totals — do NOT save them as courses.
-- Each colored cell with a course code and name is one item to save.
-- Extract ALL readable course cells. Save everything you can see even if some cells are partially unclear.
+- Each non-green colored cell with a course code and name is one item to save.
+- Extract all readable non-green course cells. Save everything you can see even if some cells are partially unclear.
 - Only skip a cell if both the course code AND course name are completely unreadable.
 
 Saving rules:
@@ -119,7 +145,7 @@ Saving rules:
 - Keep course_name exactly as visible.
 - If credits (ساعات) are shown inside the cell, save them.
 - Clear the old academic plan first (clear_academic_plan) when the prompt says to replace/update/save the new plan.
-- After saving, reply briefly in Arabic: how many courses were saved, and a summary by status.
+- After saving, reply briefly in Arabic: how many courses were saved (in_progress + planned only), and a summary by status.
 """.strip()
 
 IMAGE_CHAT_INSTRUCTIONS = """
@@ -217,7 +243,7 @@ def run_agent(
         return ('OpenAI API key is missing. Add OPENAI_API_KEY in .env.', {})
 
     conversation_input: list[Any] = list(history_messages)
-    return _run_with_tools(conversation_input, SYSTEM_INSTRUCTIONS, db=db, user=user, max_rounds=max_rounds)
+    return _run_with_tools(conversation_input, _build_system_instructions(user), db=db, user=user, max_rounds=max_rounds)
 
 
 
@@ -268,13 +294,23 @@ def run_academic_plan_image_agent(
     else:
         request_text += ' احفظ المواد الواضحة مباشرة بدون سؤال تأكيدي إذا كانت الصورة مقروءة.'
 
+    plan_context = ''
+    if user.major:
+        plan_text = get_plan_text(user.major)
+        if plan_text:
+            plan_context = (
+                f'\n\nمعلومة مهمة: الطالب مسجّل في تخصص {user.major}.'
+                f' استخدم خطة التخصص المرجعية التالية كمرجع لتوقع أسماء المواد ورموزها إذا كانت الصورة غير واضحة:\n'
+                + plan_text[:5000]
+            )
+
     conversation_input = _image_message_payload(
         prompt=f'{request_text} اسم الملف: {filename}',
         image_bytes=image_bytes,
         content_type=content_type,
         filename=filename,
     )
-    return _run_with_tools(conversation_input, ACADEMIC_PLAN_IMAGE_IMPORT_INSTRUCTIONS, db=db, user=user, max_rounds=max_rounds, force_tools=True, model=VISION_MODEL)
+    return _run_with_tools(conversation_input, ACADEMIC_PLAN_IMAGE_IMPORT_INSTRUCTIONS + plan_context, db=db, user=user, max_rounds=max_rounds, force_tools=True, model=VISION_MODEL)
 
 
 

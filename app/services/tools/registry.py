@@ -179,10 +179,11 @@ TOOL_DEFINITIONS = [
             'type': 'object',
             'properties': {
                 'title': {'type': 'string'},
-                'remind_at_text': {'type': 'string'},
+                'remind_at_text': {'type': 'string', 'description': 'Human-readable description of when to remind, e.g. "الأربعاء 11 مساءً".'},
+                'remind_at': _nullable_string('ISO 8601 datetime when to trigger the reminder, e.g. "2026-05-03T23:00:00". Compute from the current date/time. Required whenever a specific time is mentioned.'),
                 'notes': _nullable_string(),
             },
-            'required': ['title', 'remind_at_text', 'notes'],
+            'required': ['title', 'remind_at_text', 'remind_at', 'notes'],
             'additionalProperties': False,
         },
         'strict': True,
@@ -471,12 +472,20 @@ def execute_tool(name: str, args: dict[str, Any], db: Session, user: models.User
         return {'ok': True, 'deleted': crud.delete_all_schedule(db, user.id)}
 
     if name == 'create_reminder':
+        remind_at = None
+        raw_dt = args.get('remind_at')
+        if raw_dt:
+            try:
+                remind_at = datetime.fromisoformat(str(raw_dt))
+            except (ValueError, TypeError):
+                pass
         reminder = crud.create_reminder(
             db,
             user_id=user.id,
             title=str(args['title']).strip(),
             remind_at_text=str(args['remind_at_text']).strip(),
             notes=args.get('notes'),
+            remind_at=remind_at,
         )
         return {'ok': True, 'reminders': _serialize_reminders([reminder])}
 

@@ -1,5 +1,5 @@
 import json
-from datetime import time
+from datetime import datetime, time
 from typing import Iterable
 
 from sqlalchemy import func, or_
@@ -20,8 +20,23 @@ def get_user_by_email(db: Session, email: str) -> models.User | None:
     return db.query(models.User).filter(func.lower(models.User.email) == email.strip().lower()).first()
 
 
-def create_user(db: Session, name: str, email: str, password_hash: str) -> models.User:
-    user = models.User(name=name.strip(), email=email.strip().lower(), password_hash=password_hash)
+def create_user(
+    db: Session,
+    name: str,
+    email: str,
+    password_hash: str,
+    college: str | None = None,
+    major: str | None = None,
+    track: str | None = None,
+) -> models.User:
+    user = models.User(
+        name=name.strip(),
+        email=email.strip().lower(),
+        password_hash=password_hash,
+        college=college.strip() if college else None,
+        major=major.upper().strip() if major else None,
+        track=track.strip() if track else None,
+    )
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -170,8 +185,15 @@ def delete_all_schedule(db: Session, user_id: int) -> int:
 # reminders
 # ---------------------------------------------------------------------------
 
-def create_reminder(db: Session, user_id: int, title: str, remind_at_text: str, notes: str | None) -> models.Reminder:
-    item = models.Reminder(user_id=user_id, title=title, remind_at_text=remind_at_text, notes=notes)
+def create_reminder(
+    db: Session,
+    user_id: int,
+    title: str,
+    remind_at_text: str,
+    notes: str | None,
+    remind_at: datetime | None = None,
+) -> models.Reminder:
+    item = models.Reminder(user_id=user_id, title=title, remind_at_text=remind_at_text, notes=notes, remind_at=remind_at)
     db.add(item)
     db.commit()
     db.refresh(item)
@@ -183,6 +205,20 @@ def list_reminders(db: Session, user_id: int, include_done: bool = False) -> lis
     if not include_done:
         q = q.filter(models.Reminder.is_done.is_(False))
     return q.order_by(models.Reminder.id.desc()).all()
+
+
+def list_due_reminders(db: Session, user_id: int) -> list[models.Reminder]:
+    now = datetime.now()
+    candidates = (
+        db.query(models.Reminder)
+        .filter(
+            models.Reminder.user_id == user_id,
+            models.Reminder.is_done.is_(False),
+            models.Reminder.remind_at.isnot(None),
+        )
+        .all()
+    )
+    return [r for r in candidates if r.remind_at <= now]
 
 
 def mark_reminder_done(db: Session, reminder_id: int, user_id: int) -> models.Reminder | None:

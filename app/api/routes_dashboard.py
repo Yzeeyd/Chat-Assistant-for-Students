@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
@@ -41,14 +41,40 @@ def _serialize_schedule(items: list[models.ScheduleItem]) -> list[dict]:
     ]
 
 
+@router.get('/reminders/due')
+def due_reminders(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)) -> dict:
+    items = crud.list_due_reminders(db, user.id)
+    return {
+        'reminders': [
+            {
+                'reminder_id': r.id,
+                'title': r.title,
+                'remind_at_text': r.remind_at_text,
+                'remind_at': r.remind_at.isoformat() if r.remind_at else None,
+                'notes': r.notes,
+            }
+            for r in items
+        ]
+    }
+
+
+@router.post('/reminders/{reminder_id}/done')
+def mark_done(reminder_id: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)) -> dict:
+    reminder = crud.mark_reminder_done(db, reminder_id=reminder_id, user_id=user.id)
+    if not reminder:
+        raise HTTPException(status_code=404, detail='Reminder not found')
+    return {'ok': True}
+
+
 @router.get('/summary')
 def summary(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)) -> dict:
     all_items = crud.get_all_schedule(db, user.id)
     reminders = crud.list_reminders(db, user.id, include_done=False)
     plan_items = crud.list_academic_plan_items(db, user.id)
 
-    completed = [x for x in plan_items if (x.status or '').strip().lower() == 'completed']
-    active = [x for x in plan_items if (x.status or '').strip().lower() != 'completed']
+    completed  = [x for x in plan_items if (x.status or '').strip().lower() == 'completed']
+    in_progress = [x for x in plan_items if (x.status or '').strip().lower() == 'in_progress']
+    remaining  = [x for x in plan_items if (x.status or '').strip().lower() not in ('completed', 'in_progress')]
 
     week_days = []
     week_classes_count = 0
@@ -67,6 +93,9 @@ def summary(db: Session = Depends(get_db), user: models.User = Depends(get_curre
         'student': {
             'name': user.name,
             'email': user.email,
+            'college': user.college,
+            'major': user.major,
+            'track': user.track,
         },
         'counts': {
             'week_classes': week_classes_count,
@@ -74,7 +103,8 @@ def summary(db: Session = Depends(get_db), user: models.User = Depends(get_curre
             'active_reminders': len(reminders),
             'plan_items': len(plan_items),
             'completed_courses': len(completed),
-            'active_courses': len(active),
+            'active_courses': len(in_progress),
+            'remaining_courses': len(remaining),
         },
         'week_schedule': {
             'days': week_days,
@@ -89,7 +119,7 @@ def summary(db: Session = Depends(get_db), user: models.User = Depends(get_curre
             }
             for r in reminders[:6]
         ],
-        'academic_plan': [
+        'academic_plan_active': [
             {
                 'item_id': x.id,
                 'course_code': x.course_code,
@@ -97,8 +127,18 @@ def summary(db: Session = Depends(get_db), user: models.User = Depends(get_curre
                 'credits': x.credits,
                 'semester': x.semester,
                 'status': x.status,
-                'notes': x.notes,
             }
-            for x in plan_items[:8]
+            for x in in_progress[:6]
+        ],
+        'academic_plan_remaining': [
+            {
+                'item_id': x.id,
+                'course_code': x.course_code,
+                'course_name': x.course_name,
+                'credits': x.credits,
+                'semester': x.semester,
+                'status': x.status,
+            }
+            for x in remaining[:8]
         ],
     }

@@ -54,7 +54,9 @@
     .msg.assistant{align-self:flex-end;background:#0f1630}
     .message-text{white-space:pre-wrap;word-break:break-word}
     .composer{display:flex;gap:10px;align-items:flex-end}
-    textarea,input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--text);border-radius:14px;padding:12px 14px;outline:none}
+    textarea,input,select{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--text);border-radius:14px;padding:12px 14px;outline:none}
+    select{appearance:none;-webkit-appearance:none;cursor:pointer}
+    select option{background:#121933;color:var(--text)}
     .composer-main{flex:1;display:grid;gap:8px}
     .composer-side{display:flex;gap:10px;align-items:stretch}
     .attach-badge{display:none;padding:8px 12px;border-radius:12px;background:rgba(79,124,255,.14);border:1px solid rgba(79,124,255,.28);font-size:12px;color:#dbe6ff}
@@ -95,6 +97,20 @@
     .preview-image{width:100%;max-height:72vh;object-fit:contain;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
     @media (max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}.layout{grid-template-columns:1fr}.sidebar{border-left:0;border-bottom:1px solid var(--line)}.week-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media (max-width:700px){.grid{grid-template-columns:1fr}.hero{flex-direction:column;align-items:flex-start}.composer{flex-direction:column}.chat-shell{height:auto;min-height:70vh}.week-grid{grid-template-columns:1fr}}
+    .reminder-overlay{position:fixed;inset:0;z-index:99999;background:rgba(5,10,20,.88);display:none;align-items:center;justify-content:center;padding:24px}
+    .reminder-overlay.show{display:flex}
+    .reminder-card{width:min(480px,95vw);background:#121933;border:1px solid rgba(79,124,255,.55);border-radius:24px;padding:28px 24px 20px;box-shadow:0 32px 90px rgba(0,0,0,.7);display:flex;flex-direction:column;gap:18px;animation:reminder-in .25s cubic-bezier(.22,1,.36,1)}
+    @keyframes reminder-in{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .reminder-bell{font-size:36px;text-align:center}
+    .reminder-title{font-size:20px;font-weight:900;line-height:1.45;text-align:center;color:var(--text)}
+    .reminder-time{color:var(--muted);font-size:14px;text-align:center;line-height:1.6;white-space:pre-line}
+    .reminder-actions{display:flex;gap:10px}
+    .reminder-done{flex:1;background:var(--ok);color:#052010;border:0;border-radius:14px;padding:12px 0;font-weight:900;font-size:15px;cursor:pointer}
+    .reminder-ok{flex:1;background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:12px 0;font-weight:800;font-size:15px;cursor:pointer}
+    .reminder-ok:hover{background:rgba(255,255,255,.12)}
+    .reminder-done:hover{filter:brightness(1.1)}
+    .reminder-counter{text-align:center;color:var(--muted);font-size:12px;margin-top:-6px}
+    body.reminder-freeze>*:not(.reminder-overlay){pointer-events:none}
   </style>
 </head>
 <body>
@@ -113,11 +129,28 @@
       <div style="display:grid;gap:12px">
         <div class="auth-card">
           <h3>إنشاء حساب</h3>
-          <input id="suName" placeholder="الاسم" />
+          <input id="suName" placeholder="الاسم الكامل" />
           <div style="height:8px"></div>
           <input id="suEmail" placeholder="البريد الإلكتروني" />
           <div style="height:8px"></div>
-          <input id="suPass" type="password" placeholder="كلمة المرور" />
+          <input id="suPass" type="password" placeholder="كلمة المرور (6 أحرف على الأقل)" />
+          <div style="height:8px"></div>
+          <input id="suCollege" placeholder="الكلية (مثل: كلية الحاسب والمعلومات)" />
+          <div style="height:8px"></div>
+          <select id="suMajor">
+            <option value="">-- اختر التخصص --</option>
+            <option value="CS">علوم الحاسب — CS</option>
+            <option value="IT">تقنية المعلومات — IT</option>
+            <option value="IS">نظم المعلومات — IS</option>
+            <option value="CE">هندسة الحاسب — CE</option>
+            <option value="SE">هندسة البرمجيات — SE</option>
+            <option value="DS">علم البيانات — DS</option>
+            <option value="AI">الذكاء الاصطناعي — AI</option>
+            <option value="MIS">نظم المعلومات الإدارية — MIS</option>
+            <option value="OTHER">تخصص آخر</option>
+          </select>
+          <div style="height:8px"></div>
+          <input id="suTrack" placeholder="المسار (اختياري، مثل: شبكات، أمن معلومات)" />
           <div style="height:10px"></div>
           <button class="btn btn-soft" id="signupBtn">إنشاء الحساب</button>
         </div>
@@ -185,7 +218,7 @@
             <div class="card metric"><div class="k">حصص الأسبوع الدراسي</div><div class="v" id="mWeek">0</div></div>
             <div class="card metric"><div class="k">كل الحصص</div><div class="v" id="mAll">0</div></div>
             <div class="card metric"><div class="k">التذكيرات النشطة</div><div class="v" id="mRem">0</div></div>
-            <div class="card metric"><div class="k">مواد الخطة</div><div class="v" id="mPlan">0</div></div>
+            <div class="card metric"><div class="k">متبقي في الخطة</div><div class="v" id="mPlan">0</div></div>
           </div>
 
           <div class="split">
@@ -220,8 +253,12 @@
                   </div>
                 </div>
                 <input id="planImageInput" type="file" accept="image/*" style="display:none" />
-                <div class="help">ارفع صورة الخطة الأكاديمية، وسيحاول النظام حفظ المواد الواضحة مع حالتها الحالية.</div>
-                <div class="list" id="planList"></div>
+                <div class="help">ارفع صورة الخطة الأكاديمية، وسيحاول النظام حفظ المواد المتبقية والحالية مع حالتها.</div>
+                <div id="planSummaryBar" style="display:none;margin-bottom:10px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);font-size:13px;color:var(--muted);gap:16px;flex-wrap:wrap"></div>
+                <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px" id="planActiveLabel" hidden>جاري الدراسة</div>
+                <div class="list" id="planActiveList"></div>
+                <div style="font-size:13px;font-weight:700;color:var(--muted);margin:10px 0 6px" id="planRemainingLabel" hidden>المتبقية</div>
+                <div class="list" id="planRemainingList"></div>
               </div>
             </div>
           </div>
@@ -242,11 +279,23 @@
                   <button class="btn btn-primary" id="sendBtn">إرسال</button>
                 </div>
               </div>
-              <div class="help">تقدر الآن ترسل في الشات: نص فقط، أو صورة فقط، أو نص + صورة معًا. وإذا كانت صورة جدول يقدر يستخرجها أو يشرحها حسب سؤالك.</div>
             </div>
           </div>
         </section>
       </main>
+    </div>
+  </div>
+
+  <div class="reminder-overlay" id="reminderOverlay" role="dialog" aria-modal="true" aria-labelledby="reminderTitleEl">
+    <div class="reminder-card">
+      <div class="reminder-bell">🔔</div>
+      <div class="reminder-title" id="reminderTitleEl"></div>
+      <div class="reminder-time"  id="reminderTimeEl"></div>
+      <div class="reminder-actions">
+        <button class="reminder-done" id="reminderDoneBtn">تم ✓</button>
+        <button class="reminder-ok"   id="reminderOkBtn">حسناً</button>
+      </div>
+      <div class="reminder-counter" id="reminderCounter"></div>
     </div>
   </div>
 
@@ -270,6 +319,10 @@
       isSending: false,
       lastSendSignature: '',
       lastSendAt: 0,
+      notifInterval: null,
+      shownNotifs: new Set(),
+      reminderQueue: [],
+      currentReminderId: null,
     };
 
     function setToken(token){
@@ -302,6 +355,10 @@
     function showApp(){
       $('authWrap').classList.add('hidden');
       $('appWrap').classList.remove('hidden');
+      if(!state.notifInterval){
+        checkDueReminders();
+        state.notifInterval = setInterval(checkDueReminders, 30000);
+      }
     }
 
     function switchView(viewId){
@@ -380,11 +437,15 @@
     }
 
     function renderDashboard(data){
-      $('studentLabel').textContent = `${data.student.name} — ${data.student.email}`;
+      const s = data.student;
+      const labelParts = [s.name];
+      if(s.major) labelParts.push(s.major);
+      if(s.college) labelParts.push(s.college);
+      $('studentLabel').textContent = labelParts.join(' — ');
       $('mWeek').textContent = data.counts.week_classes;
       $('mAll').textContent = data.counts.all_classes;
       $('mRem').textContent = data.counts.active_reminders;
-      $('mPlan').textContent = data.counts.plan_items;
+      $('mPlan').textContent = (data.counts.remaining_courses ?? 0) + (data.counts.active_courses ?? 0);
 
       renderWeekSchedule(data.week_schedule?.days || []);
 
@@ -399,16 +460,56 @@
         </div>
       `, 'لا توجد تذكيرات أو واجبات حالية.');
 
-      renderSimpleList('planList', data.academic_plan, item => `
+      const planActive    = data.academic_plan_active    || [];
+      const planRemaining = data.academic_plan_remaining || [];
+
+      const planItemHtml = item => `
         <div class="item">
           <strong>${esc(item.course_name)}</strong>
           <div class="row-line">
             <span>${esc(item.course_code || '')}</span>
-            <span>${esc(item.status || 'planned')}</span>
+            <span>${esc(item.semester || '')}</span>
           </div>
-          <small>${esc(item.semester || '')}${item.notes ? ' — ' + esc(item.notes) : ''}</small>
-        </div>
-      `, 'لا توجد مواد في الخطة بعد.');
+        </div>`;
+
+      $('planActiveLabel').hidden   = planActive.length === 0;
+      $('planRemainingLabel').hidden = planRemaining.length === 0;
+
+      $('planActiveList').innerHTML    = planActive.length    ? planActive.map(planItemHtml).join('')    : '';
+      $('planRemainingList').innerHTML = planRemaining.length ? planRemaining.map(planItemHtml).join('') : '';
+
+      if(!planActive.length && !planRemaining.length){
+        $('planRemainingList').innerHTML = `<div class="empty">لا توجد مواد في الخطة بعد.</div>`;
+        $('planRemainingLabel').hidden = true;
+      }
+
+      const bar = $('planSummaryBar');
+      const total = data.counts.plan_items || 0;
+      if(total > 0){
+        bar.style.display = 'flex';
+        bar.innerHTML = `
+          <span>✅ مكتمل: <strong>${data.counts.completed_courses ?? 0}</strong></span>
+          <span>📖 جاري: <strong>${data.counts.active_courses ?? 0}</strong></span>
+          <span>📋 متبقي: <strong>${data.counts.remaining_courses ?? 0}</strong></span>
+          <span>المجموع: ${total}</span>`;
+      } else {
+        bar.style.display = 'none';
+      }
+    }
+
+    function formatRemindAt(isoStr){
+      if(!isoStr) return '';
+      try{
+        const d = new Date(isoStr);
+        const now = new Date();
+        const isToday = d.toDateString() === now.toDateString();
+        const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
+        const isTomorrow = d.toDateString() === tomorrow.toDateString();
+        const timeStr = d.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'});
+        if(isToday) return `اليوم ${timeStr}`;
+        if(isTomorrow) return `غداً ${timeStr}`;
+        return d.toLocaleDateString('ar-SA', {weekday:'short', month:'short', day:'numeric'}) + ' ' + timeStr;
+      }catch{ return isoStr; }
     }
 
     function renderMeta(meta){
@@ -427,12 +528,14 @@
       }
 
       if(Array.isArray(meta.reminders) && meta.reminders.length){
-        html += meta.reminders.map(it => `
+        html += meta.reminders.map(it => {
+          const timeLabel = it.remind_at ? formatRemindAt(it.remind_at) : esc(it.remind_at_text);
+          return `
           <div class="meta-card">
             <h4>${esc(it.title)}</h4>
-            <div class="row-line"><span>${esc(it.remind_at_text)}</span><span>${it.is_done ? 'منجز' : 'نشط'}</span></div>
-          </div>
-        `).join('');
+            <div class="row-line"><span>${timeLabel}</span><span>${it.is_done ? 'منجز ✓' : 'نشط'}</span></div>
+          </div>`;
+        }).join('');
       }
 
       if(Array.isArray(meta.academic_plan) && meta.academic_plan.length){
@@ -556,6 +659,7 @@
           });
           addMessage('assistant', data.text || '', data.meta || null);
           await Promise.all([loadDashboard().catch(()=>{}), loadHistory().catch(()=>{})]);
+          checkDueReminders().catch(()=>{});
         }catch(e){
           addMessage('assistant', `خطأ: ${e.message}`);
         }finally{
@@ -575,6 +679,7 @@
         });
         addMessage('assistant', data.text || '', data.meta || null);
         await loadDashboard().catch(()=>{});
+        checkDueReminders().catch(()=>{});
       }catch(e){
         addMessage('assistant', `خطأ: ${e.message}`);
       }finally{
@@ -650,8 +755,30 @@
       if(e.target === $('imagePreviewModal')) closeImagePreview();
     });
     document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape' && $('reminderOverlay').classList.contains('show')){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return;
+      }
       if(e.key === 'Escape') closeImagePreview();
     });
+
+    $('reminderDoneBtn').onclick = async () => {
+      const id = state.currentReminderId;
+      state.currentReminderId = null;
+      showNextReminder();
+      if(id !== null){
+        try{
+          await api(`/dashboard/reminders/${id}/done`, { method:'POST', headers: headers() });
+          loadDashboard().catch(()=>{});
+        }catch{}
+      }
+    };
+
+    $('reminderOkBtn').onclick = () => {
+      state.currentReminderId = null;
+      showNextReminder();
+    };
 
     $('signupBtn').onclick = async () => {
       try{
@@ -663,6 +790,9 @@
             name: $('suName').value,
             email: $('suEmail').value,
             password: $('suPass').value,
+            college: $('suCollege').value.trim() || null,
+            major: $('suMajor').value || null,
+            track: $('suTrack').value.trim() || null,
           })
         });
         $('authMsg').textContent = 'تم إنشاء الحساب. الآن سجّل دخول.';
@@ -691,9 +821,67 @@
     };
 
     $('logoutBtn').onclick = () => {
+      clearInterval(state.notifInterval);
+      state.notifInterval = null;
+      state.shownNotifs.clear();
+      state.reminderQueue = [];
+      state.currentReminderId = null;
+      $('reminderOverlay').classList.remove('show');
+      document.body.classList.remove('reminder-freeze');
       setToken('');
       showAuth('تم تسجيل الخروج');
     };
+
+    function playNotifSound(){
+      try{
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [0, 150, 300].forEach((delay, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.frequency.value = 880;
+          gain.gain.setValueAtTime(0.3, ctx.currentTime + delay/1000);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay/1000 + 0.3);
+          osc.start(ctx.currentTime + delay/1000);
+          osc.stop(ctx.currentTime + delay/1000 + 0.3);
+        });
+      }catch{}
+    }
+
+    function showNextReminder(){
+      if(!state.reminderQueue.length){
+        $('reminderOverlay').classList.remove('show');
+        document.body.classList.remove('reminder-freeze');
+        state.currentReminderId = null;
+        return;
+      }
+      const reminder = state.reminderQueue.shift();
+      state.currentReminderId = reminder.reminder_id;
+      $('reminderTitleEl').textContent = reminder.title ?? '';
+      const timeText = reminder.remind_at ? formatRemindAt(reminder.remind_at) : (reminder.remind_at_text ?? '');
+      $('reminderTimeEl').textContent = timeText + (reminder.notes ? '\n' + reminder.notes : '');
+      const remaining = state.reminderQueue.length;
+      $('reminderCounter').textContent = remaining ? `${remaining} تذكير${remaining === 1 ? '' : 'ات'} أخرى في الانتظار` : '';
+      $('reminderOverlay').classList.add('show');
+      document.body.classList.add('reminder-freeze');
+      $('reminderDoneBtn').focus();
+    }
+
+    function showNotif(reminder){
+      if(state.shownNotifs.has(reminder.reminder_id)) return;
+      state.shownNotifs.add(reminder.reminder_id);
+      const wasEmpty = !state.reminderQueue.length && state.currentReminderId === null;
+      state.reminderQueue.push(reminder);
+      if(wasEmpty){ playNotifSound(); showNextReminder(); }
+    }
+
+    async function checkDueReminders(){
+      if(!state.token) return;
+      try{
+        const data = await api('/dashboard/reminders/due', { headers: headers() });
+        (data.reminders || []).forEach(showNotif);
+      }catch{}
+    }
 
     async function init(){
       try{

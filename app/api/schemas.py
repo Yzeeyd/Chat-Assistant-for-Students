@@ -7,6 +7,9 @@ class SignupRequest(BaseModel):
     name: str = Field(min_length=2, max_length=120)
     email: EmailStr
     password: str = Field(min_length=6, max_length=128)
+    college: str | None = Field(default=None, max_length=200)
+    major: str | None = Field(default=None, max_length=100)
+    track: str | None = Field(default=None, max_length=200)
 
 
 class LoginRequest(BaseModel):
