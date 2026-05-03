@@ -95,19 +95,20 @@
     .preview-image{width:100%;max-height:72vh;object-fit:contain;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
     @media (max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}.layout{grid-template-columns:1fr}.sidebar{border-left:0;border-bottom:1px solid var(--line)}.week-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media (max-width:700px){.grid{grid-template-columns:1fr}.hero{flex-direction:column;align-items:flex-start}.composer{flex-direction:column}.chat-shell{height:auto;min-height:70vh}.week-grid{grid-template-columns:1fr}}
-    .notif-container{position:fixed;bottom:20px;left:20px;z-index:99999;display:flex;flex-direction:column;gap:10px;max-width:340px;width:calc(100vw - 40px)}
-    .notif{background:#121933;border:1px solid rgba(79,124,255,.5);border-radius:18px;padding:14px 16px;box-shadow:0 12px 40px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:10px;animation:notif-in .3s ease}
-    @keyframes notif-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-    .notif-top{display:flex;gap:10px;align-items:flex-start}
-    .notif-bell{font-size:22px;flex-shrink:0;margin-top:1px}
-    .notif-title{font-weight:700;font-size:15px;line-height:1.4}
-    .notif-time{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.5}
-    .notif-actions{display:flex;gap:8px}
-    .notif-done{background:var(--ok);color:#052010;border:0;border-radius:10px;padding:7px 14px;font-weight:800;cursor:pointer;font-size:13px}
-    .notif-dismiss{background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-weight:700;cursor:pointer;font-size:13px}
-    .notif-progress{height:3px;border-radius:999px;background:rgba(79,124,255,.3);overflow:hidden}
-    .notif-progress-bar{height:100%;border-radius:999px;background:var(--brand);animation:notif-drain 30s linear forwards}
-    @keyframes notif-drain{from{width:100%}to{width:0%}}
+    .reminder-overlay{position:fixed;inset:0;z-index:99999;background:rgba(5,10,20,.88);display:none;align-items:center;justify-content:center;padding:24px}
+    .reminder-overlay.show{display:flex}
+    .reminder-card{width:min(480px,95vw);background:#121933;border:1px solid rgba(79,124,255,.55);border-radius:24px;padding:28px 24px 20px;box-shadow:0 32px 90px rgba(0,0,0,.7);display:flex;flex-direction:column;gap:18px;animation:reminder-in .25s cubic-bezier(.22,1,.36,1)}
+    @keyframes reminder-in{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .reminder-bell{font-size:36px;text-align:center}
+    .reminder-title{font-size:20px;font-weight:900;line-height:1.45;text-align:center;color:var(--text)}
+    .reminder-time{color:var(--muted);font-size:14px;text-align:center;line-height:1.6;white-space:pre-line}
+    .reminder-actions{display:flex;gap:10px}
+    .reminder-done{flex:1;background:var(--ok);color:#052010;border:0;border-radius:14px;padding:12px 0;font-weight:900;font-size:15px;cursor:pointer}
+    .reminder-ok{flex:1;background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:12px 0;font-weight:800;font-size:15px;cursor:pointer}
+    .reminder-ok:hover{background:rgba(255,255,255,.12)}
+    .reminder-done:hover{filter:brightness(1.1)}
+    .reminder-counter{text-align:center;color:var(--muted);font-size:12px;margin-top:-6px}
+    body.reminder-freeze>*:not(.reminder-overlay){pointer-events:none}
   </style>
 </head>
 <body>
@@ -262,7 +263,18 @@
     </div>
   </div>
 
-  <div class="notif-container" id="notifContainer"></div>
+  <div class="reminder-overlay" id="reminderOverlay" role="dialog" aria-modal="true" aria-labelledby="reminderTitleEl">
+    <div class="reminder-card">
+      <div class="reminder-bell">🔔</div>
+      <div class="reminder-title" id="reminderTitleEl"></div>
+      <div class="reminder-time"  id="reminderTimeEl"></div>
+      <div class="reminder-actions">
+        <button class="reminder-done" id="reminderDoneBtn">تم ✓</button>
+        <button class="reminder-ok"   id="reminderOkBtn">حسناً</button>
+      </div>
+      <div class="reminder-counter" id="reminderCounter"></div>
+    </div>
+  </div>
 
   <div class="preview-modal" id="imagePreviewModal">
     <div class="preview-card">
@@ -286,6 +298,8 @@
       lastSendAt: 0,
       notifInterval: null,
       shownNotifs: new Set(),
+      reminderQueue: [],
+      currentReminderId: null,
     };
 
     function setToken(token){
@@ -689,8 +703,30 @@
       if(e.target === $('imagePreviewModal')) closeImagePreview();
     });
     document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape' && $('reminderOverlay').classList.contains('show')){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return;
+      }
       if(e.key === 'Escape') closeImagePreview();
     });
+
+    $('reminderDoneBtn').onclick = async () => {
+      const id = state.currentReminderId;
+      state.currentReminderId = null;
+      showNextReminder();
+      if(id !== null){
+        try{
+          await api(`/dashboard/reminders/${id}/done`, { method:'POST', headers: headers() });
+          loadDashboard().catch(()=>{});
+        }catch{}
+      }
+    };
+
+    $('reminderOkBtn').onclick = () => {
+      state.currentReminderId = null;
+      showNextReminder();
+    };
 
     $('signupBtn').onclick = async () => {
       try{
@@ -733,7 +769,10 @@
       clearInterval(state.notifInterval);
       state.notifInterval = null;
       state.shownNotifs.clear();
-      $('notifContainer').innerHTML = '';
+      state.reminderQueue = [];
+      state.currentReminderId = null;
+      $('reminderOverlay').classList.remove('show');
+      document.body.classList.remove('reminder-freeze');
       setToken('');
       showAuth('تم تسجيل الخروج');
     };
@@ -754,45 +793,31 @@
       }catch{}
     }
 
+    function showNextReminder(){
+      if(!state.reminderQueue.length){
+        $('reminderOverlay').classList.remove('show');
+        document.body.classList.remove('reminder-freeze');
+        state.currentReminderId = null;
+        return;
+      }
+      const reminder = state.reminderQueue.shift();
+      state.currentReminderId = reminder.reminder_id;
+      $('reminderTitleEl').textContent = reminder.title ?? '';
+      const timeText = reminder.remind_at ? formatRemindAt(reminder.remind_at) : (reminder.remind_at_text ?? '');
+      $('reminderTimeEl').textContent = timeText + (reminder.notes ? '\n' + reminder.notes : '');
+      const remaining = state.reminderQueue.length;
+      $('reminderCounter').textContent = remaining ? `${remaining} تذكير${remaining === 1 ? '' : 'ات'} أخرى في الانتظار` : '';
+      $('reminderOverlay').classList.add('show');
+      document.body.classList.add('reminder-freeze');
+      $('reminderDoneBtn').focus();
+    }
+
     function showNotif(reminder){
       if(state.shownNotifs.has(reminder.reminder_id)) return;
       state.shownNotifs.add(reminder.reminder_id);
-      playNotifSound();
-
-      const el = document.createElement('div');
-      el.className = 'notif';
-      el.innerHTML = `
-        <div class="notif-top">
-          <span class="notif-bell">🔔</span>
-          <div style="flex:1;min-width:0">
-            <div class="notif-title">${esc(reminder.title)}</div>
-            <div class="notif-time">${reminder.remind_at ? formatRemindAt(reminder.remind_at) : esc(reminder.remind_at_text)}${reminder.notes ? '<br>' + esc(reminder.notes) : ''}</div>
-          </div>
-        </div>
-        <div class="notif-actions">
-          <button class="notif-done">تم ✓</button>
-          <button class="notif-dismiss">إغلاق</button>
-        </div>
-        <div class="notif-progress"><div class="notif-progress-bar"></div></div>
-      `;
-
-      const autoTimer = setTimeout(() => el.remove(), 30000);
-
-      el.querySelector('.notif-done').onclick = async () => {
-        clearTimeout(autoTimer);
-        el.remove();
-        try{
-          await api(`/dashboard/reminders/${reminder.reminder_id}/done`, { method:'POST', headers: headers() });
-          loadDashboard().catch(()=>{});
-        }catch{}
-      };
-
-      el.querySelector('.notif-dismiss').onclick = () => {
-        clearTimeout(autoTimer);
-        el.remove();
-      };
-
-      $('notifContainer').appendChild(el);
+      const wasEmpty = !state.reminderQueue.length && state.currentReminderId === null;
+      state.reminderQueue.push(reminder);
+      if(wasEmpty){ playNotifSound(); showNextReminder(); }
     }
 
     async function checkDueReminders(){

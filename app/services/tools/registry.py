@@ -179,10 +179,11 @@ TOOL_DEFINITIONS = [
             'type': 'object',
             'properties': {
                 'title': {'type': 'string'},
-                'remind_at_text': {'type': 'string'},
+                'remind_at_text': {'type': 'string', 'description': 'Human-readable description of when to remind, e.g. "الأربعاء 11 مساءً".'},
+                'remind_at': _nullable_string('ISO 8601 datetime when to trigger the reminder, e.g. "2026-05-03T23:00:00". Compute from the current date/time. Required whenever a specific time is mentioned.'),
                 'notes': _nullable_string(),
             },
-            'required': ['title', 'remind_at_text', 'notes'],
+            'required': ['title', 'remind_at_text', 'remind_at', 'notes'],
             'additionalProperties': False,
         },
         'strict': True,
