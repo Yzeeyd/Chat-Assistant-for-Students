@@ -95,6 +95,19 @@
     .preview-image{width:100%;max-height:72vh;object-fit:contain;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
     @media (max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}.layout{grid-template-columns:1fr}.sidebar{border-left:0;border-bottom:1px solid var(--line)}.week-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media (max-width:700px){.grid{grid-template-columns:1fr}.hero{flex-direction:column;align-items:flex-start}.composer{flex-direction:column}.chat-shell{height:auto;min-height:70vh}.week-grid{grid-template-columns:1fr}}
+    .notif-container{position:fixed;bottom:20px;left:20px;z-index:99999;display:flex;flex-direction:column;gap:10px;max-width:340px;width:calc(100vw - 40px)}
+    .notif{background:#121933;border:1px solid rgba(79,124,255,.5);border-radius:18px;padding:14px 16px;box-shadow:0 12px 40px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:10px;animation:notif-in .3s ease}
+    @keyframes notif-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .notif-top{display:flex;gap:10px;align-items:flex-start}
+    .notif-bell{font-size:22px;flex-shrink:0;margin-top:1px}
+    .notif-title{font-weight:700;font-size:15px;line-height:1.4}
+    .notif-time{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.5}
+    .notif-actions{display:flex;gap:8px}
+    .notif-done{background:var(--ok);color:#052010;border:0;border-radius:10px;padding:7px 14px;font-weight:800;cursor:pointer;font-size:13px}
+    .notif-dismiss{background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-weight:700;cursor:pointer;font-size:13px}
+    .notif-progress{height:3px;border-radius:999px;background:rgba(79,124,255,.3);overflow:hidden}
+    .notif-progress-bar{height:100%;border-radius:999px;background:var(--brand);animation:notif-drain 30s linear forwards}
+    @keyframes notif-drain{from{width:100%}to{width:0%}}
   </style>
 </head>
 <body>
@@ -242,13 +255,14 @@
                   <button class="btn btn-primary" id="sendBtn">إرسال</button>
                 </div>
               </div>
-              <div class="help">تقدر الآن ترسل في الشات: نص فقط، أو صورة فقط، أو نص + صورة معًا. وإذا كانت صورة جدول يقدر يستخرجها أو يشرحها حسب سؤالك.</div>
             </div>
           </div>
         </section>
       </main>
     </div>
   </div>
+
+  <div class="notif-container" id="notifContainer"></div>
 
   <div class="preview-modal" id="imagePreviewModal">
     <div class="preview-card">
@@ -270,6 +284,8 @@
       isSending: false,
       lastSendSignature: '',
       lastSendAt: 0,
+      notifInterval: null,
+      shownNotifs: new Set(),
     };
 
     function setToken(token){
@@ -302,6 +318,10 @@
     function showApp(){
       $('authWrap').classList.add('hidden');
       $('appWrap').classList.remove('hidden');
+      if(!state.notifInterval){
+        checkDueReminders();
+        state.notifInterval = setInterval(checkDueReminders, 30000);
+      }
     }
 
     function switchView(viewId){
@@ -411,6 +431,21 @@
       `, 'لا توجد مواد في الخطة بعد.');
     }
 
+    function formatRemindAt(isoStr){
+      if(!isoStr) return '';
+      try{
+        const d = new Date(isoStr);
+        const now = new Date();
+        const isToday = d.toDateString() === now.toDateString();
+        const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
+        const isTomorrow = d.toDateString() === tomorrow.toDateString();
+        const timeStr = d.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'});
+        if(isToday) return `اليوم ${timeStr}`;
+        if(isTomorrow) return `غداً ${timeStr}`;
+        return d.toLocaleDateString('ar-SA', {weekday:'short', month:'short', day:'numeric'}) + ' ' + timeStr;
+      }catch{ return isoStr; }
+    }
+
     function renderMeta(meta){
       if(!meta) return '';
       let html = '<div class="meta-group">';
@@ -427,12 +462,14 @@
       }
 
       if(Array.isArray(meta.reminders) && meta.reminders.length){
-        html += meta.reminders.map(it => `
+        html += meta.reminders.map(it => {
+          const timeLabel = it.remind_at ? formatRemindAt(it.remind_at) : esc(it.remind_at_text);
+          return `
           <div class="meta-card">
             <h4>${esc(it.title)}</h4>
-            <div class="row-line"><span>${esc(it.remind_at_text)}</span><span>${it.is_done ? 'منجز' : 'نشط'}</span></div>
-          </div>
-        `).join('');
+            <div class="row-line"><span>${timeLabel}</span><span>${it.is_done ? 'منجز ✓' : 'نشط'}</span></div>
+          </div>`;
+        }).join('');
       }
 
       if(Array.isArray(meta.academic_plan) && meta.academic_plan.length){
@@ -556,6 +593,7 @@
           });
           addMessage('assistant', data.text || '', data.meta || null);
           await Promise.all([loadDashboard().catch(()=>{}), loadHistory().catch(()=>{})]);
+          checkDueReminders().catch(()=>{});
         }catch(e){
           addMessage('assistant', `خطأ: ${e.message}`);
         }finally{
@@ -575,6 +613,7 @@
         });
         addMessage('assistant', data.text || '', data.meta || null);
         await loadDashboard().catch(()=>{});
+        checkDueReminders().catch(()=>{});
       }catch(e){
         addMessage('assistant', `خطأ: ${e.message}`);
       }finally{
@@ -691,9 +730,78 @@
     };
 
     $('logoutBtn').onclick = () => {
+      clearInterval(state.notifInterval);
+      state.notifInterval = null;
+      state.shownNotifs.clear();
+      $('notifContainer').innerHTML = '';
       setToken('');
       showAuth('تم تسجيل الخروج');
     };
+
+    function playNotifSound(){
+      try{
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [0, 150, 300].forEach((delay, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.frequency.value = 880;
+          gain.gain.setValueAtTime(0.3, ctx.currentTime + delay/1000);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay/1000 + 0.3);
+          osc.start(ctx.currentTime + delay/1000);
+          osc.stop(ctx.currentTime + delay/1000 + 0.3);
+        });
+      }catch{}
+    }
+
+    function showNotif(reminder){
+      if(state.shownNotifs.has(reminder.reminder_id)) return;
+      state.shownNotifs.add(reminder.reminder_id);
+      playNotifSound();
+
+      const el = document.createElement('div');
+      el.className = 'notif';
+      el.innerHTML = `
+        <div class="notif-top">
+          <span class="notif-bell">🔔</span>
+          <div style="flex:1;min-width:0">
+            <div class="notif-title">${esc(reminder.title)}</div>
+            <div class="notif-time">${reminder.remind_at ? formatRemindAt(reminder.remind_at) : esc(reminder.remind_at_text)}${reminder.notes ? '<br>' + esc(reminder.notes) : ''}</div>
+          </div>
+        </div>
+        <div class="notif-actions">
+          <button class="notif-done">تم ✓</button>
+          <button class="notif-dismiss">إغلاق</button>
+        </div>
+        <div class="notif-progress"><div class="notif-progress-bar"></div></div>
+      `;
+
+      const autoTimer = setTimeout(() => el.remove(), 30000);
+
+      el.querySelector('.notif-done').onclick = async () => {
+        clearTimeout(autoTimer);
+        el.remove();
+        try{
+          await api(`/dashboard/reminders/${reminder.reminder_id}/done`, { method:'POST', headers: headers() });
+          loadDashboard().catch(()=>{});
+        }catch{}
+      };
+
+      el.querySelector('.notif-dismiss').onclick = () => {
+        clearTimeout(autoTimer);
+        el.remove();
+      };
+
+      $('notifContainer').appendChild(el);
+    }
+
+    async function checkDueReminders(){
+      if(!state.token) return;
+      try{
+        const data = await api('/dashboard/reminders/due', { headers: headers() });
+        (data.reminders || []).forEach(showNotif);
+      }catch{}
+    }
 
     async function init(){
       try{

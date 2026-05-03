@@ -1,5 +1,5 @@
 import json
-from datetime import time
+from datetime import datetime, time
 from typing import Iterable
 
 from sqlalchemy import func, or_
@@ -170,8 +170,15 @@ def delete_all_schedule(db: Session, user_id: int) -> int:
 # reminders
 # ---------------------------------------------------------------------------
 
-def create_reminder(db: Session, user_id: int, title: str, remind_at_text: str, notes: str | None) -> models.Reminder:
-    item = models.Reminder(user_id=user_id, title=title, remind_at_text=remind_at_text, notes=notes)
+def create_reminder(
+    db: Session,
+    user_id: int,
+    title: str,
+    remind_at_text: str,
+    notes: str | None,
+    remind_at: datetime | None = None,
+) -> models.Reminder:
+    item = models.Reminder(user_id=user_id, title=title, remind_at_text=remind_at_text, notes=notes, remind_at=remind_at)
     db.add(item)
     db.commit()
     db.refresh(item)
@@ -183,6 +190,20 @@ def list_reminders(db: Session, user_id: int, include_done: bool = False) -> lis
     if not include_done:
         q = q.filter(models.Reminder.is_done.is_(False))
     return q.order_by(models.Reminder.id.desc()).all()
+
+
+def list_due_reminders(db: Session, user_id: int) -> list[models.Reminder]:
+    now = datetime.now()
+    candidates = (
+        db.query(models.Reminder)
+        .filter(
+            models.Reminder.user_id == user_id,
+            models.Reminder.is_done.is_(False),
+            models.Reminder.remind_at.isnot(None),
+        )
+        .all()
+    )
+    return [r for r in candidates if r.remind_at <= now]
 
 
 def mark_reminder_done(db: Session, reminder_id: int, user_id: int) -> models.Reminder | None:

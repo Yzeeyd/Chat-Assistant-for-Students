@@ -67,6 +67,7 @@ class Reminder(Base):
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     title = Column(String(200), nullable=False)
     remind_at_text = Column(String(120), nullable=False)
+    remind_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     is_done = Column(Boolean, nullable=False, default=False, server_default='0')
     created_at = Column(DateTime, nullable=False, server_default=func.now())

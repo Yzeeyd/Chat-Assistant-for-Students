@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
@@ -39,6 +39,31 @@ def _serialize_schedule(items: list[models.ScheduleItem]) -> list[dict]:
         }
         for item in ordered
     ]
+
+
+@router.get('/reminders/due')
+def due_reminders(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)) -> dict:
+    items = crud.list_due_reminders(db, user.id)
+    return {
+        'reminders': [
+            {
+                'reminder_id': r.id,
+                'title': r.title,
+                'remind_at_text': r.remind_at_text,
+                'remind_at': r.remind_at.isoformat() if r.remind_at else None,
+                'notes': r.notes,
+            }
+            for r in items
+        ]
+    }
+
+
+@router.post('/reminders/{reminder_id}/done')
+def mark_done(reminder_id: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)) -> dict:
+    reminder = crud.mark_reminder_done(db, reminder_id=reminder_id, user_id=user.id)
+    if not reminder:
+        raise HTTPException(status_code=404, detail='Reminder not found')
+    return {'ok': True}
 
 
 @router.get('/summary')

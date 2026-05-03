@@ -2,5 +2,4 @@
 app/__pycache__/
 *.pyc
 student_assistant.db
-exmples
-.claude
+example
