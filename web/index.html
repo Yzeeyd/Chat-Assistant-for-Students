@@ -54,7 +54,9 @@
     .msg.assistant{align-self:flex-end;background:#0f1630}
     .message-text{white-space:pre-wrap;word-break:break-word}
     .composer{display:flex;gap:10px;align-items:flex-end}
-    textarea,input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--text);border-radius:14px;padding:12px 14px;outline:none}
+    textarea,input,select{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--text);border-radius:14px;padding:12px 14px;outline:none}
+    select{appearance:none;-webkit-appearance:none;cursor:pointer}
+    select option{background:#121933;color:var(--text)}
     .composer-main{flex:1;display:grid;gap:8px}
     .composer-side{display:flex;gap:10px;align-items:stretch}
     .attach-badge{display:none;padding:8px 12px;border-radius:12px;background:rgba(79,124,255,.14);border:1px solid rgba(79,124,255,.28);font-size:12px;color:#dbe6ff}
@@ -127,11 +129,28 @@
       <div style="display:grid;gap:12px">
         <div class="auth-card">
           <h3>إنشاء حساب</h3>
-          <input id="suName" placeholder="الاسم" />
+          <input id="suName" placeholder="الاسم الكامل" />
           <div style="height:8px"></div>
           <input id="suEmail" placeholder="البريد الإلكتروني" />
           <div style="height:8px"></div>
-          <input id="suPass" type="password" placeholder="كلمة المرور" />
+          <input id="suPass" type="password" placeholder="كلمة المرور (6 أحرف على الأقل)" />
+          <div style="height:8px"></div>
+          <input id="suCollege" placeholder="الكلية (مثل: كلية الحاسب والمعلومات)" />
+          <div style="height:8px"></div>
+          <select id="suMajor">
+            <option value="">-- اختر التخصص --</option>
+            <option value="CS">علوم الحاسب — CS</option>
+            <option value="IT">تقنية المعلومات — IT</option>
+            <option value="IS">نظم المعلومات — IS</option>
+            <option value="CE">هندسة الحاسب — CE</option>
+            <option value="SE">هندسة البرمجيات — SE</option>
+            <option value="DS">علم البيانات — DS</option>
+            <option value="AI">الذكاء الاصطناعي — AI</option>
+            <option value="MIS">نظم المعلومات الإدارية — MIS</option>
+            <option value="OTHER">تخصص آخر</option>
+          </select>
+          <div style="height:8px"></div>
+          <input id="suTrack" placeholder="المسار (اختياري، مثل: شبكات، أمن معلومات)" />
           <div style="height:10px"></div>
           <button class="btn btn-soft" id="signupBtn">إنشاء الحساب</button>
         </div>
@@ -199,7 +218,7 @@
             <div class="card metric"><div class="k">حصص الأسبوع الدراسي</div><div class="v" id="mWeek">0</div></div>
             <div class="card metric"><div class="k">كل الحصص</div><div class="v" id="mAll">0</div></div>
             <div class="card metric"><div class="k">التذكيرات النشطة</div><div class="v" id="mRem">0</div></div>
-            <div class="card metric"><div class="k">مواد الخطة</div><div class="v" id="mPlan">0</div></div>
+            <div class="card metric"><div class="k">متبقي في الخطة</div><div class="v" id="mPlan">0</div></div>
           </div>
 
           <div class="split">
@@ -234,8 +253,12 @@
                   </div>
                 </div>
                 <input id="planImageInput" type="file" accept="image/*" style="display:none" />
-                <div class="help">ارفع صورة الخطة الأكاديمية، وسيحاول النظام حفظ المواد الواضحة مع حالتها الحالية.</div>
-                <div class="list" id="planList"></div>
+                <div class="help">ارفع صورة الخطة الأكاديمية، وسيحاول النظام حفظ المواد المتبقية والحالية مع حالتها.</div>
+                <div id="planSummaryBar" style="display:none;margin-bottom:10px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);font-size:13px;color:var(--muted);gap:16px;flex-wrap:wrap"></div>
+                <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px" id="planActiveLabel" hidden>جاري الدراسة</div>
+                <div class="list" id="planActiveList"></div>
+                <div style="font-size:13px;font-weight:700;color:var(--muted);margin:10px 0 6px" id="planRemainingLabel" hidden>المتبقية</div>
+                <div class="list" id="planRemainingList"></div>
               </div>
             </div>
           </div>
@@ -414,11 +437,15 @@
     }
 
     function renderDashboard(data){
-      $('studentLabel').textContent = `${data.student.name} — ${data.student.email}`;
+      const s = data.student;
+      const labelParts = [s.name];
+      if(s.major) labelParts.push(s.major);
+      if(s.college) labelParts.push(s.college);
+      $('studentLabel').textContent = labelParts.join(' — ');
       $('mWeek').textContent = data.counts.week_classes;
       $('mAll').textContent = data.counts.all_classes;
       $('mRem').textContent = data.counts.active_reminders;
-      $('mPlan').textContent = data.counts.plan_items;
+      $('mPlan').textContent = (data.counts.remaining_courses ?? 0) + (data.counts.active_courses ?? 0);
 
       renderWeekSchedule(data.week_schedule?.days || []);
 
@@ -433,16 +460,41 @@
         </div>
       `, 'لا توجد تذكيرات أو واجبات حالية.');
 
-      renderSimpleList('planList', data.academic_plan, item => `
+      const planActive    = data.academic_plan_active    || [];
+      const planRemaining = data.academic_plan_remaining || [];
+
+      const planItemHtml = item => `
         <div class="item">
           <strong>${esc(item.course_name)}</strong>
           <div class="row-line">
             <span>${esc(item.course_code || '')}</span>
-            <span>${esc(item.status || 'planned')}</span>
+            <span>${esc(item.semester || '')}</span>
           </div>
-          <small>${esc(item.semester || '')}${item.notes ? ' — ' + esc(item.notes) : ''}</small>
-        </div>
-      `, 'لا توجد مواد في الخطة بعد.');
+        </div>`;
+
+      $('planActiveLabel').hidden   = planActive.length === 0;
+      $('planRemainingLabel').hidden = planRemaining.length === 0;
+
+      $('planActiveList').innerHTML    = planActive.length    ? planActive.map(planItemHtml).join('')    : '';
+      $('planRemainingList').innerHTML = planRemaining.length ? planRemaining.map(planItemHtml).join('') : '';
+
+      if(!planActive.length && !planRemaining.length){
+        $('planRemainingList').innerHTML = `<div class="empty">لا توجد مواد في الخطة بعد.</div>`;
+        $('planRemainingLabel').hidden = true;
+      }
+
+      const bar = $('planSummaryBar');
+      const total = data.counts.plan_items || 0;
+      if(total > 0){
+        bar.style.display = 'flex';
+        bar.innerHTML = `
+          <span>✅ مكتمل: <strong>${data.counts.completed_courses ?? 0}</strong></span>
+          <span>📖 جاري: <strong>${data.counts.active_courses ?? 0}</strong></span>
+          <span>📋 متبقي: <strong>${data.counts.remaining_courses ?? 0}</strong></span>
+          <span>المجموع: ${total}</span>`;
+      } else {
+        bar.style.display = 'none';
+      }
     }
 
     function formatRemindAt(isoStr){
@@ -738,6 +790,9 @@
             name: $('suName').value,
             email: $('suEmail').value,
             password: $('suPass').value,
+            college: $('suCollege').value.trim() || null,
+            major: $('suMajor').value || null,
+            track: $('suTrack').value.trim() || null,
           })
         });
         $('authMsg').textContent = 'تم إنشاء الحساب. الآن سجّل دخول.';

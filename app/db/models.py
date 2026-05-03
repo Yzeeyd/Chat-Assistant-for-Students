@@ -11,6 +11,9 @@ class User(Base):
     name = Column(String(120), nullable=False)
     email = Column(String(190), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
+    college = Column(String(200), nullable=True)
+    major = Column(String(100), nullable=True)
+    track = Column(String(200), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
     schedule_items = relationship('ScheduleItem', back_populates='user', cascade='all, delete-orphan')

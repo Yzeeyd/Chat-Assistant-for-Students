@@ -14,8 +14,13 @@ def signup(payload: SignupRequest, db: Session = Depends(get_db)) -> dict[str, s
     email = payload.email.strip().lower()
     if crud.get_user_by_email(db, email):
         raise HTTPException(status_code=400, detail='Email already exists')
-    user = crud.create_user(db, payload.name, email, hash_password(payload.password))
-    return {'id': user.id, 'name': user.name, 'email': user.email}
+    user = crud.create_user(
+        db, payload.name, email, hash_password(payload.password),
+        college=payload.college,
+        major=payload.major,
+        track=payload.track,
+    )
+    return {'id': user.id, 'name': user.name, 'email': user.email, 'major': user.major}
 
 
 @router.post('/login', response_model=TokenResponse)

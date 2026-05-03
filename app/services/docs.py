@@ -2,8 +2,10 @@ import unicodedata
 from pathlib import Path
 
 DOC_DIR = Path(__file__).resolve().parents[2] / 'doc'
+PLANS_DIR = DOC_DIR / 'plans'
 
 _DOCS_CACHE: str | None = None
+_PLAN_CACHE: dict[str, str] = {}
 
 
 def _normalize(text: str) -> str:
@@ -54,6 +56,34 @@ def _query_tokens(query: str) -> list[str]:
     tokens = [t.strip() for t in q.split() if len(t.strip()) > 1]
     extras = [t[2:] for t in tokens if t.startswith('ال') and len(t) > 3]
     return list(dict.fromkeys(tokens + extras))
+
+
+def _find_plan_file(major: str) -> Path | None:
+    """Scan doc/plans/ for any PDF whose name contains the major code."""
+    key = major.upper()
+    for directory in (PLANS_DIR, DOC_DIR):
+        if not directory.exists():
+            continue
+        for pdf in directory.glob('*.pdf'):
+            if key in pdf.stem.upper():
+                return pdf
+    return None
+
+
+def get_plan_text(major: str) -> str:
+    """Return extracted text from the plan PDF matching the given major code.
+    Looks in doc/plans/ first, then doc/. Auto-discovers any PDF whose
+    filename contains the major code (e.g. 'CS Plan_New.pdf' matches 'CS').
+    """
+    key = (major or '').upper().strip()
+    if not key:
+        return ''
+    if key in _PLAN_CACHE:
+        return _PLAN_CACHE[key]
+    path = _find_plan_file(key)
+    text = _load_pdf_text(path) if path else ''
+    _PLAN_CACHE[key] = text
+    return text
 
 
 def search_in_docs(query: str, max_results: int = 10, context_lines: int = 6) -> list[dict]:

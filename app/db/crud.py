@@ -20,8 +20,23 @@ def get_user_by_email(db: Session, email: str) -> models.User | None:
     return db.query(models.User).filter(func.lower(models.User.email) == email.strip().lower()).first()
 
 
-def create_user(db: Session, name: str, email: str, password_hash: str) -> models.User:
-    user = models.User(name=name.strip(), email=email.strip().lower(), password_hash=password_hash)
+def create_user(
+    db: Session,
+    name: str,
+    email: str,
+    password_hash: str,
+    college: str | None = None,
+    major: str | None = None,
+    track: str | None = None,
+) -> models.User:
+    user = models.User(
+        name=name.strip(),
+        email=email.strip().lower(),
+        password_hash=password_hash,
+        college=college.strip() if college else None,
+        major=major.upper().strip() if major else None,
+        track=track.strip() if track else None,
+    )
     db.add(user)
     db.commit()
     db.refresh(user)
