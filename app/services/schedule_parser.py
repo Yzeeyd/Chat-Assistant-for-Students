@@ -49,24 +49,24 @@ _TIME_PATTERN = re.compile(r'(\d{1,2})[:\.](\d{2})')
 _PM_MARKER = 'م'   # م
 _AM_MARKER = 'ص'   # ص
 
+_FLEXIBLE_MARKERS = {'بالاتفاق', 'باتفاق', 'by arrangement', 'tba', 'tbd'}
 
-def parse_time(value: str) -> time:
+
+def parse_time(value: str) -> time | None:
     """
     Convert an Arabic AM/PM time string to a Python time object.
+    Returns None for flexible/online sessions ("بالاتفاق" etc.).
 
     Handles:
       "8:00 ص"  -> time(8, 0)      morning class
-      "9:50 ص"  -> time(9, 50)
-      "1:00 م"  -> time(13, 0)     afternoon class
-      "12:00 م" -> time(12, 0)     noon
-      "10:00"   -> time(10, 0)     no marker, treat as 24h
-
-    Auto-correction:
-      University classes run 06:00-17:00 only.
-      If the converted hour is > 17 (e.g. "9:00 م" → 21:00), the AI misread
-      ص as م. We subtract 12 to recover the correct morning time.
+      "9:00 م"  -> time(21, 0)     evening class
+      "1:00 ص"  -> time(1, 0)      late-night Ramadan session
+      "10:00"   -> time(10, 0)     no marker, hour 8-12 kept as-is
+      "6:00"    -> time(18, 0)     no marker, hour 1-7 treated as PM
     """
     v = (value or '').strip()
+    if v.lower() in _FLEXIBLE_MARKERS or 'اتفاق' in v:
+        return None
     is_pm = _PM_MARKER in v
     is_am = _AM_MARKER in v
 
@@ -82,19 +82,14 @@ def parse_time(value: str) -> time:
         hours += 12
     elif is_am and hours == 12:
         hours = 0
-    # No marker: assume value is already in 24-hour format
+    elif not is_pm and not is_am and 1 <= hours <= 7:
+        # No marker + hour 1-7: university never runs classes at 1-7 AM,
+        # so this is a 12-hour time without a م marker — treat as PM.
+        hours += 12
 
-    # Auto-correct AI misread: if result > 17:00, the marker was probably wrong.
-    # Subtracting 12 recovers the correct morning hour (e.g. 21 -> 9).
-    if hours > 17:
-        corrected = hours - 12
-        if 6 <= corrected <= 17:
-            hours = corrected
-
-    if not (6 <= hours <= 17 and 0 <= minutes <= 59):
+    if not (0 <= hours <= 23 and 0 <= minutes <= 59):
         raise ValueError(
-            f'Time {hours:02d}:{minutes:02d} is outside university class hours (06:00-17:00). '
-            f'Original: {value!r}'
+            f'Cannot parse a valid time from: {value!r}'
         )
 
     return time(hours, minutes)
@@ -119,9 +114,20 @@ def parse_row(row: dict) -> dict:
     if not course_name:
         raise ValueError('course_name is required')
 
-    day_of_week = parse_day(str(row.get('day_ar', '')))
-    start = parse_time(str(row.get('start_time_ar', '')))
-    end = parse_time(str(row.get('end_time_ar', '')))
+    start_time_ar = str(row.get('start_time_ar', '')).strip()
+    end_time_ar   = str(row.get('end_time_ar',   '')).strip()
+    is_flexible   = 'اتفاق' in start_time_ar or 'اتفاق' in end_time_ar
+
+    day_ar_raw = str(row.get('day_ar', '')).strip()
+    if day_ar_raw and 'اتفاق' not in day_ar_raw:
+        day_of_week: int | None = parse_day(day_ar_raw)
+    elif is_flexible:
+        day_of_week = None
+    else:
+        raise ValueError(f'day_ar is required for non-flexible sessions: {day_ar_raw!r}')
+
+    start = parse_time(start_time_ar)
+    end   = parse_time(end_time_ar)
 
     room = (row.get('room') or '').strip()
 
