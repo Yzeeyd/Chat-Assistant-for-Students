@@ -80,6 +80,16 @@ def trim_chat_messages(db: Session, user_id: int, keep_limit: int) -> None:
     db.commit()
 
 
+def delete_all_chat_messages(db: Session, user_id: int) -> int:
+    deleted = (
+        db.query(models.ChatMessage)
+        .filter(models.ChatMessage.user_id == user_id)
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return deleted
+
+
 # ---------------------------------------------------------------------------
 # schedule
 # ---------------------------------------------------------------------------

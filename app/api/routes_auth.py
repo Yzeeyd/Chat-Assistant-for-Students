@@ -12,7 +12,7 @@ router = APIRouter(prefix='/auth', tags=['auth'])
 def _auto_populate_plan_background(user_id: int, major: str) -> None:
     """Background task: parse major's plan PDF via AI and populate the user's academic plan."""
     from app.services.docs import get_plan_text
-    from app.services.ai.runtime import run_plan_text_import_agent
+    from app.services.ai.runtime import MODE_PLAN_IMPORT_TEXT, run_agent
     db = SessionLocal()
     try:
         user = crud.get_user_by_id(db, user_id)
@@ -24,7 +24,16 @@ def _auto_populate_plan_background(user_id: int, major: str) -> None:
         # Check again right before the AI call — the user may have already uploaded their plan image.
         # Even if items exist, we proceed so the PDF fills gaps the image missed.
         # Status non-downgrade logic in add_academic_plan_item protects existing completed/in_progress.
-        run_plan_text_import_agent(plan_text, major, db, user)
+        messages = [
+            {
+                'role': 'user',
+                'content': (
+                    f'استورد خطة الدراسة للتخصص {major} التالية وأضف جميع المواد لحسابي.\n\n'
+                    f'{plan_text[:9000]}'
+                ),
+            }
+        ]
+        run_agent(messages=messages, db=db, user=user, mode=MODE_PLAN_IMPORT_TEXT, max_rounds=8)
     except Exception:
         pass
     finally:

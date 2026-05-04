@@ -470,6 +470,10 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
       <span class="health-dot" id="healthDot"></span>
       <span id="healthLabel">جاري الاتصال…</span>
     </div>
+    <button class="btn btn-ghost btn-block" id="clearChatBtn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      حذف المحادثات
+    </button>
     <button class="btn btn-danger btn-block" id="logoutBtn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       تسجيل الخروج
@@ -831,6 +835,21 @@ $('logoutBtn').onclick = () => {
   state.shownNotifs.clear(); state.reminderQueue = []; state.currentReminderId = null;
   $('reminderBg').classList.remove('show');
   showAuth('تم تسجيل الخروج');
+};
+
+$('clearChatBtn').onclick = async () => {
+  if(!confirm('هل أنت متأكد أنك تريد حذف جميع المحادثات؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+  const btn = $('clearChatBtn');
+  btn.disabled = true;
+  try{
+    await api('/chat/history', { method: 'DELETE', headers: headers() });
+    await loadHistory();
+    toast('تم حذف المحادثات', 'ok');
+  }catch(err){
+    toast(err.message || 'تعذر حذف المحادثات', 'err');
+  }finally{
+    btn.disabled = false;
+  }
 };
 
 const PAGE_TITLES = {

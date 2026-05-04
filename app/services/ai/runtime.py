@@ -1,6 +1,15 @@
+"""Single-entry-point AI runtime.
+
+All chat / image / import / rules flows go through `run_agent(mode=...)`.
+The mode picks the system prompt, the model (text vs vision), and whether
+tool use is forced. Tools are always the full TOOL_DEFINITIONS list — the
+model decides which to call.
+"""
+
 import base64
 import json
-from datetime import date, datetime
+from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from openai import OpenAI
@@ -13,55 +22,34 @@ from app.services.tools.registry import TOOL_DEFINITIONS, execute_tool
 
 client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
-def _build_system_instructions(user: models.User | None = None) -> str:
-    now = datetime.now()
-    today = now.strftime('%Y-%m-%d')
-    now_str = now.strftime('%Y-%m-%dT%H:%M:%S')
 
-    profile_lines: list[str] = []
-    if user:
-        if user.college:
-            profile_lines.append(f'- الكلية: {user.college}')
-        if user.major:
-            profile_lines.append(f'- التخصص: {user.major}')
-        if user.track:
-            profile_lines.append(f'- المسار: {user.track}')
-    profile_section = ('\n\nStudent profile:\n' + '\n'.join(profile_lines)) if profile_lines else ''
+# ============================================================
+# Public mode constants
+# ============================================================
 
-    return f"""
-You are the Student Assistant System.
-Answer in the same language as the student.
-Current date and time: {now_str} (use this exact time when computing remind_at).{profile_section}
+MODE_CHAT = 'chat'
+MODE_IMAGE_CHAT = 'image_chat'
+MODE_SCHEDULE_IMPORT = 'schedule_import'
+MODE_PLAN_IMPORT_IMAGE = 'plan_import_image'
+MODE_PLAN_IMPORT_TEXT = 'plan_import_text'
+MODE_RULES = 'rules'
 
-Grounding rules:
-- Never invent schedule items, reminders, academic plan items, or rules.
-- Use tools whenever the answer depends on saved student data.
-- If a requested fact is not in the database, say so clearly.
-- For course recommendations, use only academic plan items and current schedule.
-- Treat homework, exams, quizzes, projects, and deadlines as reminders.
-- Do not ask to upload assignment files unless the user explicitly asks for file storage.
+VISION_MODES: set[str] = {MODE_IMAGE_CHAT, MODE_SCHEDULE_IMPORT, MODE_PLAN_IMPORT_IMAGE}
+FORCE_TOOL_MODES: set[str] = {MODE_PLAN_IMPORT_IMAGE, MODE_PLAN_IMPORT_TEXT, MODE_RULES}
+PLAN_IMPORT_MODES: set[str] = {MODE_PLAN_IMPORT_IMAGE, MODE_PLAN_IMPORT_TEXT}
 
-Routing policy:
-- FIRST PRIORITY — DELETE SCHEDULE: If the student says "احذف جدولي" / "امسح جدولي" / "حذف الجدول" / "delete my schedule" / any phrasing that clearly means delete ALL saved schedule → call clear_schedule IMMEDIATELY. Do NOT ask for confirmation, do NOT describe what you are about to do — call the tool FIRST, then confirm in your reply.
-- Schedule questions -> schedule tools.
-- Deadline, task, exam, homework, project tracking -> use assignment tools (create_assignment, list_assignments, update_assignment).
-- Reminder / notification for an event -> reminder tools. ALWAYS pass remind_at as ISO datetime. Current time is {now_str} — use it to calculate offsets (e.g. "بعد 10 دقائق" → add 10 min to current time, "الساعة 5 مساءً" → {today}T17:00:00, "غداً الساعة 9" → next day at 09:00:00). This is critical for popup notifications to fire on time.
-- Student records an absence -> call add_absence. Student asks about their absences -> call get_absences first.
-- Student records a grade -> call add_grade. Student asks for grades or GPA -> call list_grades or get_gpa.
-- What should I take next / academic progress -> academic plan tools.
-- ANY question that mentions absences (غياب / غيابات / غيابي), attendance, barring (حرمان), grading, withdrawal, warnings, student rights, or any university policy -> follow these steps in order:
-  1. Call get_absences (filter by course name if mentioned) to check DB-recorded absences first.
-  2. Call get_all_schedule to find how many sessions per week the mentioned course has (do NOT guess from credit hours).
-  3. Call search_university_rules with keyword "غياب" to get the official absence limit.
-  4. Use total_absences from get_absences (or the number the student stated if not recorded). Using sessions/week from the schedule and today's date (semester started 2026-01-18, {today} = ~15 teaching weeks), calculate: total sessions held = weeks × sessions_per_week, absence percentage = (absences ÷ total) × 100, remaining safe absences = (total × 0.25) - absences.
-  5. Give the student a direct, plain answer with the percentage and how many more absences are allowed. No assumptions, no asking the student to calculate themselves.
 
-Response style:
-- Friendly, brief, practical.
-- After write actions, confirm clearly what was saved.
-- Do not expose raw JSON or internal tool payloads.
-- Never use programming terms like floor(), ceil(), int(), or any math function names. Write results as plain numbers only (e.g. "الحد المسموح = 7 جلسات", never "floor(30 × 0.25) = 7").
-""".strip()
+@dataclass
+class ImageInput:
+    image_bytes: bytes
+    content_type: str
+    filename: str
+    prompt: str = ''
+
+
+# ============================================================
+# System prompts
+# ============================================================
 
 UNIVERSITY_RULES_INSTRUCTIONS = """
 You are the University Rules and Regulations assistant for students.
@@ -137,10 +125,11 @@ credits       → copy الساعات as integer, or null if not visible
 - Copy course names and codes exactly — do not translate or reformat.
 
 === PROCESS ===
-1. Read every row top-to-bottom.
+1. Scan every row top-to-bottom AND once more bottom-to-top to catch any row your first pass missed
+   (especially the last day of the week and evening hours).
 2. For each row, carefully determine AM (ص) or PM (م) using the rules above.
 3. Collect all rows.
-4. Call save_raw_schedule ONCE with all rows.
+4. Call save_raw_schedule ONCE with ALL rows in a single call. There is NO second OCR pass.
 5. Reply in Arabic: how many sessions were saved and list each course with its day and time.
 """.strip()
 
@@ -209,7 +198,119 @@ Rules:
 """.strip()
 
 
-def _run_with_tools(conversation_input: list[Any], instructions: str, db: Session, user: models.User, max_rounds: int, force_tools: bool = False, model: str | None = None) -> tuple[str, dict[str, Any]]:
+def _build_chat_prompt(user: models.User | None = None) -> str:
+    """Dynamic chat system prompt — injects current time and student profile."""
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+    now_str = now.strftime('%Y-%m-%dT%H:%M:%S')
+
+    profile_lines: list[str] = []
+    if user:
+        if user.college:
+            profile_lines.append(f'- الكلية: {user.college}')
+        if user.major:
+            profile_lines.append(f'- التخصص: {user.major}')
+        if user.track:
+            profile_lines.append(f'- المسار: {user.track}')
+    profile_section = ('\n\nStudent profile:\n' + '\n'.join(profile_lines)) if profile_lines else ''
+
+    return f"""
+You are the Student Assistant System.
+Answer in the same language as the student.
+Current date and time: {now_str} (use this exact time when computing remind_at).{profile_section}
+
+Grounding rules:
+- Never invent schedule items, reminders, academic plan items, or rules.
+- Use tools whenever the answer depends on saved student data.
+- If a requested fact is not in the database, say so clearly.
+- For course recommendations, use only academic plan items and current schedule.
+- Treat homework, exams, quizzes, projects, and deadlines as reminders.
+- Do not ask to upload assignment files unless the user explicitly asks for file storage.
+
+Routing policy:
+- FIRST PRIORITY — DELETE SCHEDULE: If the student says "احذف جدولي" / "امسح جدولي" / "حذف الجدول" / "delete my schedule" / any phrasing that clearly means delete ALL saved schedule → call clear_schedule IMMEDIATELY. Do NOT ask for confirmation, do NOT describe what you are about to do — call the tool FIRST, then confirm in your reply.
+- Schedule questions -> schedule tools.
+- Deadline, task, exam, homework, project tracking -> use assignment tools (create_assignment, list_assignments, update_assignment).
+- Reminder / notification for an event -> reminder tools. ALWAYS pass remind_at as ISO datetime. Current time is {now_str} — use it to calculate offsets (e.g. "بعد 10 دقائق" → add 10 min to current time, "الساعة 5 مساءً" → {today}T17:00:00, "غداً الساعة 9" → next day at 09:00:00). This is critical for popup notifications to fire on time.
+- Student records an absence -> call add_absence. Student asks about their absences -> call get_absences first.
+- Student records a grade -> call add_grade. Student asks for grades or GPA -> call list_grades or get_gpa.
+- What should I take next / academic progress -> academic plan tools.
+- ANY question that mentions absences (غياب / غيابات / غيابي), attendance, barring (حرمان), grading, withdrawal, warnings, student rights, or any university policy -> follow these steps in order:
+  1. Call get_absences (filter by course name if mentioned) to check DB-recorded absences first.
+  2. Call get_all_schedule to find how many sessions per week the mentioned course has (do NOT guess from credit hours).
+  3. Call search_university_rules with keyword "غياب" to get the official absence limit.
+  4. Use total_absences from get_absences (or the number the student stated if not recorded). Using sessions/week from the schedule and today's date (semester started 2026-01-18, {today} = ~15 teaching weeks), calculate: total sessions held = weeks × sessions_per_week, absence percentage = (absences ÷ total) × 100, remaining safe absences = (total × 0.25) - absences.
+  5. Give the student a direct, plain answer with the percentage and how many more absences are allowed. No assumptions, no asking the student to calculate themselves.
+
+Response style:
+- Friendly, brief, practical.
+- After write actions, confirm clearly what was saved.
+- Do not expose raw JSON or internal tool payloads.
+- Never use programming terms like floor(), ceil(), int(), or any math function names. Write results as plain numbers only (e.g. "الحد المسموح = 7 جلسات", never "floor(30 × 0.25) = 7").
+""".strip()
+
+
+_STATIC_INSTRUCTIONS: dict[str, str] = {
+    MODE_IMAGE_CHAT: IMAGE_CHAT_INSTRUCTIONS,
+    MODE_SCHEDULE_IMPORT: IMAGE_IMPORT_INSTRUCTIONS,
+    MODE_PLAN_IMPORT_IMAGE: ACADEMIC_PLAN_IMAGE_IMPORT_INSTRUCTIONS,
+    MODE_PLAN_IMPORT_TEXT: ACADEMIC_PLAN_TEXT_IMPORT_INSTRUCTIONS,
+    MODE_RULES: UNIVERSITY_RULES_INSTRUCTIONS,
+}
+
+
+def _instructions_for(mode: str, user: models.User) -> str:
+    """Pick + assemble the system prompt for a given mode."""
+    if mode == MODE_CHAT:
+        return _build_chat_prompt(user)
+
+    base = _STATIC_INSTRUCTIONS.get(mode)
+    if base is None:
+        raise ValueError(f'Unknown agent mode: {mode}')
+
+    # Plan-image import benefits from the major's reference plan as extra grounding.
+    if mode == MODE_PLAN_IMPORT_IMAGE and user and user.major:
+        plan_text = get_plan_text(user.major)
+        if plan_text:
+            base = (
+                base
+                + f'\n\nمعلومة مهمة: الطالب مسجّل في تخصص {user.major}.'
+                + ' استخدم خطة التخصص المرجعية التالية كمرجع لتوقع أسماء المواد ورموزها إذا كانت الصورة غير واضحة:\n'
+                + plan_text[:5000]
+            )
+    return base
+
+
+# ============================================================
+# Internals
+# ============================================================
+
+def _image_message_payload(prompt: str, image_bytes: bytes, content_type: str, filename: str) -> list[Any]:
+    """Build a single user-message item that contains text + the inline image."""
+    encoded = base64.b64encode(image_bytes).decode('utf-8')
+    data_url = f'data:{content_type};base64,{encoded}'
+    user_prompt = (prompt or '').strip() or f'حلل هذه الصورة. اسم الملف: {filename}'
+    return [
+        {
+            'role': 'user',
+            'content': [
+                {'type': 'input_text', 'text': user_prompt},
+                {'type': 'input_image', 'image_url': data_url, 'detail': 'high'},
+            ],
+        }
+    ]
+
+
+def _run_with_tools(
+    conversation_input: list[Any],
+    instructions: str,
+    db: Session,
+    user: models.User,
+    max_rounds: int,
+    force_tools: bool = False,
+    model: str | None = None,
+) -> tuple[str, dict[str, Any]]:
+    """Run the OpenAI Responses loop, executing any tool calls until the model emits text."""
     last_payload: dict[str, Any] = {}
 
     for round_idx in range(max_rounds):
@@ -255,206 +356,60 @@ def _run_with_tools(conversation_input: list[Any], instructions: str, db: Sessio
     return ('عذرًا، صار عدد محاولات الأدوات كبير. حاول مرة ثانية برسالة أبسط.', last_payload)
 
 
-
-def _image_message_payload(prompt: str, image_bytes: bytes, content_type: str, filename: str) -> list[Any]:
-    encoded = base64.b64encode(image_bytes).decode('utf-8')
-    data_url = f'data:{content_type};base64,{encoded}'
-    user_prompt = (prompt or '').strip() or f'حلل هذه الصورة. اسم الملف: {filename}'
-    return [
-        {
-            'role': 'user',
-            'content': [
-                {
-                    'type': 'input_text',
-                    'text': user_prompt,
-                },
-                {
-                    'type': 'input_image',
-                    'image_url': data_url,
-                    'detail': 'high',
-                },
-            ],
-        }
-    ]
-
-
+# ============================================================
+# Public entry point
+# ============================================================
 
 def run_agent(
-    history_messages: list[dict[str, str]],
+    messages: list[Any],
     db: Session,
     user: models.User,
+    mode: str = MODE_CHAT,
+    image: ImageInput | None = None,
     max_rounds: int = 6,
 ) -> tuple[str, dict[str, Any]]:
+    """Single entry point for every chat / import / image / rules flow.
+
+    Args:
+        messages: prior conversation turns (chat history, or [] for image-only flows).
+        db, user: DB session and authenticated student.
+        mode: one of MODE_* — selects system prompt, model, and tool-forcing.
+        image: optional image payload. If set, appended as a user turn.
+        max_rounds: cap on the tool-call loop.
+
+    Returns:
+        (assistant_text, last_tool_payload).
+    """
     if not client:
         return ('OpenAI API key is missing. Add OPENAI_API_KEY in .env.', {})
 
-    conversation_input: list[Any] = list(history_messages)
-    return _run_with_tools(conversation_input, _build_system_instructions(user), db=db, user=user, max_rounds=max_rounds)
-
-
-
-def run_schedule_image_agent(
-    image_bytes: bytes,
-    content_type: str,
-    filename: str,
-    db: Session,
-    user: models.User,
-    prompt: str | None = None,
-    replace_existing: bool = False,
-    max_rounds: int = 8,
-) -> tuple[str, dict[str, Any]]:
-    if not client:
-        return ('OpenAI API key is missing. Add OPENAI_API_KEY in .env.', {})
-
-    from app.db import crud as _crud
-
-    request_text = (prompt or '').strip() or 'استخرج الجدول من هذه الصورة وأضفه إلى حساب الطالب.'
-    if replace_existing:
-        request_text += ' هذا هو الجدول الجديد للطالب. امسح الجدول القديم أولاً ثم أضف الجلسات الجديدة الواضحة.'
-    else:
-        request_text += ' احفظ الجلسات الواضحة مباشرة بدون سؤال تأكيدي إذا كانت الصورة مقروءة.'
-
-    # --- Pass 1 ---
-    conversation_input = _image_message_payload(
-        prompt=f'{request_text} اسم الملف: {filename}',
-        image_bytes=image_bytes,
-        content_type=content_type,
-        filename=filename,
-    )
-    first_text, first_meta = _run_with_tools(conversation_input, IMAGE_IMPORT_INSTRUCTIONS, db=db, user=user, max_rounds=max_rounds, model=VISION_MODEL)
-
-    # --- Pass 2: re-scan for missed rows ---
-    count_after_pass1 = len(_crud.get_all_schedule(db, user.id))
-    second_prompt = (
-        'مراجعة ثانية للتأكد من اكتمال الجدول: '
-        'افحص الصورة من جديد صفاً بصف من الأعلى إلى الأسفل. '
-        'ركّز على الأيام الأخيرة (خاصةً الخميس) وأوقات المساء. '
-        'إذا وجدت صفوفاً لم تُحفظ في المرة الأولى، احفظها فوراً بـ save_raw_schedule. '
-        'إذا كان كل شيء محفوظاً، أجب فقط بـ "✓ تم التحقق — لا توجد جلسات مفقودة".'
-    )
-    second_conversation = _image_message_payload(
-        prompt=second_prompt,
-        image_bytes=image_bytes,
-        content_type=content_type,
-        filename=filename,
-    )
-    second_text, _ = _run_with_tools(second_conversation, IMAGE_IMPORT_INSTRUCTIONS, db=db, user=user, max_rounds=5, model=VISION_MODEL)
-
-    count_after_pass2 = len(_crud.get_all_schedule(db, user.id))
-    extra_found = count_after_pass2 - count_after_pass1
-
-    if extra_found > 0:
-        combined = first_text + f'\n\n🔍 **التحقق الثاني:** تم اكتشاف وحفظ {extra_found} جلسة إضافية مفقودة.\n' + second_text
-    else:
-        combined = first_text + '\n\n✓ تم التحقق الثاني — لا توجد جلسات مفقودة.'
-
-    return combined, first_meta
-
-
-
-def run_academic_plan_image_agent(
-    image_bytes: bytes,
-    content_type: str,
-    filename: str,
-    db: Session,
-    user: models.User,
-    prompt: str | None = None,
-    replace_existing: bool = True,
-    max_rounds: int = 8,
-) -> tuple[str, dict[str, Any]]:
-    if not client:
-        return ('OpenAI API key is missing. Add OPENAI_API_KEY in .env.', {})
-
-    request_text = (prompt or '').strip() or 'استخرج الخطة الأكاديمية من هذه الصورة واحفظها في حساب الطالب.'
-    if replace_existing:
-        request_text += ' هذه هي الخطة الحالية أو الجديدة للطالب. امسح الخطة الأكاديمية القديمة أولاً ثم احفظ المواد الواضحة من الصورة.'
-    else:
-        request_text += ' احفظ المواد الواضحة مباشرة بدون سؤال تأكيدي إذا كانت الصورة مقروءة.'
-
-    plan_context = ''
-    if user.major:
-        plan_text = get_plan_text(user.major)
-        if plan_text:
-            plan_context = (
-                f'\n\nمعلومة مهمة: الطالب مسجّل في تخصص {user.major}.'
-                f' استخدم خطة التخصص المرجعية التالية كمرجع لتوقع أسماء المواد ورموزها إذا كانت الصورة غير واضحة:\n'
-                + plan_text[:5000]
+    conversation_input: list[Any] = list(messages)
+    if image is not None:
+        conversation_input.extend(
+            _image_message_payload(
+                prompt=image.prompt,
+                image_bytes=image.image_bytes,
+                content_type=image.content_type,
+                filename=image.filename,
             )
+        )
 
-    conversation_input = _image_message_payload(
-        prompt=f'{request_text} اسم الملف: {filename}',
-        image_bytes=image_bytes,
-        content_type=content_type,
-        filename=filename,
-    )
-    result = _run_with_tools(conversation_input, ACADEMIC_PLAN_IMAGE_IMPORT_INSTRUCTIONS + plan_context, db=db, user=user, max_rounds=max_rounds, force_tools=True, model=VISION_MODEL)
-    from app.db import crud as _crud
-    _crud.auto_close_requirement_groups(db, user.id)
-    return result
+    instructions = _instructions_for(mode, user)
+    model = VISION_MODEL if mode in VISION_MODES else OPENAI_MODEL
+    force_tools = mode in FORCE_TOOL_MODES
 
-
-
-def run_agent_with_image(
-    prompt: str,
-    image_bytes: bytes,
-    content_type: str,
-    filename: str,
-    db: Session,
-    user: models.User,
-    max_rounds: int = 6,
-) -> tuple[str, dict[str, Any]]:
-    if not client:
-        return ('OpenAI API key is missing. Add OPENAI_API_KEY in .env.', {})
-
-    conversation_input = _image_message_payload(
-        prompt=prompt,
-        image_bytes=image_bytes,
-        content_type=content_type,
-        filename=filename,
-    )
-    return _run_with_tools(conversation_input, IMAGE_CHAT_INSTRUCTIONS, db=db, user=user, max_rounds=max_rounds, model=VISION_MODEL)
-
-
-def run_university_rules_agent(
-    history_messages: list[dict[str, str]],
-    db: Session,
-    user: models.User,
-    max_rounds: int = 4,
-) -> tuple[str, dict[str, Any]]:
-    if not client:
-        return ('OpenAI API key is missing. Add OPENAI_API_KEY in .env.', {})
-
-    conversation_input: list[Any] = list(history_messages)
-    return _run_with_tools(conversation_input, UNIVERSITY_RULES_INSTRUCTIONS, db=db, user=user, max_rounds=max_rounds, force_tools=True)
-
-
-def run_plan_text_import_agent(
-    plan_text: str,
-    major: str,
-    db: Session,
-    user: models.User,
-    max_rounds: int = 8,
-) -> tuple[str, dict[str, Any]]:
-    if not client:
-        return ('OpenAI API key is missing. Add OPENAI_API_KEY in .env.', {})
-
-    conversation_input: list[Any] = [
-        {
-            'role': 'user',
-            'content': (
-                f'استورد خطة الدراسة للتخصص {major} التالية وأضف جميع المواد لحسابي.\n\n'
-                f'{plan_text[:9000]}'
-            ),
-        }
-    ]
-    result = _run_with_tools(
+    text, payload = _run_with_tools(
         conversation_input,
-        ACADEMIC_PLAN_TEXT_IMPORT_INSTRUCTIONS,
+        instructions,
         db=db,
         user=user,
         max_rounds=max_rounds,
-        force_tools=True,
+        force_tools=force_tools,
+        model=model,
     )
-    from app.db import crud as _crud
-    _crud.auto_close_requirement_groups(db, user.id)
-    return result
+
+    if mode in PLAN_IMPORT_MODES:
+        from app.db import crud as _crud
+        _crud.auto_close_requirement_groups(db, user.id)
+
+    return text, payload
