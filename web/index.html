@@ -579,14 +579,21 @@
           poolNote = g.in_progress_credits > 0 ? ` <span style="color:var(--muted);font-size:11px">(${g.completed_credits} مكتمل +${g.in_progress_credits} جاري)</span>` : '';
         }
 
+        const prefixes = (g.courses || []).map(c => (c.course_code || '').replace(/\s*\d.*$/, '').trim()).filter(Boolean);
+        const uniquePrefixes = [...new Set(prefixes)];
         let displayLabel;
         if(isMandatory){
-          displayLabel = 'متطلب الكليه';
+          if(uniquePrefixes.length === 1 && uniquePrefixes[0]){
+            const p = uniquePrefixes[0];
+            // Well-known single-prefix mandatory groups
+            if(p === 'SALM') displayLabel = 'الثقافة الإسلامية';
+            else displayLabel = `متطلبات ${esc(p)}`;
+          } else {
+            displayLabel = 'متطلبات الجامعة';
+          }
         } else {
-          // Derive label from course code prefixes (e.g. all "CS 46x" → "مواد CS الاختيارية")
-          const prefixes = (g.courses || []).map(c => (c.course_code || '').replace(/\s*\d.*$/, '').trim()).filter(Boolean);
-          const unique = [...new Set(prefixes)];
-          displayLabel = (unique.length === 1 && unique[0]) ? `مواد ${esc(unique[0])} الاختيارية` : esc(g.label);
+          // Elective pool: derive label from course code prefix
+          displayLabel = (uniquePrefixes.length === 1 && uniquePrefixes[0]) ? `مواد ${esc(uniquePrefixes[0])} الاختيارية` : esc(g.label);
         }
         return `
           <div class="req-group">
