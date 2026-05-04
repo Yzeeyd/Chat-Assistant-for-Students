@@ -106,6 +106,8 @@ async def upload_schedule_image(
     image_bytes = await file.read()
     _validate_image(file, image_bytes)
 
+    existing_count = len(crud.get_all_schedule(db, user.id))
+
     crud.add_chat_message(db, user.id, 'user', f'رفع صورة جدول: {file.filename}')
     assistant_text, meta = run_schedule_image_agent(
         image_bytes=image_bytes,
@@ -114,6 +116,15 @@ async def upload_schedule_image(
         db=db,
         user=user,
     )
+
+    if existing_count > 0:
+        assistant_text += (
+            '\n\n---\n'
+            '📌 **لاحظت أن عندك جدول محفوظ مسبقاً.**\n'
+            '• إذا كان هذا **تصحيح لخطأ في جدولك** — تمت إضافة أي جلسات جديدة تلقائياً ✓\n'
+            '• إذا كان **جدول ترم جديد** — اكتب "احذف جدولي" ثم ارفع الصورة مرة أخرى لاستبداله بالكامل'
+        )
+
     crud.add_chat_message(db, user.id, 'assistant', assistant_text, meta=meta)
     crud.trim_chat_messages(db, user.id, CHAT_MEMORY_MESSAGES)
     return ChatResponse(text=assistant_text, meta=meta or None)

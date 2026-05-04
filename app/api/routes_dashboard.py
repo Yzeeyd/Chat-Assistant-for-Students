@@ -1,5 +1,9 @@
+import re as _re
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
+_GROUP_PATTERN = _re.compile(r'اختياري\s+(\d+)\s*[-–]\s*(\d+)')
 
 from app.core.security import get_current_user
 from app.db import crud, models
@@ -78,6 +82,7 @@ def summary(db: Session = Depends(get_db), user: models.User = Depends(get_curre
 
     week_days = []
     week_classes_count = 0
+    online_items = [item for item in all_items if item.day_of_week is None]
     for day_num in STUDY_WEEK_DAYS:
         day_items = [item for item in all_items if item.day_of_week == day_num]
         week_classes_count += len(day_items)
@@ -108,6 +113,7 @@ def summary(db: Session = Depends(get_db), user: models.User = Depends(get_curre
         },
         'week_schedule': {
             'days': week_days,
+            'online_items': _serialize_schedule(online_items),
         },
         'recent_reminders': [
             {
@@ -139,6 +145,41 @@ def summary(db: Session = Depends(get_db), user: models.User = Depends(get_curre
                 'semester': x.semester,
                 'status': x.status,
             }
-            for x in remaining[:8]
+            for x in remaining
         ],
+        'requirement_groups': _build_requirement_groups(plan_items),
     }
+
+
+def _build_requirement_groups(plan_items: list) -> list[dict]:
+    groups: dict[str, list] = {}
+    for item in plan_items:
+        if item.semester and _GROUP_PATTERN.search(item.semester):
+            groups.setdefault(item.semester, []).append(item)
+
+    result = []
+    for label, items in groups.items():
+        m = _GROUP_PATTERN.search(label)
+        required = int(m.group(1)) if m else 0
+        available = int(m.group(2)) if m else 0
+        completed_credits = sum((x.credits or 0) for x in items if (x.status or '') == 'completed')
+        in_progress_credits = sum((x.credits or 0) for x in items if (x.status or '') == 'in_progress')
+        result.append({
+            'label': label,
+            'required_credits': required,
+            'available_credits': available,
+            'completed_credits': completed_credits,
+            'in_progress_credits': in_progress_credits,
+            'satisfied': completed_credits >= required,
+            'courses': [
+                {
+                    'item_id': x.id,
+                    'course_code': x.course_code,
+                    'course_name': x.course_name,
+                    'credits': x.credits,
+                    'status': x.status,
+                }
+                for x in items
+            ],
+        })
+    return result

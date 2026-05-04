@@ -1,16 +1,38 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.schemas import LoginRequest, SignupRequest, TokenResponse
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db import crud
-from app.db.session import get_db
+from app.db.session import SessionLocal, get_db
 
 router = APIRouter(prefix='/auth', tags=['auth'])
 
 
+def _auto_populate_plan_background(user_id: int, major: str) -> None:
+    """Background task: parse major's plan PDF via AI and populate the user's academic plan."""
+    from app.services.docs import get_plan_text
+    from app.services.ai.runtime import run_plan_text_import_agent
+    db = SessionLocal()
+    try:
+        user = crud.get_user_by_id(db, user_id)
+        if not user:
+            return
+        plan_text = get_plan_text(major)
+        if not plan_text:
+            return
+        # Check again right before the AI call — the user may have already uploaded their plan image.
+        # Even if items exist, we proceed so the PDF fills gaps the image missed.
+        # Status non-downgrade logic in add_academic_plan_item protects existing completed/in_progress.
+        run_plan_text_import_agent(plan_text, major, db, user)
+    except Exception:
+        pass
+    finally:
+        db.close()
+
+
 @router.post('/signup')
-def signup(payload: SignupRequest, db: Session = Depends(get_db)) -> dict[str, str | int]:
+def signup(payload: SignupRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)) -> dict[str, str | int]:
     email = payload.email.strip().lower()
     if crud.get_user_by_email(db, email):
         raise HTTPException(status_code=400, detail='Email already exists')
@@ -20,6 +42,8 @@ def signup(payload: SignupRequest, db: Session = Depends(get_db)) -> dict[str, s
         major=payload.major,
         track=payload.track,
     )
+    if user.major:
+        background_tasks.add_task(_auto_populate_plan_background, user.id, user.major)
     return {'id': user.id, 'name': user.name, 'email': user.email, 'major': user.major}
 
 

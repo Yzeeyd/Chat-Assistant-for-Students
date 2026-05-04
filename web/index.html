@@ -78,6 +78,8 @@
     .help{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.7}
     .week-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:14px}
     .day-card{border:1px solid var(--line);border-radius:18px;padding:12px;background:rgba(255,255,255,.02);min-height:180px}
+    .online-card{border-color:rgba(79,124,255,.35);background:rgba(79,124,255,.04);grid-column:1/-1;min-height:unset}
+    .online-card .mini-list{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));grid-auto-flow:row}
     .day-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
     .day-head strong{font-size:15px}
     .day-pill{font-size:11px;color:var(--muted);padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
@@ -97,6 +99,20 @@
     .preview-image{width:100%;max-height:72vh;object-fit:contain;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
     @media (max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}.layout{grid-template-columns:1fr}.sidebar{border-left:0;border-bottom:1px solid var(--line)}.week-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media (max-width:700px){.grid{grid-template-columns:1fr}.hero{flex-direction:column;align-items:flex-start}.composer{flex-direction:column}.chat-shell{height:auto;min-height:70vh}.week-grid{grid-template-columns:1fr}}
+    .req-group{border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px;background:rgba(255,255,255,.02)}
+    .req-group-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;cursor:pointer;gap:8px}
+    .req-group-label{font-weight:700;font-size:14px}
+    .req-progress{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);flex-shrink:0}
+    .req-bar{height:6px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;width:60px}
+    .req-bar-fill{height:100%;border-radius:999px;background:var(--ok)}
+    .req-bar-fill.partial{background:var(--warn)}
+    .req-bar-fill.elective{background:#ef4444}
+    .req-courses{display:grid;gap:6px;margin-top:8px}
+    .req-course-item{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);font-size:13px}
+    .status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
+    .status-dot.completed{background:var(--ok)}
+    .status-dot.in_progress{background:var(--brand)}
+    .status-dot.planned{background:rgba(255,255,255,.2)}
     .reminder-overlay{position:fixed;inset:0;z-index:99999;background:rgba(5,10,20,.88);display:none;align-items:center;justify-content:center;padding:24px}
     .reminder-overlay.show{display:flex}
     .reminder-card{width:min(480px,95vw);background:#121933;border:1px solid rgba(79,124,255,.55);border-radius:24px;padding:28px 24px 20px;box-shadow:0 32px 90px rgba(0,0,0,.7);display:flex;flex-direction:column;gap:18px;animation:reminder-in .25s cubic-bezier(.22,1,.36,1)}
@@ -259,6 +275,10 @@
                 <div class="list" id="planActiveList"></div>
                 <div style="font-size:13px;font-weight:700;color:var(--muted);margin:10px 0 6px" id="planRemainingLabel" hidden>المتبقية</div>
                 <div class="list" id="planRemainingList"></div>
+                <div id="reqGroupsSection" style="display:none;margin-top:14px">
+                  <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px">مجموعات الاختياري</div>
+                  <div id="reqGroupsList"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -409,31 +429,49 @@
       return `<div class="mini-action-row"><button type="button" class="mini-link-btn room-open-btn" data-image-url="${esc(imageUrl)}" data-title="${esc(title)}">عرض المكان</button></div>`;
     }
 
-    function renderWeekSchedule(days){
+    function miniItemHtml(item){
+      return `
+        <div class="mini-item">
+          ${item.course_code ? `<div class="course-code">${esc(item.course_code)}</div>` : ''}
+          <strong>${esc(item.course_name)}</strong>
+          <small class="time-range">${item.start_time ? `<span>${esc(item.start_time)}</span><span>→</span><span>${esc(item.end_time || '--:--')}</span>` : `<span>بالاتفاق</span>`}</small>
+          <small>${esc(item.room_text || 'بدون قاعة')}</small>
+          ${roomButtonHtml(item.image_url, item.room_text, item.course_name)}
+        </div>`;
+    }
+
+    function renderWeekSchedule(weekSchedule){
       const el = $('weekGrid');
-      if(!Array.isArray(days) || !days.length){
-        el.innerHTML = emptyState('لا يوجد جدول محفوظ بعد.');
+      const days = weekSchedule?.days || weekSchedule || [];
+      const onlineItems = weekSchedule?.online_items || [];
+      const totalItems = (Array.isArray(days) ? days.reduce((s, d) => s + (d.items?.length || 0), 0) : 0) + onlineItems.length;
+      if(!Array.isArray(days) || totalItems === 0){
+        el.innerHTML = emptyState('لا يوجد جدول محفوظ بعد. ارفع صورة جدولك لإضافة المواد.');
         return;
       }
-      el.innerHTML = days.map(day => `
+      const dayCols = days.map(day => `
         <div class="day-card">
           <div class="day-head">
             <strong>${esc(day.day_name_ar)}</strong>
             <span class="day-pill">${Array.isArray(day.items) ? day.items.length : 0} مادة</span>
           </div>
           <div class="mini-list">
-            ${(Array.isArray(day.items) && day.items.length) ? day.items.map(item => `
-              <div class="mini-item">
-                ${item.course_code ? `<div class="course-code">${esc(item.course_code)}</div>` : ''}
-                <strong>${esc(item.course_name)}</strong>
-                <small class="time-range"><span>${esc(item.start_time || '--:--')}</span><span>→</span><span>${esc(item.end_time || '--:--')}</span></small>
-                <small>${esc(item.room_text || 'بدون قاعة')}</small>
-                ${roomButtonHtml(item.image_url, item.room_text, item.course_name)}
-              </div>
-            `).join('') : `<div class="empty">لا توجد محاضرات.</div>`}
+            ${(Array.isArray(day.items) && day.items.length) ? day.items.map(miniItemHtml).join('') : `<div class="empty">لا توجد محاضرات.</div>`}
           </div>
         </div>
       `).join('');
+      const onlineCol = onlineItems.length ? `
+        <div class="day-card online-card">
+          <div class="day-head">
+            <strong>بالاتفاق</strong>
+            <span class="day-pill">${onlineItems.length} مادة</span>
+          </div>
+          <div class="mini-list">
+            ${onlineItems.map(miniItemHtml).join('')}
+          </div>
+        </div>
+      ` : '';
+      el.innerHTML = dayCols + onlineCol;
     }
 
     function renderDashboard(data){
@@ -447,7 +485,7 @@
       $('mRem').textContent = data.counts.active_reminders;
       $('mPlan').textContent = (data.counts.remaining_courses ?? 0) + (data.counts.active_courses ?? 0);
 
-      renderWeekSchedule(data.week_schedule?.days || []);
+      renderWeekSchedule(data.week_schedule || {});
 
       renderSimpleList('remList', data.recent_reminders, item => `
         <div class="item">
@@ -483,6 +521,8 @@
         $('planRemainingLabel').hidden = true;
       }
 
+      renderRequirementGroups(data.requirement_groups || []);
+
       const bar = $('planSummaryBar');
       const total = data.counts.plan_items || 0;
       if(total > 0){
@@ -495,6 +535,85 @@
       } else {
         bar.style.display = 'none';
       }
+    }
+
+    function toggleReqGroup(id){
+      const el = $(id);
+      if(!el) return;
+      el.style.display = el.style.display === 'none' ? 'grid' : 'none';
+    }
+
+    function renderRequirementGroups(groups){
+      const section = $('reqGroupsSection');
+      const list = $('reqGroupsList');
+      if(!Array.isArray(groups) || !groups.length){
+        section.style.display = 'none';
+        return;
+      }
+      section.style.display = 'block';
+      const STATUS_AR = {completed:'مكتمل', in_progress:'جاري', planned:'متبقي'};
+      list.innerHTML = groups.map((g, idx) => {
+        const isMandatory = g.required_credits === g.available_credits;
+        const isSatisfied = g.satisfied;
+        const collapseId = `reqGroup_${idx}`;
+        const courses = g.courses || [];
+
+        // Mandatory: bar = completed / required (green when done)
+        // Elective:  bar = (completed + in_progress) / available (always red — pool is never "done")
+        const usedCredits = g.completed_credits + g.in_progress_credits;
+        const pct = isMandatory
+          ? (g.required_credits > 0 ? Math.min(100, Math.round(g.completed_credits / g.required_credits * 100)) : 0)
+          : (g.available_credits > 0 ? Math.min(100, Math.round(usedCredits / g.available_credits * 100)) : 0);
+
+        const barClass = isMandatory ? (isSatisfied ? '' : 'partial') : 'elective';
+        const iconColor = isMandatory ? (isSatisfied ? 'var(--ok)' : 'var(--warn)') : '#ef4444';
+        const iconSymbol = isMandatory ? (isSatisfied ? '✓' : '▼') : '✕';
+
+        let hoursLabel, poolNote;
+        if(isMandatory){
+          const inProgressLabel = g.in_progress_credits > 0 ? ` +${g.in_progress_credits} جاري` : '';
+          hoursLabel = `${g.completed_credits}/${g.required_credits} ساعة${inProgressLabel}`;
+          poolNote = '';
+        } else {
+          hoursLabel = `${usedCredits}/${g.available_credits} ساعة`;
+          poolNote = g.in_progress_credits > 0 ? ` <span style="color:var(--muted);font-size:11px">(${g.completed_credits} مكتمل +${g.in_progress_credits} جاري)</span>` : '';
+        }
+
+        let displayLabel;
+        if(isMandatory){
+          displayLabel = 'متطلب الكليه';
+        } else {
+          // Derive label from course code prefixes (e.g. all "CS 46x" → "مواد CS الاختيارية")
+          const prefixes = (g.courses || []).map(c => (c.course_code || '').replace(/\s*\d.*$/, '').trim()).filter(Boolean);
+          const unique = [...new Set(prefixes)];
+          displayLabel = (unique.length === 1 && unique[0]) ? `مواد ${esc(unique[0])} الاختيارية` : esc(g.label);
+        }
+        return `
+          <div class="req-group">
+            <div class="req-group-head" onclick="toggleReqGroup('${collapseId}')">
+              <div class="req-group-label">${displayLabel}</div>
+              <div class="req-progress">
+                <span>${hoursLabel}${poolNote}</span>
+                <div class="req-bar"><div class="req-bar-fill ${barClass}" style="width:${pct}%"></div></div>
+                <span style="color:${iconColor}">${iconSymbol}</span>
+              </div>
+            </div>
+            <div id="${collapseId}" class="req-courses" style="display:none">
+              ${courses.map(c => `
+                <div class="req-course-item">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span class="status-dot ${c.status || 'planned'}"></span>
+                    <span>${esc(c.course_name)}</span>
+                  </div>
+                  <div style="display:flex;gap:10px;align-items:center;color:var(--muted);font-size:12px">
+                    ${c.course_code ? `<span>${esc(c.course_code)}</span>` : ''}
+                    <span>${c.credits || 0} ساعة</span>
+                    <span>${STATUS_AR[c.status] || esc(c.status || '')}</span>
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>`;
+      }).join('');
     }
 
     function formatRemindAt(isoStr){
@@ -521,7 +640,7 @@
           <div class="meta-card">
             ${it.course_code ? `<div class="course-code">${esc(it.course_code)}</div>` : ''}
             <h4>${esc(it.course_name)}</h4>
-            <div class="row-line"><span class="time-range"><span>${esc(it.start_time || '--:--')}</span><span>→</span><span>${esc(it.end_time || '--:--')}</span></span><span>${esc(it.room_text || '')}</span></div>
+            <div class="row-line"><span class="time-range">${it.start_time ? `<span>${esc(it.start_time)}</span><span>→</span><span>${esc(it.end_time || '--:--')}</span>` : `<span>بالاتفاق</span>`}</span><span>${esc(it.room_text || '')}</span></div>
             ${roomPreviewHtml(it.image_url, it.room_text)}
           </div>
         `).join('');
@@ -751,6 +870,7 @@
       }
     });
     $('closeImagePreviewBtn').onclick = closeImagePreview;
+
     $('imagePreviewModal').addEventListener('click', (e) => {
       if(e.target === $('imagePreviewModal')) closeImagePreview();
     });

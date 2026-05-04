@@ -89,25 +89,30 @@ def add_schedule_item(
     user_id: int,
     course_code: str | None,
     course_name: str,
-    day_of_week: int,
-    start_time: time,
-    end_time: time,
+    day_of_week: int | None,
+    start_time: time | None,
+    end_time: time | None,
     room_text: str,
     instructor: str | None,
     credits: int | None,
 ) -> models.ScheduleItem:
-    exists = (
+    q = (
         db.query(models.ScheduleItem)
         .filter(
             models.ScheduleItem.user_id == user_id,
             models.ScheduleItem.course_name == course_name,
-            models.ScheduleItem.day_of_week == day_of_week,
-            models.ScheduleItem.start_time == start_time,
-            models.ScheduleItem.end_time == end_time,
             models.ScheduleItem.room_text == room_text,
         )
-        .first()
     )
+    if day_of_week is None:
+        q = q.filter(models.ScheduleItem.day_of_week.is_(None))
+    else:
+        q = q.filter(models.ScheduleItem.day_of_week == day_of_week)
+    if start_time is None:
+        q = q.filter(models.ScheduleItem.start_time.is_(None))
+    else:
+        q = q.filter(models.ScheduleItem.start_time == start_time)
+    exists = q.first()
     if exists:
         return exists
 
@@ -272,12 +277,15 @@ def add_academic_plan_item(
             .first()
         )
 
+    _PRIORITY: dict[str, int] = {'completed': 2, 'in_progress': 1, 'planned': 0}
     if item:
         item.course_code = normalized_code or item.course_code
         item.course_name = normalized_name or item.course_name
         item.credits = credits if credits is not None else item.credits
         item.semester = semester or item.semester
-        item.status = (status or item.status or 'planned').strip()
+        new_s = (status or 'planned').strip().lower()
+        old_s = (item.status or 'planned').strip().lower()
+        item.status = new_s if _PRIORITY.get(new_s, 0) >= _PRIORITY.get(old_s, 0) else old_s
         item.notes = notes if notes is not None else item.notes
     else:
         item = models.AcademicPlanItem(
@@ -309,6 +317,42 @@ def list_academic_plan_items(db: Session, user_id: int) -> list[models.AcademicP
         .order_by(models.AcademicPlanItem.semester, models.AcademicPlanItem.course_code)
         .all()
     )
+
+
+def auto_close_requirement_groups(db: Session, user_id: int) -> int:
+    """Auto-close only mandatory groups (اختياري X-X where required==pool).
+    Elective pools (اختياري X-Y where X!=Y) are left alone so remaining planned
+    courses continue to appear in the student's remaining course list."""
+    import re
+    items = list_academic_plan_items(db, user_id)
+    group_pattern = re.compile(r'اختياري\s+(\d+)\s*[-–]\s*(\d+)')
+
+    groups: dict[str, list[models.AcademicPlanItem]] = {}
+    for item in items:
+        if item.semester and group_pattern.search(item.semester):
+            groups.setdefault(item.semester, []).append(item)
+
+    closed = 0
+    for semester, group_items in groups.items():
+        match = group_pattern.search(semester)
+        if not match:
+            continue
+        required_credits = int(match.group(1))
+        available_credits = int(match.group(2))
+        if required_credits != available_credits:
+            continue
+        completed_credits = sum(
+            (item.credits or 0) for item in group_items if item.status == 'completed'
+        )
+        if completed_credits >= required_credits:
+            for item in group_items:
+                if item.status == 'planned':
+                    item.status = 'completed'
+                    closed += 1
+
+    if closed:
+        db.commit()
+    return closed
 
 
 def recommend_courses_from_plan(db: Session, user_id: int, limit: int = 3) -> list[models.AcademicPlanItem]:
