@@ -102,6 +102,12 @@ input,select,textarea{font-family:inherit;color:inherit}
 .btn-primary:disabled{opacity:.55;cursor:not-allowed}
 .btn-ghost{background:var(--panel);color:var(--text);border:1px solid var(--line)}
 .btn-ghost:hover{background:var(--panel-2);border-color:var(--line-strong)}
+.lang-btn{
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:5px 10px;font-size:12px;font-weight:800;cursor:pointer;letter-spacing:.04em;
+  color:var(--text-dim);transition:.15s;flex-shrink:0;
+}
+.lang-btn:hover{background:hsl(var(--accent)/.14);border-color:hsl(var(--accent)/.4);color:var(--text)}
 .btn-danger{background:hsl(0 84% 60% / .15);color:#fca5a5;border:1px solid hsl(0 84% 60% / .25)}
 html[data-theme="light"] .btn-danger{color:#b91c1c}
 .btn-block{width:100%}
@@ -386,42 +392,38 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
     <div class="auth-logo">
       <div class="logo-mark">ج</div>
       <div>
-        <h1>المساعد الذكي للطلاب</h1>
-        <div class="sub">جدولك ومذكراتك وخطتك الأكاديمية في مكان واحد</div>
+        <h1 data-i18n="page.title">المساعد الذكي للطلاب</h1>
+        <div class="sub" data-i18n="auth.tagline">جدولك ومذكراتك وخطتك الأكاديمية في مكان واحد</div>
       </div>
     </div>
     <div class="tabs" role="tablist">
-      <button class="on" data-auth-tab="login">تسجيل الدخول</button>
-      <button data-auth-tab="signup">إنشاء حساب</button>
+      <button class="on" data-auth-tab="login" data-i18n="auth.login">تسجيل الدخول</button>
+      <button data-auth-tab="signup" data-i18n="auth.signup">إنشاء حساب</button>
     </div>
     <form id="loginForm" class="auth-form">
-      <div class="field"><label>البريد الإلكتروني</label><input id="liEmail" type="email" placeholder="example@university.edu.sa" autocomplete="email" required /></div>
-      <div class="field"><label>كلمة المرور</label><input id="liPass" type="password" placeholder="••••••••" autocomplete="current-password" required /></div>
-      <button type="submit" class="btn btn-primary btn-block" id="loginBtn">دخول</button>
+      <div class="field"><label data-i18n="auth.email">البريد الإلكتروني</label><input id="liEmail" type="email" placeholder="example@university.edu.sa" autocomplete="email" required /></div>
+      <div class="field"><label data-i18n="auth.password">كلمة المرور</label><input id="liPass" type="password" data-i18n-ph="auth.pass.ph" placeholder="••••••••" autocomplete="current-password" required /></div>
+      <button type="submit" class="btn btn-primary btn-block" id="loginBtn" data-i18n="auth.login.btn">دخول</button>
     </form>
     <form id="signupForm" class="auth-form" style="display:none">
-      <div class="field"><label>الاسم الكامل</label><input id="suName" placeholder="اسمك" required /></div>
-      <div class="field"><label>البريد الإلكتروني</label><input id="suEmail" type="email" placeholder="example@university.edu.sa" required /></div>
-      <div class="field"><label>كلمة المرور</label><input id="suPass" type="password" placeholder="6 أحرف على الأقل" minlength="6" required /></div>
+      <div class="field"><label data-i18n="auth.fullname">الاسم الكامل</label><input id="suName" data-i18n-ph="auth.name.ph" placeholder="اسمك" required /></div>
+      <div class="field"><label data-i18n="auth.email">البريد الإلكتروني</label><input id="suEmail" type="email" placeholder="example@university.edu.sa" required /></div>
+      <div class="field"><label data-i18n="auth.password">كلمة المرور</label><input id="suPass" type="password" data-i18n-ph="auth.pass.min" placeholder="6 أحرف على الأقل" minlength="6" required /></div>
       <div class="field-row">
-        <div class="field"><label>الكلية</label><input id="suCollege" placeholder="كلية الحاسب" /></div>
-        <div class="field"><label>التخصص</label>
+        <div class="field"><label data-i18n="auth.college">الكلية</label><input id="suCollege" data-i18n-ph="auth.college.ph" placeholder="كلية الحاسب" /></div>
+        <div class="field"><label data-i18n="auth.major">التخصص</label>
           <select id="suMajor">
-            <option value="">اختر التخصص</option>
-            <option value="CS">علوم الحاسب — CS</option>
-            <option value="IT">تقنية المعلومات — IT</option>
-            <option value="IS">نظم المعلومات — IS</option>
-            <option value="CE">هندسة الحاسب — CE</option>
-            <option value="SE">هندسة البرمجيات — SE</option>
-            <option value="DS">علم البيانات — DS</option>
-            <option value="AI">الذكاء الاصطناعي — AI</option>
-            <option value="MIS">نظم المعلومات الإدارية — MIS</option>
-            <option value="OTHER">تخصص آخر</option>
+            <option value="" data-i18n="auth.major.choose">اختر التخصص</option>
+            <option value="CS" data-i18n="auth.major.cs">علوم الحاسب — CS</option>
+            <option value="IT" data-i18n="auth.major.it">تقنية المعلومات — IT</option>
+            <option value="DS" data-i18n="auth.major.ds">علم البيانات — DS</option>
+            <option value="AI" data-i18n="auth.major.ai">الذكاء الاصطناعي — AI</option>
+            <option value="OTHER" data-i18n="auth.major.other">تخصص آخر</option>
           </select>
         </div>
       </div>
-      <div class="field"><label>المسار <span style="color:var(--muted);font-weight:500">(اختياري)</span></label><input id="suTrack" placeholder="مثل: شبكات، أمن معلومات" /></div>
-      <button type="submit" class="btn btn-primary btn-block" id="signupBtn">إنشاء الحساب</button>
+      <div class="field"><label><span data-i18n="auth.track">المسار</span> <span style="color:var(--muted);font-weight:500" data-i18n="auth.track.opt">(اختياري)</span></label><input id="suTrack" data-i18n-ph="auth.track.ph" placeholder="مثل: شبكات، أمن معلومات" /></div>
+      <button type="submit" class="btn btn-primary btn-block" id="signupBtn" data-i18n="auth.signup.btn">إنشاء الحساب</button>
     </form>
     <div class="auth-msg" id="authMsg"></div>
   </div>
@@ -433,8 +435,8 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
     <div class="brand-block">
       <div class="logo-mark">ج</div>
       <div>
-        <div class="name">جامعتي</div>
-        <div class="role">مساعد الطالب الذكي</div>
+        <div class="name" data-i18n="brand.name">جامعتي</div>
+        <div class="role" data-i18n="brand.role">مساعد الطالب الذكي</div>
       </div>
     </div>
     <div class="profile-card" id="profileCard">
@@ -445,54 +447,55 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
       </div>
     </div>
     <div class="nav">
-      <div class="nav-label">القوائم</div>
+      <div class="nav-label" data-i18n="nav.label">القوائم</div>
       <button class="nav-btn active" data-view="dashboardView">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>
-        لوحة التحكم
+        <span data-i18n="nav.dashboard">لوحة التحكم</span>
       </button>
       <button class="nav-btn" data-view="chatView">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-12.6 8.2L3 21l.8-5.4A9 9 0 1 1 21 12z"/></svg>
-        المحادثة
+        <span data-i18n="nav.chat">المحادثة</span>
       </button>
       <button class="nav-btn" data-view="scheduleView">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        الجدول الأسبوعي
+        <span data-i18n="nav.schedule">الجدول الأسبوعي</span>
       </button>
       <button class="nav-btn" data-view="remindersView">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
-        التذكيرات
+        <span data-i18n="nav.reminders">التذكيرات</span>
       </button>
       <button class="nav-btn" data-view="planView">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        الخطة الأكاديمية
+        <span data-i18n="nav.plan">الخطة الأكاديمية</span>
       </button>
     </div>
     <div class="nav-spacer"></div>
     <div class="health-pill" id="healthPill">
       <span class="health-dot" id="healthDot"></span>
-      <span id="healthLabel">جاري الاتصال…</span>
+      <span id="healthLabel" data-health-state="connecting">جاري الاتصال…</span>
     </div>
     <button class="btn btn-ghost btn-block" id="clearChatBtn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-      حذف المحادثات
+      <span data-i18n="sidebar.clear">حذف المحادثات</span>
     </button>
     <button class="btn btn-danger btn-block" id="logoutBtn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      تسجيل الخروج
+      <span data-i18n="sidebar.logout">تسجيل الخروج</span>
     </button>
   </aside>
 
   <main class="main">
     <div class="topbar">
-      <button class="icon-btn menu-btn" id="menuBtn" aria-label="القائمة">
+      <button class="icon-btn menu-btn" id="menuBtn" data-i18n-aria="topbar.menu" aria-label="القائمة">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <h2 id="pageTitle">لوحة التحكم</h2>
       <div class="spacer"></div>
-      <button class="icon-btn" id="themeBtn" title="تبديل المظهر" aria-label="تبديل المظهر">
+      <button class="lang-btn" id="langBtn">EN</button>
+      <button class="icon-btn" id="themeBtn" data-i18n-aria="topbar.theme" title="تبديل المظهر" aria-label="تبديل المظهر">
         <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
-      <button class="icon-btn" id="tweaksBtn" title="إعدادات المظهر" aria-label="إعدادات المظهر" style="display:none">
+      <button class="icon-btn" id="tweaksBtn" data-i18n-aria="topbar.tweaks" title="إعدادات المظهر" aria-label="إعدادات المظهر" style="display:none">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82 2 2 0 0 1-2.83 2.83 1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33 2 2 0 0 1-2.83-2.83 1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82 2 2 0 0 1 2.83-2.83 1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33 2 2 0 0 1 2.83 2.83 1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
     </div>
@@ -502,27 +505,27 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
         <div class="hero">
           <div>
             <h3 id="greetEl">أهلاً 👋</h3>
-            <p>تابع جدولك، تذكيراتك، وخطتك الأكاديمية. اسأل المساعد عن أي شيء — يفهم جدولك ويجاوبك بناءً عليه.</p>
+            <p data-i18n="dash.tagline">تابع جدولك، تذكيراتك، وخطتك الأكاديمية. اسأل المساعد عن أي شيء — يفهم جدولك ويجاوبك بناءً عليه.</p>
           </div>
           <div class="cta">
-            <button class="btn btn-primary" data-prompt="وش عندي اليوم؟">جدول اليوم</button>
-            <button class="btn btn-ghost" data-go="chatView">افتح المحادثة</button>
+            <button class="btn btn-primary" data-prompt="وش عندي اليوم؟" data-i18n="dash.today">جدول اليوم</button>
+            <button class="btn btn-ghost" data-go="chatView" data-i18n="dash.open.chat">افتح المحادثة</button>
           </div>
         </div>
         <div class="metrics">
-          <div class="metric"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><div class="k">حصص الأسبوع</div><div class="v" id="mWeek">0</div></div>
-          <div class="metric v2"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div><div class="k">إجمالي الحصص</div><div class="v" id="mAll">0</div></div>
-          <div class="metric v3"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/></svg></div><div class="k">تذكيرات نشطة</div><div class="v" id="mRem">0</div></div>
-          <div class="metric v4"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="k">المتبقي بالخطة</div><div class="v" id="mPlan">0</div></div>
+          <div class="metric"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><div class="k" data-i18n="metric.week">حصص الأسبوع</div><div class="v" id="mWeek">0</div></div>
+          <div class="metric v2"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div><div class="k" data-i18n="metric.all">إجمالي الحصص</div><div class="v" id="mAll">0</div></div>
+          <div class="metric v3"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/></svg></div><div class="k" data-i18n="metric.rem">تذكيرات نشطة</div><div class="v" id="mRem">0</div></div>
+          <div class="metric v4"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="k" data-i18n="metric.plan">المتبقي بالخطة</div><div class="v" id="mPlan">0</div></div>
         </div>
         <div class="split">
           <div class="card">
             <div class="card-head">
-              <h4>جدول الأسبوع الدراسي</h4>
+              <h4 data-i18n="schedule.title">جدول الأسبوع الدراسي</h4>
               <div class="actions">
                 <button class="btn btn-ghost btn-sm" id="uploadScheduleBtn">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  رفع صورة
+                  <span data-i18n="schedule.upload">رفع صورة</span>
                 </button>
                 <input id="scheduleImgInput" type="file" accept="image/*" hidden />
               </div>
@@ -531,8 +534,8 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
           </div>
           <div class="card">
             <div class="card-head">
-              <h4>تذكيرات قريبة</h4>
-              <button class="btn btn-ghost btn-sm" data-prompt="أضف تذكير جديد">+ تذكير</button>
+              <h4 data-i18n="reminders.soon">تذكيرات قريبة</h4>
+              <button class="btn btn-ghost btn-sm" data-prompt="أضف تذكير جديد" data-i18n="reminder.add.short">+ تذكير</button>
             </div>
             <div class="list" id="remListShort"></div>
           </div>
@@ -541,23 +544,23 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
 
       <section class="view" id="chatView">
         <div class="quick-strip">
-          <button data-prompt="وش عندي اليوم؟">جدول اليوم</button>
-          <button data-prompt="اعرض كل جدولي">كل الجدول</button>
-          <button data-prompt="اعرض التذكيرات الحالية">التذكيرات</button>
-          <button data-prompt="اعرض خطتي الأكاديمية">الخطة الأكاديمية</button>
-          <button data-prompt="اقترح علي مواد مناسبة للفصل الجاي">اقتراح مواد</button>
-          <button data-prompt="ما هي قواعد الانذار الأكاديمي؟">قواعد الجامعة</button>
+          <button data-prompt="وش عندي اليوم؟" data-i18n="chat.today">جدول اليوم</button>
+          <button data-prompt="اعرض كل جدولي" data-i18n="chat.all">كل الجدول</button>
+          <button data-prompt="اعرض التذكيرات الحالية" data-i18n="chat.reminders">التذكيرات</button>
+          <button data-prompt="اعرض خطتي الأكاديمية" data-i18n="chat.plan">الخطة الأكاديمية</button>
+          <button data-prompt="اقترح علي مواد مناسبة للفصل الجاي" data-i18n="chat.suggest">اقتراح مواد</button>
+          <button data-prompt="ما هي قواعد الانذار الأكاديمي؟" data-i18n="chat.rules">قواعد الجامعة</button>
         </div>
         <div class="card chat-card chat-shell">
           <div class="chat-list" id="chatList">
             <div class="welcome" id="chatWelcome">
-              <div class="big">كيف أقدر أساعدك اليوم؟</div>
-              <p>اسأل عن جدولك أو خطتك، أضف تذكيرات، أو ارفع صورة الجدول وأنا أرتبه لك.</p>
+              <div class="big" data-i18n="chat.welcome.big">كيف أقدر أساعدك اليوم؟</div>
+              <p data-i18n="chat.welcome.p">اسأل عن جدولك أو خطتك، أضف تذكيرات، أو ارفع صورة الجدول وأنا أرتبه لك.</p>
               <div class="suggestion-grid">
-                <button class="suggestion" data-prompt="وش عندي اليوم؟">وش عندي اليوم؟<span class="hint">جدول الحصص الحالي</span></button>
-                <button class="suggestion" data-prompt="أضف واجب الذكاء الاصطناعي يوم الأربعاء 11 مساءً">أضف تذكير<span class="hint">واجب، اختبار، موعد</span></button>
-                <button class="suggestion" data-prompt="اقترح علي مواد مناسبة للفصل الجاي">اقتراح مواد<span class="hint">حسب خطتك الأكاديمية</span></button>
-                <button class="suggestion" data-prompt="ما هي قواعد الانذار الأكاديمي؟">قواعد الجامعة<span class="hint">من المستندات الرسمية</span></button>
+                <button class="suggestion" data-prompt="وش عندي اليوم؟"><span data-i18n="chat.s1">وش عندي اليوم؟</span><span class="hint" data-i18n="chat.s1.hint">جدول الحصص الحالي</span></button>
+                <button class="suggestion" data-prompt="أضف واجب الذكاء الاصطناعي يوم الأربعاء 11 مساءً"><span data-i18n="chat.s2">أضف تذكير</span><span class="hint" data-i18n="chat.s2.hint">واجب، اختبار، موعد</span></button>
+                <button class="suggestion" data-prompt="اقترح علي مواد مناسبة للفصل الجاي"><span data-i18n="chat.s3">اقتراح مواد</span><span class="hint" data-i18n="chat.s3.hint">حسب خطتك الأكاديمية</span></button>
+                <button class="suggestion" data-prompt="ما هي قواعد الانذار الأكاديمي؟"><span data-i18n="chat.s4">قواعد الجامعة</span><span class="hint" data-i18n="chat.s4.hint">من المستندات الرسمية</span></button>
               </div>
             </div>
           </div>
@@ -565,18 +568,18 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
             <div class="attachment-chip" id="attachChip">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               <span id="attachName"></span>
-              <button id="attachRemove" type="button" aria-label="إزالة">×</button>
+              <button id="attachRemove" type="button" data-i18n-aria="attach.remove" aria-label="إزالة">×</button>
             </div>
-            <textarea id="chatInput" placeholder="اكتب سؤالك… (Enter للإرسال، Shift+Enter لسطر جديد)" rows="1"></textarea>
+            <textarea id="chatInput" data-i18n-ph="chat.input.ph" placeholder="اكتب سؤالك… (Enter للإرسال، Shift+Enter لسطر جديد)" rows="1"></textarea>
             <div class="composer-bar">
               <div class="composer-actions">
-                <button class="tool-btn" id="attachBtn" title="إرفاق صورة" aria-label="إرفاق صورة">
+                <button class="tool-btn" id="attachBtn" data-i18n-aria="chat.attach" title="إرفاق صورة" aria-label="إرفاق صورة">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83L15.07 6.1"/></svg>
                 </button>
                 <input id="chatImgInput" type="file" accept="image/*" hidden />
               </div>
               <button class="send-btn" id="sendBtn">
-                إرسال
+                <span data-i18n="chat.send">إرسال</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
               </button>
             </div>
@@ -587,12 +590,12 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
       <section class="view" id="scheduleView">
         <div class="card">
           <div class="card-head">
-            <h4>الجدول الأسبوعي</h4>
+            <h4 data-i18n="schedule.view.title">الجدول الأسبوعي</h4>
             <div class="actions">
-              <button class="btn btn-ghost btn-sm" data-prompt="اعرض جدولي الأسبوعي">فتح بالشات</button>
+              <button class="btn btn-ghost btn-sm" data-prompt="اعرض جدولي الأسبوعي" data-i18n="schedule.open.chat">فتح بالشات</button>
               <button class="btn btn-primary btn-sm" id="uploadScheduleBtn2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                رفع صورة الجدول
+                <span data-i18n="schedule.upload.btn">رفع صورة الجدول</span>
               </button>
             </div>
           </div>
@@ -603,8 +606,8 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
       <section class="view" id="remindersView">
         <div class="card">
           <div class="card-head">
-            <h4>التذكيرات والواجبات</h4>
-            <button class="btn btn-primary btn-sm" data-prompt="أضف تذكير جديد">+ إضافة تذكير</button>
+            <h4 data-i18n="reminders.title">التذكيرات والواجبات</h4>
+            <button class="btn btn-primary btn-sm" data-prompt="أضف تذكير جديد" data-i18n="reminders.add">+ إضافة تذكير</button>
           </div>
           <div class="list" id="remListFull"></div>
         </div>
@@ -613,20 +616,20 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
       <section class="view" id="planView">
         <div class="card">
           <div class="card-head">
-            <h4>الخطة الأكاديمية</h4>
+            <h4 data-i18n="plan.title">الخطة الأكاديمية</h4>
             <div class="actions">
-              <button class="btn btn-ghost btn-sm" data-prompt="اقترح علي مواد مناسبة للفصل الجاي">اقتراح مواد</button>
+              <button class="btn btn-ghost btn-sm" data-prompt="اقترح علي مواد مناسبة للفصل الجاي" data-i18n="plan.suggest">اقتراح مواد</button>
               <button class="btn btn-primary btn-sm" id="uploadPlanBtn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                رفع صورة الخطة
+                <span data-i18n="plan.upload">رفع صورة الخطة</span>
               </button>
               <input id="planImgInput" type="file" accept="image/*" hidden />
             </div>
           </div>
           <div class="plan-summary" id="planSummary" style="display:none"></div>
-          <div class="section-label" id="planActiveLabel" hidden>جاري الدراسة</div>
+          <div class="section-label" id="planActiveLabel" hidden data-i18n="plan.active.label">جاري الدراسة</div>
           <div class="list" id="planActiveList"></div>
-          <div class="section-label" id="planRemainingLabel" hidden>المتبقية</div>
+          <div class="section-label" id="planRemainingLabel" hidden data-i18n="plan.remaining.label">المتبقية</div>
           <div class="list" id="planRemainingList"></div>
         </div>
       </section>
@@ -637,8 +640,8 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
 <div class="modal-bg" id="imgModal">
   <div class="modal">
     <div class="modal-head">
-      <h3 id="imgModalTitle">صورة المكان</h3>
-      <button class="icon-btn" id="imgModalClose" aria-label="إغلاق">✕</button>
+      <h3 id="imgModalTitle" data-i18n="modal.room.title">صورة المكان</h3>
+      <button class="icon-btn" id="imgModalClose" data-i18n-aria="modal.close" aria-label="إغلاق">✕</button>
     </div>
     <img class="preview" id="imgModalImg" alt="" />
   </div>
@@ -650,8 +653,8 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
     <div class="r-title" id="rTitle"></div>
     <div class="r-time" id="rTime"></div>
     <div class="r-actions">
-      <button class="r-done" id="rDoneBtn">تم ✓</button>
-      <button class="r-ok" id="rOkBtn">حسناً</button>
+      <button class="r-done" id="rDoneBtn" data-i18n="reminder.done">تم ✓</button>
+      <button class="r-ok" id="rOkBtn" data-i18n="reminder.ok">حسناً</button>
     </div>
     <div class="r-counter" id="rCounter"></div>
   </div>
@@ -660,25 +663,25 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
 <div class="toast" id="toast"></div>
 
 <div class="tweaks" id="tweaksPanel">
-  <h4>إعدادات المظهر <button id="tweaksClose">×</button></h4>
+  <h4><span data-i18n="tweaks.title">إعدادات المظهر</span> <button id="tweaksClose">×</button></h4>
   <div class="tweak-row">
-    <label>اللون الأساسي</label>
+    <label data-i18n="tweaks.color">اللون الأساسي</label>
     <div class="swatches" id="accentSwatches"></div>
   </div>
   <div class="tweak-row">
-    <label>الكثافة</label>
+    <label data-i18n="tweaks.density">الكثافة</label>
     <div class="seg" id="densitySeg">
-      <button data-val="0.9">مدمج</button>
-      <button data-val="1" class="on">عادي</button>
-      <button data-val="1.1">مريح</button>
+      <button data-val="0.9" data-i18n="tweaks.density.compact">مدمج</button>
+      <button data-val="1" class="on" data-i18n="tweaks.density.normal">عادي</button>
+      <button data-val="1.1" data-i18n="tweaks.density.comfort">مريح</button>
     </div>
   </div>
   <div class="tweak-row">
-    <label>الزوايا</label>
+    <label data-i18n="tweaks.corners">الزوايا</label>
     <div class="seg" id="radiusSeg">
-      <button data-val="10">حادة</button>
-      <button data-val="18" class="on">متوسطة</button>
-      <button data-val="26">دائرية</button>
+      <button data-val="10" data-i18n="tweaks.corners.sharp">حادة</button>
+      <button data-val="18" class="on" data-i18n="tweaks.corners.med">متوسطة</button>
+      <button data-val="26" data-i18n="tweaks.corners.round">دائرية</button>
     </div>
   </div>
 </div>
@@ -688,7 +691,175 @@ const BASE = (location.protocol === 'http:' || location.protocol === 'https:') &
   ? location.origin
   : 'http://127.0.0.1:8000';
 const TOKEN_KEY = 'student_assistant_token';
+const LANG_KEY = 'student_assistant_lang';
 const $ = (id) => document.getElementById(id);
+
+let lang = localStorage.getItem(LANG_KEY) || 'ar';
+
+const T = {
+  ar: {
+    'page.title':'المساعد الذكي للطلاب','brand.name':'جامعتي','brand.role':'مساعد الطالب الذكي',
+    'auth.tagline':'جدولك ومذكراتك وخطتك الأكاديمية في مكان واحد',
+    'auth.login':'تسجيل الدخول','auth.signup':'إنشاء حساب',
+    'auth.email':'البريد الإلكتروني','auth.password':'كلمة المرور','auth.pass.ph':'••••••••',
+    'auth.login.btn':'دخول','auth.fullname':'الاسم الكامل','auth.name.ph':'اسمك',
+    'auth.pass.min':'6 أحرف على الأقل','auth.college':'الكلية','auth.college.ph':'كلية الحاسب',
+    'auth.major':'التخصص','auth.major.choose':'اختر التخصص',
+    'auth.major.cs':'علوم الحاسب — CS','auth.major.it':'تقنية المعلومات — IT',
+    'auth.major.is':'نظم المعلومات — IS','auth.major.ce':'هندسة الحاسب — CE',
+    'auth.major.se':'هندسة البرمجيات — SE','auth.major.ds':'علم البيانات — DS',
+    'auth.major.ai':'الذكاء الاصطناعي — AI','auth.major.mis':'نظم المعلومات الإدارية — MIS',
+    'auth.major.other':'تخصص آخر','auth.track':'المسار','auth.track.opt':'(اختياري)',
+    'auth.track.ph':'مثل: شبكات، أمن معلومات','auth.signup.btn':'إنشاء الحساب',
+    'nav.label':'القوائم','nav.dashboard':'لوحة التحكم','nav.chat':'المحادثة',
+    'nav.schedule':'الجدول الأسبوعي','nav.reminders':'التذكيرات','nav.plan':'الخطة الأكاديمية',
+    'health.connecting':'جاري الاتصال…','health.ok':'API متصل',
+    'health.offline':'الخادم غير متصل','health.unavailable':'API غير متاح',
+    'sidebar.clear':'حذف المحادثات','sidebar.logout':'تسجيل الخروج',
+    'topbar.menu':'القائمة','topbar.theme':'تبديل المظهر','topbar.tweaks':'إعدادات المظهر',
+    'dash.tagline':'تابع جدولك، تذكيراتك، وخطتك الأكاديمية. اسأل المساعد عن أي شيء — يفهم جدولك ويجاوبك بناءً عليه.',
+    'dash.today':'جدول اليوم','dash.open.chat':'افتح المحادثة',
+    'metric.week':'حصص الأسبوع','metric.all':'إجمالي الحصص',
+    'metric.rem':'تذكيرات نشطة','metric.plan':'المتبقي بالخطة',
+    'schedule.title':'جدول الأسبوع الدراسي','schedule.upload':'رفع صورة',
+    'reminders.soon':'تذكيرات قريبة','reminder.add.short':'+ تذكير',
+    'chat.today':'جدول اليوم','chat.all':'كل الجدول','chat.reminders':'التذكيرات',
+    'chat.plan':'الخطة الأكاديمية','chat.suggest':'اقتراح مواد','chat.rules':'قواعد الجامعة',
+    'chat.welcome.big':'كيف أقدر أساعدك اليوم؟',
+    'chat.welcome.p':'اسأل عن جدولك أو خطتك، أضف تذكيرات، أو ارفع صورة الجدول وأنا أرتبه لك.',
+    'chat.s1':'وش عندي اليوم؟','chat.s1.hint':'جدول الحصص الحالي',
+    'chat.s2':'أضف تذكير','chat.s2.hint':'واجب، اختبار، موعد',
+    'chat.s3':'اقتراح مواد','chat.s3.hint':'حسب خطتك الأكاديمية',
+    'chat.s4':'قواعد الجامعة','chat.s4.hint':'من المستندات الرسمية',
+    'chat.input.ph':'اكتب سؤالك… (Enter للإرسال، Shift+Enter لسطر جديد)',
+    'chat.attach':'إرفاق صورة','chat.send':'إرسال','attach.remove':'إزالة',
+    'schedule.view.title':'الجدول الأسبوعي','schedule.open.chat':'فتح بالشات',
+    'schedule.upload.btn':'رفع صورة الجدول',
+    'reminders.title':'التذكيرات والواجبات','reminders.add':'+ إضافة تذكير',
+    'plan.title':'الخطة الأكاديمية','plan.suggest':'اقتراح مواد','plan.upload':'رفع صورة الخطة',
+    'plan.active.label':'جاري الدراسة','plan.remaining.label':'المتبقية',
+    'modal.room.title':'صورة المكان','modal.close':'إغلاق',
+    'reminder.done':'تم ✓','reminder.ok':'حسناً',
+    'tweaks.title':'إعدادات المظهر','tweaks.color':'اللون الأساسي','tweaks.density':'الكثافة',
+    'tweaks.density.compact':'مدمج','tweaks.density.normal':'عادي','tweaks.density.comfort':'مريح',
+    'tweaks.corners':'الزوايا','tweaks.corners.sharp':'حادة','tweaks.corners.med':'متوسطة','tweaks.corners.round':'دائرية',
+    'default.student':'طالب','greet.morning':'صباح الخير','greet.evening':'مساء الخير','greet.sep':'، ',
+    'room.view.btn':'عرض القاعة','schedule.empty':'لا يوجد جدول محفوظ بعد. ارفع صورة جدولك ليظهر هنا.',
+    'day.classes':'حصة','day.no.classes':'لا حصص',
+    'status.done':'منجز ✓','status.active':'نشط','rem.del.title':'حذف التذكير',
+    'rem.empty.short':'لا توجد تذكيرات حالياً.','rem.empty.full':'لا توجد تذكيرات. أضف واحدة من المحادثة.',
+    'plan.completed':'✅ مكتمل: ','plan.in.progress':'📖 جاري: ','plan.remaining':'📋 متبقي: ','plan.total':'المجموع: ',
+    'plan.status.active':'قيد الدراسة','plan.status.remaining':'متبقي',
+    'plan.empty':'لا توجد مواد بالخطة بعد. ارفع صورة الخطة ليتم استخراجها.',
+    'import.title':'ملخص الاستيراد','import.added':'المضاف','import.skipped':'متخطى',
+    'toast.logout':'تم تسجيل الخروج','toast.clear.ok':'تم حذف المحادثات',
+    'toast.clear.err':'تعذر حذف المحادثات','toast.del.err':'تعذر الحذف',
+    'toast.import.ok':'تم الاستيراد بنجاح ✓','toast.import.err':'فشل الاستيراد: ',
+    'confirm.clear':'هل أنت متأكد أنك تريد حذف جميع المحادثات؟ لا يمكن التراجع عن هذا الإجراء.',
+    'auth.signing.in':'جاري تسجيل الدخول…','auth.signing.up':'جاري إنشاء الحساب…',
+    'auth.created':'تم إنشاء الحساب! سجل دخول الآن.','auth.session.expired':'انتهت الجلسة، سجل دخول من جديد',
+    'uploaded.image':'رفعت صورة: ','reminder.more':'+{n} تذكيرات أخرى',
+    'time.today':'اليوم ','time.tomorrow':'غداً ','locale':'ar-SA',
+    'pt.dashboardView':'لوحة التحكم','pt.chatView':'المحادثة',
+    'pt.scheduleView':'الجدول الأسبوعي','pt.remindersView':'التذكيرات','pt.planView':'الخطة الأكاديمية',
+  },
+  en: {
+    'page.title':'Smart Student Assistant','brand.name':'My University','brand.role':'Smart Student Assistant',
+    'auth.tagline':'Your schedule, reminders, and academic plan in one place',
+    'auth.login':'Sign In','auth.signup':'Create Account',
+    'auth.email':'Email','auth.password':'Password','auth.pass.ph':'••••••••',
+    'auth.login.btn':'Sign In','auth.fullname':'Full Name','auth.name.ph':'Your name',
+    'auth.pass.min':'At least 6 characters','auth.college':'College','auth.college.ph':'College of Computing',
+    'auth.major':'Major','auth.major.choose':'Choose Major',
+    'auth.major.cs':'Computer Science — CS','auth.major.it':'Information Technology — IT',
+    'auth.major.is':'Information Systems — IS','auth.major.ce':'Computer Engineering — CE',
+    'auth.major.se':'Software Engineering — SE','auth.major.ds':'Data Science — DS',
+    'auth.major.ai':'Artificial Intelligence — AI','auth.major.mis':'Management Info Systems — MIS',
+    'auth.major.other':'Other Major','auth.track':'Track','auth.track.opt':'(optional)',
+    'auth.track.ph':'e.g., Networks, Cybersecurity','auth.signup.btn':'Create Account',
+    'nav.label':'MENU','nav.dashboard':'Dashboard','nav.chat':'Chat',
+    'nav.schedule':'Weekly Schedule','nav.reminders':'Reminders','nav.plan':'Academic Plan',
+    'health.connecting':'Connecting…','health.ok':'API Connected',
+    'health.offline':'Server Offline','health.unavailable':'API Unavailable',
+    'sidebar.clear':'Clear Chat History','sidebar.logout':'Sign Out',
+    'topbar.menu':'Menu','topbar.theme':'Toggle Theme','topbar.tweaks':'Appearance Settings',
+    'dash.tagline':'Track your schedule, reminders, and academic plan. Ask the assistant anything — it knows your schedule.',
+    'dash.today':"Today's Schedule",'dash.open.chat':'Open Chat',
+    'metric.week':'Classes This Week','metric.all':'Total Classes',
+    'metric.rem':'Active Reminders','metric.plan':'Remaining in Plan',
+    'schedule.title':'Weekly Study Schedule','schedule.upload':'Upload Image',
+    'reminders.soon':'Upcoming Reminders','reminder.add.short':'+ Reminder',
+    'chat.today':"Today's Schedule",'chat.all':'Full Schedule','chat.reminders':'Reminders',
+    'chat.plan':'Academic Plan','chat.suggest':'Suggest Courses','chat.rules':'University Rules',
+    'chat.welcome.big':'How can I help you today?',
+    'chat.welcome.p':"Ask about your schedule or plan, add reminders, or upload a schedule image and I'll organize it for you.",
+    'chat.s1':"What's my schedule today?",'chat.s1.hint':'Current class schedule',
+    'chat.s2':'Add a reminder','chat.s2.hint':'Assignment, exam, appointment',
+    'chat.s3':'Suggest courses','chat.s3.hint':'Based on your academic plan',
+    'chat.s4':'University rules','chat.s4.hint':'From official documents',
+    'chat.input.ph':'Type your question… (Enter to send, Shift+Enter for new line)',
+    'chat.attach':'Attach Image','chat.send':'Send','attach.remove':'Remove',
+    'schedule.view.title':'Weekly Schedule','schedule.open.chat':'Open in Chat',
+    'schedule.upload.btn':'Upload Schedule Image',
+    'reminders.title':'Reminders & Assignments','reminders.add':'+ Add Reminder',
+    'plan.title':'Academic Plan','plan.suggest':'Suggest Courses','plan.upload':'Upload Plan Image',
+    'plan.active.label':'Currently Studying','plan.remaining.label':'Remaining',
+    'modal.room.title':'Room Image','modal.close':'Close',
+    'reminder.done':'Done ✓','reminder.ok':'OK',
+    'tweaks.title':'Appearance Settings','tweaks.color':'Accent Color','tweaks.density':'Density',
+    'tweaks.density.compact':'Compact','tweaks.density.normal':'Normal','tweaks.density.comfort':'Comfortable',
+    'tweaks.corners':'Corners','tweaks.corners.sharp':'Sharp','tweaks.corners.med':'Medium','tweaks.corners.round':'Rounded',
+    'default.student':'Student','greet.morning':'Good morning','greet.evening':'Good evening','greet.sep':', ',
+    'room.view.btn':'View Room','schedule.empty':'No schedule saved yet. Upload your schedule image to display it here.',
+    'day.classes':'class','day.no.classes':'No classes',
+    'status.done':'Done ✓','status.active':'Active','rem.del.title':'Delete Reminder',
+    'rem.empty.short':'No reminders yet.','rem.empty.full':'No reminders. Add one from the chat.',
+    'plan.completed':'✅ Completed: ','plan.in.progress':'📖 Active: ','plan.remaining':'📋 Remaining: ','plan.total':'Total: ',
+    'plan.status.active':'In Progress','plan.status.remaining':'Remaining',
+    'plan.empty':'No courses in plan yet. Upload your plan image to extract them.',
+    'import.title':'Import Summary','import.added':'Added','import.skipped':'Skipped',
+    'toast.logout':'Signed out','toast.clear.ok':'Chat history cleared',
+    'toast.clear.err':'Failed to clear chat history','toast.del.err':'Deletion failed',
+    'toast.import.ok':'Successfully imported ✓','toast.import.err':'Import failed: ',
+    'confirm.clear':'Are you sure you want to delete all conversations? This action cannot be undone.',
+    'auth.signing.in':'Signing in…','auth.signing.up':'Creating account…',
+    'auth.created':'Account created! Sign in now.','auth.session.expired':'Session expired, please sign in again',
+    'uploaded.image':'Uploaded image: ','reminder.more':'+{n} more reminders',
+    'time.today':'Today ','time.tomorrow':'Tomorrow ','locale':'en-US',
+    'pt.dashboardView':'Dashboard','pt.chatView':'Chat',
+    'pt.scheduleView':'Weekly Schedule','pt.remindersView':'Reminders','pt.planView':'Academic Plan',
+  }
+};
+
+function t(key){ return (T[lang]||T.ar)[key] ?? key; }
+
+function applyLang(){
+  const isAr = lang === 'ar';
+  document.documentElement.lang = lang;
+  document.documentElement.dir = isAr ? 'rtl' : 'ltr';
+  document.title = t('page.title');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+    const v = t(el.dataset.i18nAria);
+    el.setAttribute('aria-label', v);
+    if(el.hasAttribute('title')) el.title = v;
+  });
+  const lb = $('langBtn'); if(lb) lb.textContent = isAr ? 'EN' : 'عر';
+  renderPlan();
+  renderRemindersFull();
+  renderWeekGrid('weekGrid', state.lastDays);
+  renderWeekGrid('weekGridFull', state.lastDays);
+  const remEl = $('remListShort');
+  if(remEl){
+    const rems = state.lastReminders.slice(0,4);
+    remEl.innerHTML = rems.length ? rems.map(rowHTML).join('') : `<div class="empty">${t('rem.empty.short')}</div>`;
+  }
+  $('pageTitle').textContent = t('pt.' + (document.querySelector('.view.active')?.id || 'dashboardView'));
+  if(state.lastStudent?.name) renderHeader(state.lastStudent);
+  const hl = $('healthLabel');
+  if(hl) { const s = hl.dataset.healthState; if(s) hl.textContent = t('health.' + s); }
+}
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 
 const state = {
@@ -703,6 +874,7 @@ const state = {
   lastReminders: [],
   lastPlan: {active:[],remaining:[],counts:{}},
   studentName: '',
+  lastStudent: {},
 };
 
 const TWEAKS = /*EDITMODE-BEGIN*/{
@@ -738,6 +910,12 @@ function persistTweaks(patch){
   try{ window.parent.postMessage({type:'__edit_mode_set_keys', edits: patch}, '*'); }catch{}
 }
 applyTweaks();
+
+$('langBtn').onclick = () => {
+  lang = lang === 'ar' ? 'en' : 'ar';
+  localStorage.setItem(LANG_KEY, lang);
+  applyLang();
+};
 
 function headers(extra={}){
   const out = {...extra};
@@ -789,7 +967,7 @@ $('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = $('loginBtn');
   btn.disabled = true;
-  $('authMsg').className = 'auth-msg'; $('authMsg').textContent = 'جاري تسجيل الدخول…';
+  $('authMsg').className = 'auth-msg'; $('authMsg').textContent = t('auth.signing.in');
   try{
     const data = await api('/auth/login', {
       method:'POST',
@@ -799,6 +977,7 @@ $('loginForm').addEventListener('submit', async (e) => {
     state.token = data.access_token;
     localStorage.setItem(TOKEN_KEY, state.token);
     showApp();
+    applyLang();
     await Promise.all([loadDashboard(), loadHistory()]);
   }catch(err){
     $('authMsg').className = 'auth-msg err'; $('authMsg').textContent = err.message;
@@ -809,7 +988,7 @@ $('signupForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = $('signupBtn');
   btn.disabled = true;
-  $('authMsg').className = 'auth-msg'; $('authMsg').textContent = 'جاري إنشاء الحساب…';
+  $('authMsg').className = 'auth-msg'; $('authMsg').textContent = t('auth.signing.up');
   try{
     await api('/auth/signup', {
       method:'POST',
@@ -823,7 +1002,7 @@ $('signupForm').addEventListener('submit', async (e) => {
         track:$('suTrack').value.trim() || null,
       }),
     });
-    $('authMsg').className = 'auth-msg'; $('authMsg').textContent = 'تم إنشاء الحساب! سجل دخول الآن.';
+    $('authMsg').className = 'auth-msg'; $('authMsg').textContent = t('auth.created');
     document.querySelector('[data-auth-tab="login"]').click();
     $('liEmail').value = $('suEmail').value;
   }catch(err){
@@ -837,32 +1016,28 @@ $('logoutBtn').onclick = () => {
   clearInterval(state.notifInterval); state.notifInterval = null;
   state.shownNotifs.clear(); state.reminderQueue = []; state.currentReminderId = null;
   $('reminderBg').classList.remove('show');
-  showAuth('تم تسجيل الخروج');
+  showAuth(t('toast.logout'));
 };
 
 $('clearChatBtn').onclick = async () => {
-  if(!confirm('هل أنت متأكد أنك تريد حذف جميع المحادثات؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+  if(!confirm(t('confirm.clear'))) return;
   const btn = $('clearChatBtn');
   btn.disabled = true;
   try{
     await api('/chat/history', { method: 'DELETE', headers: headers() });
     await loadHistory();
-    toast('تم حذف المحادثات', 'ok');
+    toast(t('toast.clear.ok'), 'ok');
   }catch(err){
-    toast(err.message || 'تعذر حذف المحادثات', 'err');
+    toast(err.message || t('toast.clear.err'), 'err');
   }finally{
     btn.disabled = false;
   }
 };
 
-const PAGE_TITLES = {
-  dashboardView:'لوحة التحكم', chatView:'المحادثة',
-  scheduleView:'الجدول الأسبوعي', remindersView:'التذكيرات', planView:'الخطة الأكاديمية',
-};
 function switchView(viewId){
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === viewId));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === viewId));
-  $('pageTitle').textContent = PAGE_TITLES[viewId] || '';
+  $('pageTitle').textContent = t('pt.' + viewId) || '';
   if(window.innerWidth <= 760){
     $('sidebar').classList.add('collapsed');
     $('sbBackdrop').classList.remove('show');
@@ -905,21 +1080,21 @@ function initialOf(name){
 
 function renderHeader(student){
   state.studentName = student.name || '';
-  $('pName').textContent = student.name || 'طالب';
+  $('pName').textContent = student.name || t('default.student');
   const tags = [student.major, student.college].filter(Boolean).join(' • ');
   $('pMajor').textContent = tags || '—';
   $('avatar').textContent = initialOf(student.name);
   const hr = new Date().getHours();
-  const greet = hr < 12 ? 'صباح الخير' : 'مساء الخير';
-  const first = (student.name || 'طالب').split(' ')[0];
-  $('greetEl').textContent = `${greet}، ${first} 👋`;
+  const greet = hr < 12 ? t('greet.morning') : t('greet.evening');
+  const first = (student.name || t('default.student')).split(' ')[0];
+  $('greetEl').textContent = `${greet}${t('greet.sep')}${first} 👋`;
 }
 
 function lecHTML(item){
   const code = item.course_code ? `<div class="code">${esc(item.course_code)}</div>` : '';
   const room = item.room_text ? esc(item.room_text) : '—';
   const roomBtn = item.image_url
-    ? `<button class="room-link" data-img="${esc(item.image_url)}" data-title="${esc(item.room_text || item.course_name || '')}">عرض القاعة</button>`
+    ? `<button class="room-link" data-img="${esc(item.image_url)}" data-title="${esc(item.room_text || item.course_name || '')}">${t('room.view.btn')}</button>`
     : '';
   return `
     <div class="lec">
@@ -933,33 +1108,35 @@ function lecHTML(item){
     </div>`;
 }
 
+const DAY_EN = {'الأحد':'Sunday','الاثنين':'Monday','الثلاثاء':'Tuesday','الأربعاء':'Wednesday','الخميس':'Thursday','الجمعة':'Friday','السبت':'Saturday'};
 function renderWeekGrid(targetId, days){
   const el = $(targetId);
   if(!el) return;
   if(!Array.isArray(days) || !days.length){
-    el.innerHTML = `<div class="empty" style="grid-column:1/-1">لا يوجد جدول محفوظ بعد. ارفع صورة جدولك ليظهر هنا.</div>`;
+    el.innerHTML = `<div class="empty" style="grid-column:1/-1">${t('schedule.empty')}</div>`;
     return;
   }
+  const dayName = d => lang === 'ar' ? (d.day_name_ar || '') : (d.day_name_en || DAY_EN[d.day_name_ar] || d.day_name_ar || '');
   el.innerHTML = days.map(d => `
     <div class="day">
       <div class="day-head">
-        <strong>${esc(d.day_name_ar || '')}</strong>
-        <span class="day-pill">${(d.items||[]).length} حصة</span>
+        <strong>${esc(dayName(d))}</strong>
+        <span class="day-pill">${(d.items||[]).length} ${t('day.classes')}</span>
       </div>
-      ${(d.items||[]).length ? d.items.map(lecHTML).join('') : `<div class="empty">لا حصص</div>`}
+      ${(d.items||[]).length ? d.items.map(lecHTML).join('') : `<div class="empty">${t('day.no.classes')}</div>`}
     </div>`).join('');
 }
 
 function rowHTML(r){
   const status = r.is_done ? 'done' : 'active';
-  const label = r.is_done ? 'منجز ✓' : 'نشط';
+  const label = r.is_done ? t('status.done') : t('status.active');
   return `
     <div class="row">
       <div class="title">
         <span>${esc(r.title || '')}</span>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
           <span class="status-pill ${status}">${label}</span>
-          <button class="rem-del-btn" data-del-rid="${r.reminder_id ?? r.id ?? ''}" title="حذف التذكير">🗑</button>
+          <button class="rem-del-btn" data-del-rid="${r.reminder_id ?? r.id ?? ''}" title="${t('rem.del.title')}">🗑</button>
         </div>
       </div>
       <div class="meta-line">
@@ -973,8 +1150,9 @@ function renderDashboard(data){
   state.lastDays = data.week_schedule?.days || [];
   state.lastReminders = data.recent_reminders || [];
   state.lastPlan = { active: data.academic_plan_active || [], remaining: data.academic_plan_remaining || [], counts: data.counts || {} };
+  state.lastStudent = data.student || {};
 
-  renderHeader(data.student || {});
+  renderHeader(state.lastStudent);
   $('mWeek').textContent = data.counts.week_classes ?? 0;
   $('mAll').textContent = data.counts.all_classes ?? 0;
   $('mRem').textContent = data.counts.active_reminders ?? 0;
@@ -983,7 +1161,7 @@ function renderDashboard(data){
   renderWeekGrid('weekGrid', state.lastDays);
   const remEl = $('remListShort');
   const rems = state.lastReminders.slice(0,4);
-  remEl.innerHTML = rems.length ? rems.map(rowHTML).join('') : `<div class="empty">لا توجد تذكيرات حالياً.</div>`;
+  remEl.innerHTML = rems.length ? rems.map(rowHTML).join('') : `<div class="empty">${t('rem.empty.short')}</div>`;
   renderPlan();
 }
 
@@ -994,10 +1172,10 @@ function renderPlan(){
   if(total){
     ps.style.display = 'flex';
     ps.innerHTML = `
-      <span>✅ مكتمل: <strong>${counts.completed_courses ?? 0}</strong></span>
-      <span>📖 جاري: <strong>${counts.active_courses ?? 0}</strong></span>
-      <span>📋 متبقي: <strong>${counts.remaining_courses ?? 0}</strong></span>
-      <span>المجموع: <strong>${total}</strong></span>`;
+      <span>${t('plan.completed')}<strong>${counts.completed_courses ?? 0}</strong></span>
+      <span>${t('plan.in.progress')}<strong>${counts.active_courses ?? 0}</strong></span>
+      <span>${t('plan.remaining')}<strong>${counts.remaining_courses ?? 0}</strong></span>
+      <span>${t('plan.total')}<strong>${total}</strong></span>`;
   } else { ps.style.display = 'none'; }
 
   $('planActiveLabel').hidden = !active.length;
@@ -1005,7 +1183,7 @@ function renderPlan(){
     <div class="row">
       <div class="title">
         <span>${esc(it.course_name || '')}</span>
-        <span class="status-pill in-progress">قيد الدراسة</span>
+        <span class="status-pill in-progress">${t('plan.status.active')}</span>
       </div>
       <div class="meta-line"><span>${esc(it.course_code || '')}</span><span>${esc(it.semester || '')}</span></div>
     </div>`).join('');
@@ -1015,20 +1193,20 @@ function renderPlan(){
     <div class="row">
       <div class="title">
         <span>${esc(it.course_name || '')}</span>
-        <span class="status-pill remaining">متبقي</span>
+        <span class="status-pill remaining">${t('plan.status.remaining')}</span>
       </div>
       <div class="meta-line"><span>${esc(it.course_code || '')}</span><span>${esc(it.semester || '')}</span></div>
     </div>`).join('');
 
   if(!active.length && !remaining.length){
     $('planRemainingLabel').hidden = true;
-    $('planRemainingList').innerHTML = `<div class="empty">لا توجد مواد بالخطة بعد. ارفع صورة الخطة ليتم استخراجها.</div>`;
+    $('planRemainingList').innerHTML = `<div class="empty">${t('plan.empty')}</div>`;
   }
 }
 
 function renderRemindersFull(){
   const list = state.lastReminders || [];
-  $('remListFull').innerHTML = list.length ? list.map(rowHTML).join('') : `<div class="empty">لا توجد تذكيرات. أضف واحدة من المحادثة.</div>`;
+  $('remListFull').innerHTML = list.length ? list.map(rowHTML).join('') : `<div class="empty">${t('rem.empty.full')}</div>`;
 }
 
 async function loadDashboard(){
@@ -1036,10 +1214,7 @@ async function loadDashboard(){
     const data = await api('/dashboard/summary', { headers: headers() });
     renderDashboard(data);
   }catch(e){
-    if(String(e.message).includes('401')) {
-      state.token = ''; localStorage.removeItem(TOKEN_KEY);
-      showAuth('انتهت الجلسة، سجل دخول من جديد', true);
-    }
+    if(String(e.message).includes('401')) throw e;
   }
 }
 
@@ -1079,9 +1254,9 @@ function metaHTML(meta){
     added = true;
     html += `
       <div class="meta-card">
-        <h5>ملخص الاستيراد</h5>
-        <div class="row-line"><span>المضاف</span><span>${esc(meta.added)}</span></div>
-        ${Array.isArray(meta.skipped) && meta.skipped.length ? `<div class="row-line"><span>متخطى</span><span>${esc(meta.skipped.length)}</span></div>` : ''}
+        <h5>${t('import.title')}</h5>
+        <div class="row-line"><span>${t('import.added')}</span><span>${esc(meta.added)}</span></div>
+        ${Array.isArray(meta.skipped) && meta.skipped.length ? `<div class="row-line"><span>${t('import.skipped')}</span><span>${esc(meta.skipped.length)}</span></div>` : ''}
       </div>`;
   }
   html += '</div>';
@@ -1100,7 +1275,7 @@ function addMessage(role, text, meta=null, isTyping=false){
   clearWelcome();
   const el = document.createElement('div');
   el.className = `msg ${role}`;
-  const av = role === 'user' ? (initialOf(state.studentName) || 'أ') : 'ج';
+  const av = role === 'user' ? (initialOf(state.studentName) || (lang==='ar'?'أ':'S')) : (lang==='ar'?'ج':'A');
   const bubbleContent = isTyping
     ? '<div class="typing"><span></span><span></span><span></span></div>'
     : (role === 'assistant' ? renderMd(text || '') : esc(text || ''));
@@ -1122,13 +1297,13 @@ async function loadHistory(){
     if(!Array.isArray(hist) || !hist.length){
       $('chatList').innerHTML = `
         <div class="welcome" id="chatWelcome">
-          <div class="big">كيف أقدر أساعدك اليوم؟</div>
-          <p>اسأل عن جدولك أو خطتك، أضف تذكيرات، أو ارفع صورة الجدول.</p>
+          <div class="big">${t('chat.welcome.big')}</div>
+          <p>${t('chat.welcome.p')}</p>
           <div class="suggestion-grid">
-            <button class="suggestion" data-prompt="وش عندي اليوم؟">وش عندي اليوم؟<span class="hint">جدول الحصص الحالي</span></button>
-            <button class="suggestion" data-prompt="أضف واجب الذكاء الاصطناعي يوم الأربعاء 11 مساءً">أضف تذكير<span class="hint">واجب، اختبار، موعد</span></button>
-            <button class="suggestion" data-prompt="اقترح علي مواد مناسبة للفصل الجاي">اقتراح مواد<span class="hint">حسب خطتك الأكاديمية</span></button>
-            <button class="suggestion" data-prompt="ما هي قواعد الانذار الأكاديمي؟">قواعد الجامعة<span class="hint">من المستندات الرسمية</span></button>
+            <button class="suggestion" data-prompt="وش عندي اليوم؟"><span>${t('chat.s1')}</span><span class="hint">${t('chat.s1.hint')}</span></button>
+            <button class="suggestion" data-prompt="أضف واجب الذكاء الاصطناعي يوم الأربعاء 11 مساءً"><span>${t('chat.s2')}</span><span class="hint">${t('chat.s2.hint')}</span></button>
+            <button class="suggestion" data-prompt="اقترح علي مواد مناسبة للفصل الجاي"><span>${t('chat.s3')}</span><span class="hint">${t('chat.s3.hint')}</span></button>
+            <button class="suggestion" data-prompt="ما هي قواعد الانذار الأكاديمي؟"><span>${t('chat.s4')}</span><span class="hint">${t('chat.s4.hint')}</span></button>
           </div>
         </div>`;
       return;
@@ -1138,7 +1313,9 @@ async function loadHistory(){
       if(m.meta_json){ try{ meta = JSON.parse(m.meta_json); }catch{} }
       addMessage(m.role === 'user' ? 'user' : 'assistant', m.content, meta);
     });
-  }catch(e){}
+  }catch(e){
+    if(String(e.message).includes('401')) throw e;
+  }
 }
 
 function setSending(s){ state.isSending = s; $('sendBtn').disabled = s; }
@@ -1161,7 +1338,7 @@ async function sendMessage(prefilled){
   setSending(true);
 
   if(file){
-    addMessage('user', msg ? `${msg}\n[image: ${file.name}]` : `رفعت صورة: ${file.name}`);
+    addMessage('user', msg ? `${msg}\n[image: ${file.name}]` : `${t('uploaded.image')}${file.name}`);
   } else {
     addMessage('user', msg);
   }
@@ -1223,7 +1400,7 @@ document.body.addEventListener('click', async (e) => {
       delBtn.closest('.row')?.remove();
       loadDashboard().catch(()=>{});
     }catch(err){
-      toast(err.message || 'تعذر الحذف', 'err');
+      toast(err.message || t('toast.del.err'), 'err');
       delBtn.disabled = false;
     }
   }
@@ -1241,10 +1418,10 @@ async function uploadFile(endpoint, file, label){
     if(wrap.firstChild) t.querySelector('.msg-content').appendChild(wrap.firstChild);
     loadDashboard().catch(()=>{});
     loadHistory().catch(()=>{});
-    toast('تم الاستيراد بنجاح ✓');
+    toast(t('toast.import.ok'));
   } catch(err){
     t.querySelector('.bubble').innerHTML = `<span style="color:#fca5a5">⚠️ ${esc(err.message)}</span>`;
-    toast('فشل الاستيراد: '+err.message, 'err');
+    toast(t('toast.import.err')+err.message, 'err');
   }
 }
 function pickFile(input, endpoint, label){
@@ -1262,7 +1439,7 @@ $('uploadPlanBtn').onclick = () => pickFile($('planImgInput'), '/chat/upload-pla
 
 function openImg(src, title){
   $('imgModalImg').src = src;
-  $('imgModalTitle').textContent = title || 'صورة المكان';
+  $('imgModalTitle').textContent = title || t('modal.room.title');
   $('imgModal').classList.add('show');
 }
 $('imgModalClose').onclick = () => { $('imgModal').classList.remove('show'); $('imgModalImg').src=''; };
@@ -1276,15 +1453,14 @@ function fmtAt(iso, fallback){
     const isToday = d.toDateString() === now.toDateString();
     const tomorrow = new Date(now); tomorrow.setDate(now.getDate()+1);
     const isTom = d.toDateString() === tomorrow.toDateString();
-    const t = d.toLocaleTimeString('ar-SA', {hour:'2-digit',minute:'2-digit'});
-    if(isToday) return `اليوم ${t}`;
-    if(isTom) return `غداً ${t}`;
-    return d.toLocaleDateString('ar-SA',{weekday:'short',month:'short',day:'numeric'}) + ' ' + t;
+    const loc = t('locale');
+    const tm = d.toLocaleTimeString(loc, {hour:'2-digit',minute:'2-digit'});
+    if(isToday) return `${t('time.today')}${tm}`;
+    if(isTom) return `${t('time.tomorrow')}${tm}`;
+    return d.toLocaleDateString(loc,{weekday:'short',month:'short',day:'numeric'}) + ' ' + tm;
   }catch{ return fallback || iso; }
 }
-let reminderSoundloop = false;
 function playReminderSound(){
-  while(!reminderSoundloop){
     try{
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     [[880,0,0.15],[660,0.18,0.12],[880,0.32,0.18]].forEach(([freq,start,dur])=>{
@@ -1298,10 +1474,8 @@ function playReminderSound(){
       osc.stop(ctx.currentTime + start + dur + 0.05);
     });
   }catch{}
-  }
 }
 function showNextReminder(){
-  reminderSoundloop = false;
   if(!state.reminderQueue.length){
     $('reminderBg').classList.remove('show'); state.currentReminderId = null; return;
   }
@@ -1309,12 +1483,11 @@ function showNextReminder(){
   state.currentReminderId = r.reminder_id;
   $('rTitle').textContent = r.title || '';
   $('rTime').textContent = fmtAt(r.remind_at, r.remind_at_text) + (r.notes ? '\n'+r.notes : '');
-  $('rCounter').textContent = state.reminderQueue.length ? `+${state.reminderQueue.length} تذكيرات أخرى` : '';
+  $('rCounter').textContent = state.reminderQueue.length ? t('reminder.more').replace('{n}', state.reminderQueue.length) : '';
   $('reminderBg').classList.add('show');
   playReminderSound();
 }
 $('rDoneBtn').onclick = async () => {
-  reminderSoundloop = true;
   const id = state.currentReminderId;
   state.currentReminderId = null;
   showNextReminder();
@@ -1322,7 +1495,7 @@ $('rDoneBtn').onclick = async () => {
     try{ await api(`/dashboard/reminders/${id}/done`, { method:'POST', headers: headers() }); loadDashboard().catch(()=>{}); }catch{}
   }
 };
-$('rOkBtn').onclick = () => { state.currentReminderId = null; showNextReminder(); reminderSoundloop = true; };
+$('rOkBtn').onclick = () => { state.currentReminderId = null; showNextReminder(); };
 async function checkDueReminders(){
   if(!state.token) return;
   try{
@@ -1338,14 +1511,17 @@ async function checkDueReminders(){
 }
 
 async function pingHealth(){
+  const setHealth = (state, bad) => {
+    $('healthDot').classList.toggle('bad', bad);
+    const hl = $('healthLabel');
+    hl.dataset.healthState = state;
+    hl.textContent = t('health.' + state);
+  };
   try{
     const h = await api('/health');
-    const ok = h?.status === 'ok';
-    $('healthDot').classList.toggle('bad', !ok);
-    $('healthLabel').textContent = ok ? 'API متصل' : 'الخادم غير متصل';
+    setHealth(h?.status === 'ok' ? 'ok' : 'offline', h?.status !== 'ok');
   }catch{
-    $('healthDot').classList.add('bad');
-    $('healthLabel').textContent = 'API غير متاح';
+    setHealth('unavailable', true);
   }
 }
 
@@ -1395,11 +1571,17 @@ try{ window.parent.postMessage({type:'__edit_mode_available'}, '*'); }catch{}
 
 async function init(){
   applyMobileSidebarState();
+  applyLang();
   pingHealth();
   if(state.token){
-    showApp();
-    try{ await Promise.all([loadHistory(), loadDashboard()]); }
-    catch{ state.token=''; localStorage.removeItem(TOKEN_KEY); showAuth('انتهت الجلسة، سجل دخول'); }
+    try{
+      await Promise.all([loadHistory(), loadDashboard()]);
+      showApp();
+      applyLang();
+    }catch{
+      state.token=''; localStorage.removeItem(TOKEN_KEY);
+      showAuth(t('auth.session.expired'), true);
+    }
   } else {
     showAuth('');
   }
