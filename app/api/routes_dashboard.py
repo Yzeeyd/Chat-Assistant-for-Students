@@ -62,6 +62,14 @@ def due_reminders(db: Session = Depends(get_db), user: models.User = Depends(get
     }
 
 
+@router.delete('/reminders/{reminder_id}')
+def delete_reminder(reminder_id: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)) -> dict:
+    deleted = crud.delete_reminder(db, reminder_id=reminder_id, user_id=user.id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail='Reminder not found')
+    return {'ok': True}
+
+
 @router.post('/reminders/{reminder_id}/done')
 def mark_done(reminder_id: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)) -> dict:
     reminder = crud.mark_reminder_done(db, reminder_id=reminder_id, user_id=user.id)

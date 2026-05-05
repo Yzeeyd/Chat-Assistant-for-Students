@@ -236,6 +236,8 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
 .row .title{font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .row .meta-line{display:flex;justify-content:space-between;color:var(--muted);font-size:12.5px;flex-wrap:wrap;gap:8px}
 .status-pill{font-size:11px;padding:3px 8px;border-radius:999px;font-weight:700}
+.rem-del-btn{background:transparent;border:0;cursor:pointer;color:var(--muted);font-size:15px;line-height:1;padding:2px 4px;border-radius:6px;transition:.15s;flex-shrink:0}
+.rem-del-btn:hover{color:#ef4444;background:hsl(0 84% 60% / .12)}
 .status-pill.active{background:hsl(38 92% 50% / .16);color:#f59e0b}
 .status-pill.done{background:hsl(142 71% 45% / .16);color:#22c55e}
 .status-pill.in-progress{background:hsl(var(--accent)/.16);color:hsl(var(--accent))}
@@ -955,7 +957,10 @@ function rowHTML(r){
     <div class="row">
       <div class="title">
         <span>${esc(r.title || '')}</span>
-        <span class="status-pill ${status}">${label}</span>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <span class="status-pill ${status}">${label}</span>
+          <button class="rem-del-btn" data-del-rid="${r.reminder_id ?? r.id ?? ''}" title="حذف التذكير">🗑</button>
+        </div>
       </div>
       <div class="meta-line">
         <span>${esc(r.remind_at_text || '')}</span>
@@ -1203,11 +1208,25 @@ $('attachBtn').onclick = () => $('chatImgInput').click();
 $('chatImgInput').addEventListener('change', (e) => setAttachment(e.target.files?.[0] || null));
 $('attachRemove').onclick = () => setAttachment(null);
 
-document.body.addEventListener('click', (e) => {
+document.body.addEventListener('click', async (e) => {
   const p = e.target.closest('[data-prompt]');
   if(p){ const q = p.dataset.prompt; if(q) sendMessage(q); }
   const ri = e.target.closest('[data-img]');
   if(ri){ openImg(ri.dataset.img, ri.dataset.title); }
+  const delBtn = e.target.closest('[data-del-rid]');
+  if(delBtn){
+    const rid = delBtn.dataset.delRid;
+    if(!rid) return;
+    delBtn.disabled = true;
+    try{
+      await api(`/dashboard/reminders/${rid}`, { method:'DELETE', headers: headers() });
+      delBtn.closest('.row')?.remove();
+      loadDashboard().catch(()=>{});
+    }catch(err){
+      toast(err.message || 'تعذر الحذف', 'err');
+      delBtn.disabled = false;
+    }
+  }
 });
 
 async function uploadFile(endpoint, file, label){
@@ -1263,7 +1282,26 @@ function fmtAt(iso, fallback){
     return d.toLocaleDateString('ar-SA',{weekday:'short',month:'short',day:'numeric'}) + ' ' + t;
   }catch{ return fallback || iso; }
 }
+let reminderSoundloop = false;
+function playReminderSound(){
+  while(!reminderSoundloop){
+    try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[880,0,0.15],[660,0.18,0.12],[880,0.32,0.18]].forEach(([freq,start,dur])=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.25, ctx.currentTime + start);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur + 0.05);
+    });
+  }catch{}
+  }
+}
 function showNextReminder(){
+  reminderSoundloop = false;
   if(!state.reminderQueue.length){
     $('reminderBg').classList.remove('show'); state.currentReminderId = null; return;
   }
@@ -1273,8 +1311,10 @@ function showNextReminder(){
   $('rTime').textContent = fmtAt(r.remind_at, r.remind_at_text) + (r.notes ? '\n'+r.notes : '');
   $('rCounter').textContent = state.reminderQueue.length ? `+${state.reminderQueue.length} تذكيرات أخرى` : '';
   $('reminderBg').classList.add('show');
+  playReminderSound();
 }
 $('rDoneBtn').onclick = async () => {
+  reminderSoundloop = true;
   const id = state.currentReminderId;
   state.currentReminderId = null;
   showNextReminder();
@@ -1282,7 +1322,7 @@ $('rDoneBtn').onclick = async () => {
     try{ await api(`/dashboard/reminders/${id}/done`, { method:'POST', headers: headers() }); loadDashboard().catch(()=>{}); }catch{}
   }
 };
-$('rOkBtn').onclick = () => { state.currentReminderId = null; showNextReminder(); };
+$('rOkBtn').onclick = () => { state.currentReminderId = null; showNextReminder(); reminderSoundloop = true; };
 async function checkDueReminders(){
   if(!state.token) return;
   try{

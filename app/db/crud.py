@@ -254,6 +254,16 @@ def list_due_reminders(db: Session, user_id: int) -> list[models.Reminder]:
     return [r for r in candidates if r.remind_at <= now]
 
 
+def delete_reminder(db: Session, reminder_id: int, user_id: int) -> bool:
+    deleted = (
+        db.query(models.Reminder)
+        .filter(models.Reminder.id == reminder_id, models.Reminder.user_id == user_id)
+        .delete()
+    )
+    db.commit()
+    return bool(deleted)
+
+
 def mark_reminder_done(db: Session, reminder_id: int, user_id: int) -> models.Reminder | None:
     item = (
         db.query(models.Reminder)
