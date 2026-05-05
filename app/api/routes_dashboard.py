@@ -8,7 +8,7 @@ _GROUP_PATTERN = _re.compile(r'اختياري\s+(\d+)\s*[-–]\s*(\d+)')
 from app.core.security import get_current_user
 from app.db import crud, models
 from app.db.session import get_db
-from app.utils.schedule import find_room_image
+from app.services.schedule_parser import find_room_image
 
 router = APIRouter(prefix='/dashboard', tags=['dashboard'])
 

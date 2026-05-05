@@ -1,4 +1,5 @@
 import json
+import re as _re
 from datetime import datetime, time
 from typing import Iterable
 
@@ -6,6 +7,23 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.db import models
+
+_SEMESTER_ORDER = {
+    'الأول': 1, 'الثاني': 2, 'الثالث': 3, 'الرابع': 4,
+    'الخامس': 5, 'السادس': 6, 'السابع': 7, 'الثامن': 8,
+}
+_ELECTIVE_RE = _re.compile(r'اختياري\s+(\d+)')
+
+
+def _plan_sort_key(item) -> tuple:
+    sem = (item.semester or '').strip()
+    if sem in _SEMESTER_ORDER:
+        return (_SEMESTER_ORDER[sem], item.course_code or '')
+    m = _ELECTIVE_RE.search(sem)
+    if m:
+        # University reqs (e.g. اختياري 8-8 → 17) sort before specialization (e.g. اختياري 18-18 → 27)
+        return (9 + int(m.group(1)), item.course_code or '')
+    return (100, item.course_code or '')
 
 
 # ---------------------------------------------------------------------------
@@ -321,12 +339,12 @@ def clear_academic_plan(db: Session, user_id: int) -> int:
 
 
 def list_academic_plan_items(db: Session, user_id: int) -> list[models.AcademicPlanItem]:
-    return (
+    items = (
         db.query(models.AcademicPlanItem)
         .filter(models.AcademicPlanItem.user_id == user_id)
-        .order_by(models.AcademicPlanItem.semester, models.AcademicPlanItem.course_code)
         .all()
     )
+    return sorted(items, key=_plan_sort_key)
 
 
 def auto_close_requirement_groups(db: Session, user_id: int) -> int:

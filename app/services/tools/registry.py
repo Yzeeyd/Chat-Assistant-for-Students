@@ -4,23 +4,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.db import crud, models
-from app.services.schedule_parser import parse_row
-from app.utils.schedule import find_room_image, normalize_room_text, today_dow_1_to_7
-
-
-def _nullable_string(description: str | None = None) -> dict[str, Any]:
-    item: dict[str, Any] = {'type': ['string', 'null']}
-    if description:
-        item['description'] = description
-    return item
-
-
-def _nullable_integer() -> dict[str, Any]:
-    return {'type': ['integer', 'null']}
-
-
-def _required_all(properties: dict[str, Any]) -> list[str]:
-    return list(properties.keys())
+from app.services.schedule_parser import parse_row, find_room_image, normalize_room_text, today_dow_1_to_7
 
 
 TOOL_DEFINITIONS = [
@@ -31,14 +15,14 @@ TOOL_DEFINITIONS = [
         'parameters': {
             'type': 'object',
             'properties': {
-                'course_code': _nullable_string('Course code such as CS461 or MH423.'),
+                'course_code': {'type': ['string', 'null'], 'description': 'Course code such as CS461 or MH423.'},
                 'course_name': {'type': 'string'},
                 'day_of_week': {'type': 'integer', 'minimum': 1, 'maximum': 7},
                 'start_time': {'type': 'string', 'description': 'HH:MM 24-hour'},
                 'end_time': {'type': 'string', 'description': 'HH:MM 24-hour'},
                 'room_text': {'type': 'string'},
-                'credits': _nullable_integer(),
-                'instructor': _nullable_string(),
+                'credits': {'type': ['integer', 'null']},
+                'instructor': {'type': ['string', 'null']},
             },
             'required': [
                 'course_code',
@@ -66,14 +50,14 @@ TOOL_DEFINITIONS = [
                     'items': {
                         'type': 'object',
                         'properties': {
-                            'course_code': _nullable_string(),
+                            'course_code': {'type': ['string', 'null']},
                             'course_name': {'type': 'string'},
                             'day_of_week': {'type': 'integer', 'minimum': 1, 'maximum': 7},
                             'start_time': {'type': 'string'},
                             'end_time': {'type': 'string'},
                             'room_text': {'type': 'string'},
-                            'credits': _nullable_integer(),
-                            'instructor': _nullable_string(),
+                            'credits': {'type': ['integer', 'null']},
+                            'instructor': {'type': ['string', 'null']},
                         },
                         'required': [
                             'course_code',
@@ -128,14 +112,14 @@ TOOL_DEFINITIONS = [
             'type': 'object',
             'properties': {
                 'course_id': {'type': 'integer'},
-                'course_code': _nullable_string(),
-                'course_name': _nullable_string(),
+                'course_code': {'type': ['string', 'null']},
+                'course_name': {'type': ['string', 'null']},
                 'day_of_week': {'type': ['integer', 'null'], 'minimum': 1, 'maximum': 7},
-                'start_time': _nullable_string('HH:MM 24-hour'),
-                'end_time': _nullable_string('HH:MM 24-hour'),
-                'room_text': _nullable_string(),
-                'instructor': _nullable_string(),
-                'credits': _nullable_integer(),
+                'start_time': {'type': ['string', 'null'], 'description': 'HH:MM 24-hour'},
+                'end_time': {'type': ['string', 'null'], 'description': 'HH:MM 24-hour'},
+                'room_text': {'type': ['string', 'null']},
+                'instructor': {'type': ['string', 'null']},
+                'credits': {'type': ['integer', 'null']},
             },
             'required': [
                 'course_id',
@@ -180,8 +164,8 @@ TOOL_DEFINITIONS = [
             'properties': {
                 'title': {'type': 'string'},
                 'remind_at_text': {'type': 'string', 'description': 'Human-readable description of when to remind, e.g. "الأربعاء 11 مساءً".'},
-                'remind_at': _nullable_string('ISO 8601 datetime when to trigger the reminder, e.g. "2026-05-03T23:00:00". Compute from the current date/time. Required whenever a specific time is mentioned.'),
-                'notes': _nullable_string(),
+                'remind_at': {'type': ['string', 'null'], 'description': 'ISO 8601 datetime when to trigger the reminder, e.g. "2026-05-03T23:00:00". Compute from the current date/time. Required whenever a specific time is mentioned.'},
+                'notes': {'type': ['string', 'null']},
             },
             'required': ['title', 'remind_at_text', 'remind_at', 'notes'],
             'additionalProperties': False,
@@ -219,12 +203,12 @@ TOOL_DEFINITIONS = [
         'parameters': {
             'type': 'object',
             'properties': {
-                'course_code': _nullable_string(),
+                'course_code': {'type': ['string', 'null']},
                 'course_name': {'type': 'string'},
-                'credits': _nullable_integer(),
-                'semester': _nullable_string(),
-                'status': _nullable_string('planned, in_progress, or completed'),
-                'notes': _nullable_string(),
+                'credits': {'type': ['integer', 'null']},
+                'semester': {'type': ['string', 'null']},
+                'status': {'type': ['string', 'null'], 'description': 'planned, in_progress, or completed'},
+                'notes': {'type': ['string', 'null']},
             },
             'required': ['course_code', 'course_name', 'credits', 'semester', 'status', 'notes'],
             'additionalProperties': False,
@@ -243,12 +227,12 @@ TOOL_DEFINITIONS = [
                     'items': {
                         'type': 'object',
                         'properties': {
-                            'course_code': _nullable_string(),
+                            'course_code': {'type': ['string', 'null']},
                             'course_name': {'type': 'string'},
-                            'credits': _nullable_integer(),
-                            'semester': _nullable_string(),
-                            'status': _nullable_string('planned, in_progress, or completed'),
-                            'notes': _nullable_string(),
+                            'credits': {'type': ['integer', 'null']},
+                            'semester': {'type': ['string', 'null']},
+                            'status': {'type': ['string', 'null'], 'description': 'planned, in_progress, or completed'},
+                            'notes': {'type': ['string', 'null']},
                         },
                         'required': ['course_code', 'course_name', 'credits', 'semester', 'status', 'notes'],
                         'additionalProperties': False,
@@ -320,8 +304,8 @@ TOOL_DEFINITIONS = [
                             'start_time_ar': {'type': 'string', 'description': 'Start time exactly as in image, e.g. "8:00 ص" or "1:00 م"'},
                             'end_time_ar': {'type': 'string', 'description': 'End time exactly as in image, e.g. "8:50 ص"'},
                             'room': {'type': 'string', 'description': 'Room text exactly as in image'},
-                            'instructor': _nullable_string('Instructor name or null'),
-                            'credits': _nullable_integer(),
+                            'instructor': {'type': ['string', 'null'], 'description': 'Instructor name or null'},
+                            'credits': {'type': ['integer', 'null']},
                         },
                         'required': ['course_code', 'course_name', 'day_ar', 'start_time_ar', 'end_time_ar', 'room', 'instructor', 'credits'],
                         'additionalProperties': False,

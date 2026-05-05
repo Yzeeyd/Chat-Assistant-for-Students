@@ -21,6 +21,5 @@ DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite+pysqlite:///./student_assistant
 
 UPLOADS_DIR = BASE_DIR / 'uploads'
 ROOMS_DIR = UPLOADS_DIR / 'rooms'
-ASSIGNMENTS_DIR = UPLOADS_DIR / 'assignments'
-for path in (UPLOADS_DIR, ROOMS_DIR, ASSIGNMENTS_DIR):
+for path in (UPLOADS_DIR, ROOMS_DIR):
     path.mkdir(parents=True, exist_ok=True)

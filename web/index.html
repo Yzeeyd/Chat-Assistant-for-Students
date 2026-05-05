@@ -224,8 +224,8 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
 .lec .code{font-size:11px;color:var(--muted);font-weight:700}
 .lec .name{font-size:13.5px;font-weight:700;line-height:1.4}
 .lec .meta-row{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--text-dim);direction:ltr;unicode-bidi:isolate}
-.lec .room-link{font-size:11px;color:hsl(var(--accent));background:transparent;border:0;padding:2px 0;cursor:pointer;font-weight:700;text-align:start}
-.lec .room-link:hover{text-decoration:underline}
+.lec .room-link,.meta-card .room-link{font-size:11px;color:hsl(var(--accent));background:transparent;border:0;padding:2px 0;cursor:pointer;font-weight:700;text-align:start}
+.lec .room-link:hover,.meta-card .room-link:hover{text-decoration:underline}
 .empty{color:var(--muted);font-size:13px;padding:8px 0;text-align:center}
 
 .list{display:flex;flex-direction:column;gap:10px}
@@ -700,6 +700,7 @@ const state = {
   lastDays: [],
   lastReminders: [],
   lastPlan: {active:[],remaining:[],counts:{}},
+  studentName: '',
 };
 
 const TWEAKS = /*EDITMODE-BEGIN*/{
@@ -866,6 +867,10 @@ function switchView(viewId){
   }
   if(viewId === 'scheduleView') renderWeekGrid('weekGridFull', state.lastDays);
   if(viewId === 'remindersView') renderRemindersFull();
+  if(viewId === 'chatView'){
+    const cl = $('chatList');
+    if(cl) requestAnimationFrame(() => { cl.scrollTop = cl.scrollHeight; });
+  }
 }
 document.querySelectorAll('.nav-btn').forEach(b => b.onclick = () => switchView(b.dataset.view));
 document.body.addEventListener('click', (e) => {
@@ -897,6 +902,7 @@ function initialOf(name){
 }
 
 function renderHeader(student){
+  state.studentName = student.name || '';
   $('pName').textContent = student.name || 'طالب';
   const tags = [student.major, student.college].filter(Boolean).join(' • ');
   $('pMajor').textContent = tags || '—';
@@ -1042,8 +1048,10 @@ function metaHTML(meta){
       <div class="meta-card">
         ${it.course_code ? `<div style="font-size:11px;color:var(--muted)">${esc(it.course_code)}</div>` : ''}
         <h5>${esc(it.course_name || '')}</h5>
-        <div class="row-line"><span>${esc(it.start_time || '--:--')} → ${esc(it.end_time || '--:--')}</span><span>${esc(it.room_text || '')}</span></div>
-        ${it.image_url ? `<img class="room-img" src="${esc(it.image_url)}" alt="${esc(it.room_text||'')}" data-img="${esc(it.image_url)}" data-title="${esc(it.room_text||'')}" loading="lazy" />` : ''}
+        <div class="row-line">
+          <span>${esc(it.start_time || '--:--')} → ${esc(it.end_time || '--:--')}</span>
+          <span>${esc(it.room_text || '')}${it.image_url ? ` <button class="room-link" data-img="${esc(it.image_url)}" data-title="${esc(it.room_text||it.course_name||'')}">عرض</button>` : ''}</span>
+        </div>
       </div>`).join('');
   }
   if(Array.isArray(meta.reminders) && meta.reminders.length){
@@ -1075,16 +1083,26 @@ function metaHTML(meta){
   return added ? html : '';
 }
 
+function renderMd(text){
+  let s = (text || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  s = s.replace(/\*\*([^*\n]+?)\*\*/g,'<strong>$1</strong>');
+  s = s.replace(/\*([^*\n]+?)\*/g,'<em>$1</em>');
+  return s;
+}
 function clearWelcome(){ const w = $('chatWelcome'); if(w) w.remove(); }
 function addMessage(role, text, meta=null, isTyping=false){
   clearWelcome();
   const el = document.createElement('div');
   el.className = `msg ${role}`;
-  const av = role === 'user' ? 'أ' : 'ج';
+  const av = role === 'user' ? (initialOf(state.studentName) || 'أ') : 'ج';
+  const bubbleContent = isTyping
+    ? '<div class="typing"><span></span><span></span><span></span></div>'
+    : (role === 'assistant' ? renderMd(text || '') : esc(text || ''));
   el.innerHTML = `
     <div class="msg-avatar">${av}</div>
-    <div style="min-width:0;flex:1">
-      <div class="bubble">${isTyping ? '<div class="typing"><span></span><span></span><span></span></div>' : esc(text || '')}</div>
+    <div class="msg-content" style="min-width:0;flex:1">
+      <div class="bubble">${bubbleContent}</div>
       ${metaHTML(meta)}
     </div>`;
   $('chatList').appendChild(el);
@@ -1158,9 +1176,9 @@ async function sendMessage(prefilled){
         body: JSON.stringify({ message: msg }),
       });
     }
-    typingEl.querySelector('.bubble').innerHTML = esc(data.text || '');
+    typingEl.querySelector('.bubble').innerHTML = renderMd(data.text || '');
     const wrap = document.createElement('div'); wrap.innerHTML = metaHTML(data.meta || null);
-    if(wrap.firstChild) typingEl.querySelector('div').appendChild(wrap.firstChild);
+    if(wrap.firstChild) typingEl.querySelector('.msg-content').appendChild(wrap.firstChild);
     setAttachment(null);
     loadDashboard().catch(()=>{});
     checkDueReminders().catch(()=>{});
@@ -1199,9 +1217,9 @@ async function uploadFile(endpoint, file, label){
   try{
     const form = new FormData(); form.append('file', file);
     const data = await api(endpoint, { method:'POST', headers: headers(), body: form });
-    t.querySelector('.bubble').innerHTML = esc(data.text || '');
+    t.querySelector('.bubble').innerHTML = renderMd(data.text || '');
     const wrap = document.createElement('div'); wrap.innerHTML = metaHTML(data.meta || null);
-    if(wrap.firstChild) t.querySelector('div').appendChild(wrap.firstChild);
+    if(wrap.firstChild) t.querySelector('.msg-content').appendChild(wrap.firstChild);
     loadDashboard().catch(()=>{});
     loadHistory().catch(()=>{});
     toast('تم الاستيراد بنجاح ✓');
