@@ -1,5 +1,6 @@
 .venv/
 app/__pycache__/
 *.pyc
+.env
 student_assistant.db
 example

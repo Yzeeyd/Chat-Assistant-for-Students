@@ -8,7 +8,7 @@ _GROUP_PATTERN = _re.compile(r'اختياري\s+(\d+)\s*[-–]\s*(\d+)')
 from app.core.security import get_current_user
 from app.db import crud, models
 from app.db.session import get_db
-from app.utils.schedule import find_room_image
+from app.services.schedule_parser import find_room_image
 
 router = APIRouter(prefix='/dashboard', tags=['dashboard'])
 
@@ -60,6 +60,14 @@ def due_reminders(db: Session = Depends(get_db), user: models.User = Depends(get
             for r in items
         ]
     }
+
+
+@router.delete('/reminders/{reminder_id}')
+def delete_reminder(reminder_id: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)) -> dict:
+    deleted = crud.delete_reminder(db, reminder_id=reminder_id, user_id=user.id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail='Reminder not found')
+    return {'ok': True}
 
 
 @router.post('/reminders/{reminder_id}/done')

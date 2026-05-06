@@ -8,374 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-<style>
-:root{
-  --accent: 235 91% 64%;
-  --accent-2: 268 86% 68%;
-  --radius: 18px;
-  --density: 1;
-  --bg: #0b1020;
-  --bg-2: #0a1226;
-  --panel: rgba(255,255,255,.04);
-  --panel-2: rgba(255,255,255,.025);
-  --line: rgba(255,255,255,.08);
-  --line-strong: rgba(255,255,255,.14);
-  --text: #eef2ff;
-  --text-dim: #b8c2e0;
-  --muted: #8893b8;
-  --ok: #22c55e;
-  --warn: #f59e0b;
-  --err: #ef4444;
-}
-html[data-theme="light"]{
-  --bg:#f4f6fb; --bg-2:#eaeef7;
-  --panel:rgba(255,255,255,.86); --panel-2:rgba(255,255,255,.6);
-  --line:rgba(20,30,60,.08); --line-strong:rgba(20,30,60,.16);
-  --text:#0e152e; --text-dim:#27345e; --muted:#5a6587;
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  background:
-    radial-gradient(1200px 600px at 100% -10%, hsl(var(--accent-2)/.18), transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, hsl(var(--accent)/.20), transparent 60%),
-    linear-gradient(180deg,var(--bg) 0%, var(--bg-2) 100%);
-  background-attachment: fixed;
-  color:var(--text);
-  font-family:"IBM Plex Sans Arabic","Tajawal",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  -webkit-font-smoothing:antialiased;
-  font-size: calc(15px * var(--density));
-  line-height:1.6;
-}
-html[data-theme="light"] body{
-  background:
-    radial-gradient(1100px 540px at 100% -10%, hsl(var(--accent-2)/.18), transparent 65%),
-    radial-gradient(900px 500px at -5% 110%, hsl(var(--accent)/.15), transparent 60%),
-    linear-gradient(180deg,#f7f9ff,#eef2fb);
-}
-button{font-family:inherit}
-input,select,textarea{font-family:inherit;color:inherit}
-
-.auth-wrap{min-height:100dvh;display:grid;place-items:center;padding:24px}
-.auth-card{
-  width:min(440px,100%);
-  background:linear-gradient(180deg, hsl(var(--accent)/.08), transparent 50%), var(--panel);
-  border:1px solid var(--line);
-  backdrop-filter:blur(20px);
-  border-radius: calc(var(--radius) + 8px);
-  padding:28px;
-  box-shadow:0 30px 80px rgba(0,0,0,.35);
-}
-.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:6px}
-.logo-mark{
-  width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
-  background:linear-gradient(135deg,hsl(var(--accent)),hsl(var(--accent-2)));
-  box-shadow:0 8px 24px hsl(var(--accent)/.4);
-  color:#fff;font-weight:900;
-}
-.auth-card h1{margin:6px 0 4px;font-size:22px;font-weight:800;letter-spacing:-.01em}
-.auth-card .sub{color:var(--muted);font-size:14px;margin-bottom:20px}
-.tabs{display:flex;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:18px}
-.tabs button{flex:1;border:0;background:transparent;color:var(--muted);padding:10px;border-radius:9px;font-weight:700;cursor:pointer;font-size:13.5px;transition:.18s}
-.tabs button.on{background:hsl(var(--accent)/.18);color:var(--text);box-shadow:inset 0 0 0 1px hsl(var(--accent)/.35)}
-.field{display:grid;gap:6px;margin-bottom:12px}
-.field label{font-size:12.5px;color:var(--muted);font-weight:600}
-.field input, .field select{
-  width:100%;background:var(--panel-2);border:1px solid var(--line);
-  border-radius:12px;padding:12px 14px;font-size:14.5px;outline:none;transition:.15s;
-}
-.field input:focus, .field select:focus{border-color:hsl(var(--accent)/.6);background:var(--panel);box-shadow:0 0 0 4px hsl(var(--accent)/.12)}
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:520px){.field-row{grid-template-columns:1fr}}
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  border:0;border-radius:12px;padding:12px 16px;font-weight:800;font-size:14.5px;cursor:pointer;
-  transition:transform .12s, filter .15s, background .15s, box-shadow .15s;
-}
-.btn:active{transform:translateY(1px)}
-.btn-primary{
-  background:linear-gradient(135deg,hsl(var(--accent)),hsl(var(--accent-2)));
-  color:#fff;box-shadow:0 10px 30px hsl(var(--accent)/.35);
-}
-.btn-primary:hover{filter:brightness(1.05)}
-.btn-primary:disabled{opacity:.55;cursor:not-allowed}
-.btn-ghost{background:var(--panel);color:var(--text);border:1px solid var(--line)}
-.btn-ghost:hover{background:var(--panel-2);border-color:var(--line-strong)}
-.btn-danger{background:hsl(0 84% 60% / .15);color:#fca5a5;border:1px solid hsl(0 84% 60% / .25)}
-html[data-theme="light"] .btn-danger{color:#b91c1c}
-.btn-block{width:100%}
-.auth-msg{margin-top:10px;font-size:13px;color:var(--muted);min-height:18px;text-align:center}
-.auth-msg.err{color:#fca5a5}
-
-.app{display:none;min-height:100dvh}
-.app.show{display:grid;grid-template-columns:280px 1fr}
-.sidebar{
-  position:sticky;top:0;height:100dvh;
-  border-inline-start:1px solid var(--line);
-  background:linear-gradient(180deg, hsl(var(--accent)/.06), transparent 30%), var(--panel-2);
-  backdrop-filter:blur(14px);
-  padding:18px;display:flex;flex-direction:column;gap:14px;overflow:auto;
-}
-.brand-block{display:flex;align-items:center;gap:10px;padding:10px 4px}
-.brand-block .name{font-weight:800;font-size:16px;letter-spacing:-.01em}
-.brand-block .role{font-size:12px;color:var(--muted)}
-.profile-card{
-  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
-  padding:14px;display:flex;align-items:center;gap:12px;
-}
-.avatar{
-  width:44px;height:44px;border-radius:50%;
-  background:linear-gradient(135deg,hsl(var(--accent)),hsl(var(--accent-2)));
-  color:#fff;display:grid;place-items:center;font-weight:800;font-size:16px;flex-shrink:0;
-}
-.profile-card .meta{min-width:0}
-.profile-card .pname{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.profile-card .pmajor{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nav{display:flex;flex-direction:column;gap:4px}
-.nav .nav-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:8px 10px 4px;font-weight:700}
-.nav button{
-  display:flex;align-items:center;gap:10px;
-  text-align:start;width:100%;padding:11px 12px;border-radius:11px;
-  border:0;background:transparent;color:var(--text-dim);cursor:pointer;font-weight:600;font-size:14px;
-  transition:.15s;
-}
-.nav button:hover{background:var(--panel)}
-.nav button.active{background:hsl(var(--accent)/.16);color:var(--text);box-shadow:inset 0 0 0 1px hsl(var(--accent)/.3)}
-.nav button .ico{width:18px;height:18px;flex-shrink:0;opacity:.9}
-.nav-spacer{flex:1}
-.health-pill{
-  display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);
-  padding:6px 10px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);width:fit-content;
-}
-.health-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px hsl(142 71% 45% / .25)}
-.health-dot.bad{background:var(--err);box-shadow:0 0 0 3px hsl(0 84% 60% / .25)}
-
-.main{min-width:0;display:flex;flex-direction:column}
-.topbar{
-  position:sticky;top:0;z-index:20;
-  display:flex;align-items:center;gap:12px;padding:14px 22px;
-  border-bottom:1px solid var(--line);
-  background:color-mix(in oklab, var(--bg) 72%, transparent);
-  backdrop-filter:blur(14px);
-}
-.topbar .menu-btn{display:none}
-.topbar h2{margin:0;font-size:18px;font-weight:800;letter-spacing:-.01em}
-.topbar .spacer{flex:1}
-.icon-btn{
-  width:38px;height:38px;display:grid;place-items:center;border-radius:10px;
-  border:1px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;transition:.15s;
-}
-.icon-btn:hover{background:var(--panel-2);border-color:var(--line-strong)}
-
-.content{padding:22px;display:flex;flex-direction:column;gap:18px;flex:1}
-.view{display:none}
-.view.active{display:flex;flex-direction:column;gap:18px}
-
-.hero{
-  border:1px solid var(--line);border-radius:calc(var(--radius) + 4px);padding:22px;
-  background:
-    radial-gradient(600px 200px at 90% 0%, hsl(var(--accent-2)/.18), transparent 70%),
-    linear-gradient(135deg, hsl(var(--accent)/.14), hsl(var(--accent-2)/.06));
-  display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
-}
-.hero h3{margin:0 0 6px;font-size:20px;font-weight:800;letter-spacing:-.01em}
-.hero p{margin:0;color:var(--text-dim);max-width:560px;line-height:1.7}
-.hero .cta{display:flex;gap:8px;flex-wrap:wrap}
-
-.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.metric{
-  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
-  padding:16px;display:flex;flex-direction:column;gap:8px;
-}
-.metric .ico-pill{
-  width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
-  background:hsl(var(--accent)/.16);color:hsl(var(--accent));
-}
-.metric.v2 .ico-pill{background:hsl(var(--accent-2)/.16);color:hsl(var(--accent-2))}
-.metric.v3 .ico-pill{background:hsl(38 92% 50% / .16);color:#f59e0b}
-.metric.v4 .ico-pill{background:hsl(142 71% 45% / .16);color:#22c55e}
-.metric .k{color:var(--muted);font-size:13px;font-weight:600}
-.metric .v{font-size:30px;font-weight:900;letter-spacing:-.02em;line-height:1}
-
-.split{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
-.card{
-  background:var(--panel);border:1px solid var(--line);
-  border-radius:var(--radius);padding:18px;
-}
-.card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.card-head h4{margin:0;font-size:15.5px;font-weight:800;letter-spacing:-.01em}
-.card-head .actions{display:flex;gap:6px;flex-wrap:wrap}
-.btn-sm{padding:8px 12px;font-size:13px;border-radius:10px}
-
-.week-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-.day{
-  background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:170px;
-  display:flex;flex-direction:column;gap:10px;
-}
-.day .day-head{display:flex;justify-content:space-between;align-items:center}
-.day .day-head strong{font-size:14px;font-weight:800}
-.day-pill{font-size:11px;color:var(--muted);background:var(--panel);border:1px solid var(--line);padding:3px 8px;border-radius:999px}
-.lec{
-  border-radius:11px;padding:9px 10px;
-  background:linear-gradient(180deg, hsl(var(--accent)/.10), hsl(var(--accent)/.04));
-  border:1px solid hsl(var(--accent)/.22);display:grid;gap:3px;
-}
-.lec .code{font-size:11px;color:var(--muted);font-weight:700}
-.lec .name{font-size:13.5px;font-weight:700;line-height:1.4}
-.lec .meta-row{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--text-dim);direction:ltr;unicode-bidi:isolate}
-.lec .room-link{font-size:11px;color:hsl(var(--accent));background:transparent;border:0;padding:2px 0;cursor:pointer;font-weight:700;text-align:start}
-.lec .room-link:hover{text-decoration:underline}
-.empty{color:var(--muted);font-size:13px;padding:8px 0;text-align:center}
-
-.list{display:flex;flex-direction:column;gap:10px}
-.row{
-  background:var(--panel-2);border:1px solid var(--line);border-radius:13px;padding:12px 14px;
-  display:flex;flex-direction:column;gap:4px;
-}
-.row .title{font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.row .meta-line{display:flex;justify-content:space-between;color:var(--muted);font-size:12.5px;flex-wrap:wrap;gap:8px}
-.status-pill{font-size:11px;padding:3px 8px;border-radius:999px;font-weight:700}
-.status-pill.active{background:hsl(38 92% 50% / .16);color:#f59e0b}
-.status-pill.done{background:hsl(142 71% 45% / .16);color:#22c55e}
-.status-pill.in-progress{background:hsl(var(--accent)/.16);color:hsl(var(--accent))}
-.status-pill.remaining{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
-
-.plan-summary{
-  display:flex;gap:14px;flex-wrap:wrap;background:var(--panel-2);border:1px solid var(--line);
-  padding:10px 14px;border-radius:12px;font-size:13px;color:var(--text-dim);margin-bottom:12px;
-}
-.plan-summary span strong{color:var(--text)}
-.section-label{font-size:12px;color:var(--muted);font-weight:700;margin:14px 0 6px}
-
-.chat-shell{display:grid;grid-template-rows:1fr auto;gap:12px;height:calc(100dvh - 120px);min-height:480px}
-.chat-card{padding:14px;display:flex;flex-direction:column;min-height:0}
-.chat-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:14px;padding:6px 4px;scroll-behavior:smooth}
-.chat-list::-webkit-scrollbar{width:8px}
-.chat-list::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
-.welcome{margin:auto;text-align:center;max-width:520px;padding:28px 16px;color:var(--text-dim)}
-.welcome .big{font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px;letter-spacing:-.01em}
-.welcome p{margin:0 0 18px;line-height:1.7}
-.suggestion-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
-@media(max-width:520px){.suggestion-grid{grid-template-columns:1fr}}
-.suggestion{
-  background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:11px 13px;text-align:start;
-  cursor:pointer;color:var(--text);font-size:13.5px;font-weight:600;transition:.15s;line-height:1.5;
-}
-.suggestion:hover{background:var(--panel);border-color:hsl(var(--accent)/.4);transform:translateY(-1px)}
-.suggestion .hint{display:block;font-size:11.5px;color:var(--muted);font-weight:500;margin-top:3px}
-
-.msg{display:flex;gap:10px;align-items:flex-start;max-width:88%}
-.msg.user{align-self:flex-end;flex-direction:row-reverse}
-.msg.assistant{align-self:flex-start}
-.msg .bubble{padding:12px 14px;border-radius:16px;line-height:1.7;font-size:14.5px;white-space:pre-wrap;word-break:break-word}
-.msg.user .bubble{background:linear-gradient(135deg,hsl(var(--accent)),hsl(var(--accent-2)));color:#fff;border-bottom-right-radius:6px}
-.msg.assistant .bubble{background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:6px}
-.msg-avatar{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex-shrink:0;font-size:14px;font-weight:800}
-.msg.user .msg-avatar{background:hsl(var(--accent)/.18);color:hsl(var(--accent))}
-.msg.assistant .msg-avatar{background:linear-gradient(135deg,hsl(var(--accent)),hsl(var(--accent-2)));color:#fff}
-
-.typing{display:inline-flex;gap:4px;padding:4px 0}
-.typing span{width:7px;height:7px;background:var(--muted);border-radius:50%;animation:bounce 1.2s infinite}
-.typing span:nth-child(2){animation-delay:.15s}
-.typing span:nth-child(3){animation-delay:.3s}
-@keyframes bounce{0%,80%,100%{transform:scale(.6);opacity:.5}40%{transform:scale(1);opacity:1}}
-
-.meta-group{display:flex;flex-direction:column;gap:8px;margin-top:10px}
-.meta-card{padding:10px 12px;border-radius:12px;background:var(--panel-2);border:1px solid var(--line)}
-.meta-card h5{margin:0 0 4px;font-size:13.5px;font-weight:700}
-.meta-card .row-line{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);gap:8px;flex-wrap:wrap}
-.meta-card .room-img{width:100%;max-height:160px;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin-top:8px;cursor:pointer}
-
-.composer{display:flex;flex-direction:column;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:10px}
-.composer:focus-within{border-color:hsl(var(--accent)/.5);box-shadow:0 0 0 4px hsl(var(--accent)/.12)}
-.composer textarea{width:100%;background:transparent;border:0;outline:none;resize:none;min-height:44px;max-height:160px;font-size:14.5px;padding:6px 8px}
-.attachment-chip{display:none;align-items:center;gap:6px;background:hsl(var(--accent)/.14);border:1px solid hsl(var(--accent)/.3);color:var(--text);padding:5px 10px;border-radius:999px;font-size:12px;width:fit-content}
-.attachment-chip.show{display:inline-flex}
-.attachment-chip button{background:transparent;border:0;color:inherit;cursor:pointer;font-size:14px;line-height:1;padding:0 2px}
-.composer-bar{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.composer-actions{display:flex;gap:4px}
-.tool-btn{width:36px;height:36px;border-radius:10px;border:0;background:transparent;color:var(--text-dim);cursor:pointer;display:grid;place-items:center;transition:.15s}
-.tool-btn:hover{background:var(--panel-2);color:var(--text)}
-.send-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:11px;border:0;font-weight:800;cursor:pointer;background:linear-gradient(135deg,hsl(var(--accent)),hsl(var(--accent-2)));color:#fff;font-size:13.5px;box-shadow:0 8px 20px hsl(var(--accent)/.3);transition:.15s}
-.send-btn:disabled{opacity:.55;cursor:not-allowed}
-.send-btn:hover:not(:disabled){filter:brightness(1.06)}
-
-.quick-strip{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 6px}
-.quick-strip::-webkit-scrollbar{height:0}
-.quick-strip button{flex-shrink:0;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--text-dim);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.15s}
-.quick-strip button:hover{background:var(--panel-2);color:var(--text);border-color:hsl(var(--accent)/.35)}
-
-.modal-bg{position:fixed;inset:0;background:rgba(5,10,20,.6);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px;z-index:100}
-.modal-bg.show{display:flex;animation:fadeIn .2s ease}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.modal{width:min(720px,100%);max-height:90dvh;overflow:auto;background:var(--bg-2);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:popIn .25s cubic-bezier(.22,1,.36,1)}
-@keyframes popIn{from{opacity:0;transform:translateY(20px) scale(.96)}to{opacity:1;transform:none}}
-.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.modal-head h3{margin:0;font-size:17px;font-weight:800}
-.modal img.preview{width:100%;max-height:70dvh;object-fit:contain;border-radius:12px;background:var(--panel-2);border:1px solid var(--line)}
-
-.reminder-bg{position:fixed;inset:0;background:rgba(5,10,20,.86);display:none;align-items:center;justify-content:center;padding:20px;z-index:200}
-.reminder-bg.show{display:flex;animation:fadeIn .2s ease}
-.reminder-card{width:min(440px,100%);background:var(--bg-2);border:1px solid hsl(var(--accent)/.4);border-radius:20px;padding:26px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:popIn .25s cubic-bezier(.22,1,.36,1);text-align:center}
-.bell{font-size:38px;animation:wiggle 1.4s ease-in-out infinite}
-@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
-.r-title{font-size:18px;font-weight:800;line-height:1.4}
-.r-time{color:var(--muted);font-size:13.5px;line-height:1.6;white-space:pre-line}
-.r-actions{display:flex;gap:10px}
-.r-actions button{flex:1;padding:11px;border-radius:12px;font-weight:800;border:0;cursor:pointer;font-size:14px}
-.r-done{background:var(--ok);color:#052010}
-.r-ok{background:var(--panel);color:var(--text);border:1px solid var(--line) !important}
-.r-counter{font-size:11.5px;color:var(--muted)}
-
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:12px 18px;font-size:13.5px;font-weight:600;box-shadow:0 20px 40px rgba(0,0,0,.4);opacity:0;transition:.25s;z-index:1000;pointer-events:none}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.toast.err{border-color:hsl(0 84% 60% / .4);color:#fca5a5}
-
-.tweaks{position:fixed;bottom:18px;left:18px;z-index:90;width:300px;background:var(--bg-2);border:1px solid var(--line);border-radius:18px;padding:14px;display:none;flex-direction:column;gap:12px;box-shadow:0 20px 50px rgba(0,0,0,.5)}
-.tweaks.show{display:flex}
-.tweaks h4{margin:0;font-size:14px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
-.tweaks h4 button{background:transparent;border:0;color:var(--muted);cursor:pointer;font-size:18px;line-height:1}
-.tweak-row{display:flex;flex-direction:column;gap:6px}
-.tweak-row label{font-size:12px;color:var(--muted);font-weight:600}
-.swatches{display:flex;gap:6px;flex-wrap:wrap}
-.swatch{width:26px;height:26px;border-radius:8px;border:2px solid transparent;cursor:pointer;transition:.15s}
-.swatch.on{border-color:var(--text);transform:scale(1.1)}
-.seg{display:flex;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
-.seg button{flex:1;border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:700;padding:7px;border-radius:7px;cursor:pointer}
-.seg button.on{background:hsl(var(--accent)/.2);color:var(--text)}
-
-.sidebar-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:70;display:none}
-.sidebar-backdrop.show{display:block}
-
-@media (max-width:1100px){
-  .metrics{grid-template-columns:repeat(2,1fr)}
-  .split{grid-template-columns:1fr}
-  .week-grid{grid-template-columns:repeat(3,1fr)}
-}
-@media (max-width:760px){
-  .app.show{grid-template-columns:1fr}
-  .sidebar{position:fixed;inset:0 0 0 auto;width:78%;max-width:300px;z-index:80;transform:translateX(0);transition:transform .25s;box-shadow:0 0 60px rgba(0,0,0,.5)}
-  .sidebar.collapsed{transform:translateX(100%)}
-  .topbar .menu-btn{display:grid}
-  .week-grid{grid-template-columns:1fr 1fr}
-  .hero{padding:18px}
-  .hero h3{font-size:18px}
-  .content{padding:16px}
-  .metric .v{font-size:24px}
-  .chat-shell{height:calc(100dvh - 100px)}
-  .tweaks{left:10px;right:10px;bottom:10px;width:auto}
-}
-@media (max-width:480px){
-  .metrics{grid-template-columns:1fr 1fr;gap:8px}
-  .metric{padding:13px}
-  .week-grid{grid-template-columns:1fr}
-  .auth-card{padding:22px}
-  .hero .cta{width:100%}
-  .hero .cta .btn{flex:1}
-}
-@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -384,42 +17,38 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
     <div class="auth-logo">
       <div class="logo-mark">ج</div>
       <div>
-        <h1>المساعد الذكي للطلاب</h1>
-        <div class="sub">جدولك ومذكراتك وخطتك الأكاديمية في مكان واحد</div>
+        <h1 data-i18n="page.title">المساعد الذكي للطلاب</h1>
+        <div class="sub" data-i18n="auth.tagline">جدولك ومذكراتك وخطتك الأكاديمية في مكان واحد</div>
       </div>
     </div>
     <div class="tabs" role="tablist">
-      <button class="on" data-auth-tab="login">تسجيل الدخول</button>
-      <button data-auth-tab="signup">إنشاء حساب</button>
+      <button class="on" data-auth-tab="login" data-i18n="auth.login">تسجيل الدخول</button>
+      <button data-auth-tab="signup" data-i18n="auth.signup">إنشاء حساب</button>
     </div>
     <form id="loginForm" class="auth-form">
-      <div class="field"><label>البريد الإلكتروني</label><input id="liEmail" type="email" placeholder="example@university.edu.sa" autocomplete="email" required /></div>
-      <div class="field"><label>كلمة المرور</label><input id="liPass" type="password" placeholder="••••••••" autocomplete="current-password" required /></div>
-      <button type="submit" class="btn btn-primary btn-block" id="loginBtn">دخول</button>
+      <div class="field"><label data-i18n="auth.email">البريد الإلكتروني</label><input id="liEmail" type="email" placeholder="example@university.edu.sa" autocomplete="email" required /></div>
+      <div class="field"><label data-i18n="auth.password">كلمة المرور</label><input id="liPass" type="password" data-i18n-ph="auth.pass.ph" placeholder="••••••••" autocomplete="current-password" required /></div>
+      <button type="submit" class="btn btn-primary btn-block" id="loginBtn" data-i18n="auth.login.btn">دخول</button>
     </form>
     <form id="signupForm" class="auth-form" style="display:none">
-      <div class="field"><label>الاسم الكامل</label><input id="suName" placeholder="اسمك" required /></div>
-      <div class="field"><label>البريد الإلكتروني</label><input id="suEmail" type="email" placeholder="example@university.edu.sa" required /></div>
-      <div class="field"><label>كلمة المرور</label><input id="suPass" type="password" placeholder="6 أحرف على الأقل" minlength="6" required /></div>
+      <div class="field"><label data-i18n="auth.fullname">الاسم الكامل</label><input id="suName" data-i18n-ph="auth.name.ph" placeholder="اسمك" required /></div>
+      <div class="field"><label data-i18n="auth.email">البريد الإلكتروني</label><input id="suEmail" type="email" placeholder="example@university.edu.sa" required /></div>
+      <div class="field"><label data-i18n="auth.password">كلمة المرور</label><input id="suPass" type="password" data-i18n-ph="auth.pass.min" placeholder="6 أحرف على الأقل" minlength="6" required /></div>
       <div class="field-row">
-        <div class="field"><label>الكلية</label><input id="suCollege" placeholder="كلية الحاسب" /></div>
-        <div class="field"><label>التخصص</label>
+        <div class="field"><label data-i18n="auth.college">الكلية</label><input id="suCollege" data-i18n-ph="auth.college.ph" placeholder="كلية الحاسب" /></div>
+        <div class="field"><label data-i18n="auth.major">التخصص</label>
           <select id="suMajor">
-            <option value="">اختر التخصص</option>
-            <option value="CS">علوم الحاسب — CS</option>
-            <option value="IT">تقنية المعلومات — IT</option>
-            <option value="IS">نظم المعلومات — IS</option>
-            <option value="CE">هندسة الحاسب — CE</option>
-            <option value="SE">هندسة البرمجيات — SE</option>
-            <option value="DS">علم البيانات — DS</option>
-            <option value="AI">الذكاء الاصطناعي — AI</option>
-            <option value="MIS">نظم المعلومات الإدارية — MIS</option>
-            <option value="OTHER">تخصص آخر</option>
+            <option value="" data-i18n="auth.major.choose">اختر التخصص</option>
+            <option value="CS" data-i18n="auth.major.cs">علوم الحاسب — CS</option>
+            <option value="IT" data-i18n="auth.major.it">تقنية المعلومات — IT</option>
+            <option value="DS" data-i18n="auth.major.ds">علم البيانات — DS</option>
+            <option value="AI" data-i18n="auth.major.ai">الذكاء الاصطناعي — AI</option>
+            <option value="OTHER" data-i18n="auth.major.other">تخصص آخر</option>
           </select>
         </div>
       </div>
-      <div class="field"><label>المسار <span style="color:var(--muted);font-weight:500">(اختياري)</span></label><input id="suTrack" placeholder="مثل: شبكات، أمن معلومات" /></div>
-      <button type="submit" class="btn btn-primary btn-block" id="signupBtn">إنشاء الحساب</button>
+      <div class="field"><label><span data-i18n="auth.track">المسار</span> <span style="color:var(--muted);font-weight:500" data-i18n="auth.track.opt">(اختياري)</span></label><input id="suTrack" data-i18n-ph="auth.track.ph" placeholder="مثل: شبكات، أمن معلومات" /></div>
+      <button type="submit" class="btn btn-primary btn-block" id="signupBtn" data-i18n="auth.signup.btn">إنشاء الحساب</button>
     </form>
     <div class="auth-msg" id="authMsg"></div>
   </div>
@@ -431,8 +60,8 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
     <div class="brand-block">
       <div class="logo-mark">ج</div>
       <div>
-        <div class="name">جامعتي</div>
-        <div class="role">مساعد الطالب الذكي</div>
+        <div class="name" data-i18n="brand.name">جامعتي</div>
+        <div class="role" data-i18n="brand.role">مساعد الطالب الذكي</div>
       </div>
     </div>
     <div class="profile-card" id="profileCard">
@@ -443,54 +72,55 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
       </div>
     </div>
     <div class="nav">
-      <div class="nav-label">القوائم</div>
+      <div class="nav-label" data-i18n="nav.label">القوائم</div>
       <button class="nav-btn active" data-view="dashboardView">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>
-        لوحة التحكم
+        <span data-i18n="nav.dashboard">لوحة التحكم</span>
       </button>
       <button class="nav-btn" data-view="chatView">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-12.6 8.2L3 21l.8-5.4A9 9 0 1 1 21 12z"/></svg>
-        المحادثة
+        <span data-i18n="nav.chat">المحادثة</span>
       </button>
       <button class="nav-btn" data-view="scheduleView">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        الجدول الأسبوعي
+        <span data-i18n="nav.schedule">الجدول الأسبوعي</span>
       </button>
       <button class="nav-btn" data-view="remindersView">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
-        التذكيرات
+        <span data-i18n="nav.reminders">التذكيرات</span>
       </button>
       <button class="nav-btn" data-view="planView">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        الخطة الأكاديمية
+        <span data-i18n="nav.plan">الخطة الأكاديمية</span>
       </button>
     </div>
     <div class="nav-spacer"></div>
     <div class="health-pill" id="healthPill">
       <span class="health-dot" id="healthDot"></span>
-      <span id="healthLabel">جاري الاتصال…</span>
+      <span id="healthLabel" data-health-state="connecting">جاري الاتصال…</span>
     </div>
     <button class="btn btn-ghost btn-block" id="clearChatBtn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-      حذف المحادثات
+      <span data-i18n="sidebar.clear">حذف المحادثات</span>
     </button>
     <button class="btn btn-danger btn-block" id="logoutBtn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      تسجيل الخروج
+      <span data-i18n="sidebar.logout">تسجيل الخروج</span>
     </button>
   </aside>
 
   <main class="main">
     <div class="topbar">
-      <button class="icon-btn menu-btn" id="menuBtn" aria-label="القائمة">
+      <button class="icon-btn menu-btn" id="menuBtn" data-i18n-aria="topbar.menu" aria-label="القائمة">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <h2 id="pageTitle">لوحة التحكم</h2>
       <div class="spacer"></div>
-      <button class="icon-btn" id="themeBtn" title="تبديل المظهر" aria-label="تبديل المظهر">
+      <button class="lang-btn" id="langBtn">EN</button>
+      <button class="icon-btn" id="themeBtn" data-i18n-aria="topbar.theme" title="تبديل المظهر" aria-label="تبديل المظهر">
         <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
-      <button class="icon-btn" id="tweaksBtn" title="إعدادات المظهر" aria-label="إعدادات المظهر" style="display:none">
+      <button class="icon-btn" id="tweaksBtn" data-i18n-aria="topbar.tweaks" title="إعدادات المظهر" aria-label="إعدادات المظهر" style="display:none">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82 2 2 0 0 1-2.83 2.83 1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33 2 2 0 0 1-2.83-2.83 1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82 2 2 0 0 1 2.83-2.83 1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33 2 2 0 0 1 2.83 2.83 1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
     </div>
@@ -500,27 +130,27 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
         <div class="hero">
           <div>
             <h3 id="greetEl">أهلاً 👋</h3>
-            <p>تابع جدولك، تذكيراتك، وخطتك الأكاديمية. اسأل المساعد عن أي شيء — يفهم جدولك ويجاوبك بناءً عليه.</p>
+            <p data-i18n="dash.tagline">تابع جدولك، تذكيراتك، وخطتك الأكاديمية. اسأل المساعد عن أي شيء — يفهم جدولك ويجاوبك بناءً عليه.</p>
           </div>
           <div class="cta">
-            <button class="btn btn-primary" data-prompt="وش عندي اليوم؟">جدول اليوم</button>
-            <button class="btn btn-ghost" data-go="chatView">افتح المحادثة</button>
+            <button class="btn btn-primary" data-prompt="وش عندي اليوم؟" data-i18n="dash.today">جدول اليوم</button>
+            <button class="btn btn-ghost" data-go="chatView" data-i18n="dash.open.chat">افتح المحادثة</button>
           </div>
         </div>
         <div class="metrics">
-          <div class="metric"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><div class="k">حصص الأسبوع</div><div class="v" id="mWeek">0</div></div>
-          <div class="metric v2"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div><div class="k">إجمالي الحصص</div><div class="v" id="mAll">0</div></div>
-          <div class="metric v3"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/></svg></div><div class="k">تذكيرات نشطة</div><div class="v" id="mRem">0</div></div>
-          <div class="metric v4"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="k">المتبقي بالخطة</div><div class="v" id="mPlan">0</div></div>
+          <div class="metric"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><div class="k" data-i18n="metric.week">حصص الأسبوع</div><div class="v" id="mWeek">0</div></div>
+          <div class="metric v2"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div><div class="k" data-i18n="metric.all">إجمالي الحصص</div><div class="v" id="mAll">0</div></div>
+          <div class="metric v3"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/></svg></div><div class="k" data-i18n="metric.rem">تذكيرات نشطة</div><div class="v" id="mRem">0</div></div>
+          <div class="metric v4"><div class="ico-pill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="k" data-i18n="metric.plan">المتبقي بالخطة</div><div class="v" id="mPlan">0</div></div>
         </div>
         <div class="split">
           <div class="card">
             <div class="card-head">
-              <h4>جدول الأسبوع الدراسي</h4>
+              <h4 data-i18n="schedule.title">جدول الأسبوع الدراسي</h4>
               <div class="actions">
                 <button class="btn btn-ghost btn-sm" id="uploadScheduleBtn">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  رفع صورة
+                  <span data-i18n="schedule.upload">رفع صورة</span>
                 </button>
                 <input id="scheduleImgInput" type="file" accept="image/*" hidden />
               </div>
@@ -529,8 +159,8 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
           </div>
           <div class="card">
             <div class="card-head">
-              <h4>تذكيرات قريبة</h4>
-              <button class="btn btn-ghost btn-sm" data-prompt="أضف تذكير جديد">+ تذكير</button>
+              <h4 data-i18n="reminders.soon">تذكيرات قريبة</h4>
+              <button class="btn btn-ghost btn-sm" data-prompt="أضف تذكير جديد" data-i18n="reminder.add.short">+ تذكير</button>
             </div>
             <div class="list" id="remListShort"></div>
           </div>
@@ -539,23 +169,23 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
 
       <section class="view" id="chatView">
         <div class="quick-strip">
-          <button data-prompt="وش عندي اليوم؟">جدول اليوم</button>
-          <button data-prompt="اعرض كل جدولي">كل الجدول</button>
-          <button data-prompt="اعرض التذكيرات الحالية">التذكيرات</button>
-          <button data-prompt="اعرض خطتي الأكاديمية">الخطة الأكاديمية</button>
-          <button data-prompt="اقترح علي مواد مناسبة للفصل الجاي">اقتراح مواد</button>
-          <button data-prompt="ما هي قواعد الانذار الأكاديمي؟">قواعد الجامعة</button>
+          <button data-prompt="وش عندي اليوم؟" data-i18n="chat.today">جدول اليوم</button>
+          <button data-prompt="اعرض كل جدولي" data-i18n="chat.all">كل الجدول</button>
+          <button data-prompt="اعرض التذكيرات الحالية" data-i18n="chat.reminders">التذكيرات</button>
+          <button data-prompt="اعرض خطتي الأكاديمية" data-i18n="chat.plan">الخطة الأكاديمية</button>
+          <button data-prompt="اقترح علي مواد مناسبة للفصل الجاي" data-i18n="chat.suggest">اقتراح مواد</button>
+          <button data-prompt="ما هي قواعد الانذار الأكاديمي؟" data-i18n="chat.rules">قواعد الجامعة</button>
         </div>
         <div class="card chat-card chat-shell">
           <div class="chat-list" id="chatList">
             <div class="welcome" id="chatWelcome">
-              <div class="big">كيف أقدر أساعدك اليوم؟</div>
-              <p>اسأل عن جدولك أو خطتك، أضف تذكيرات، أو ارفع صورة الجدول وأنا أرتبه لك.</p>
+              <div class="big" data-i18n="chat.welcome.big">كيف أقدر أساعدك اليوم؟</div>
+              <p data-i18n="chat.welcome.p">اسأل عن جدولك أو خطتك، أضف تذكيرات، أو ارفع صورة الجدول وأنا أرتبه لك.</p>
               <div class="suggestion-grid">
-                <button class="suggestion" data-prompt="وش عندي اليوم؟">وش عندي اليوم؟<span class="hint">جدول الحصص الحالي</span></button>
-                <button class="suggestion" data-prompt="أضف واجب الذكاء الاصطناعي يوم الأربعاء 11 مساءً">أضف تذكير<span class="hint">واجب، اختبار، موعد</span></button>
-                <button class="suggestion" data-prompt="اقترح علي مواد مناسبة للفصل الجاي">اقتراح مواد<span class="hint">حسب خطتك الأكاديمية</span></button>
-                <button class="suggestion" data-prompt="ما هي قواعد الانذار الأكاديمي؟">قواعد الجامعة<span class="hint">من المستندات الرسمية</span></button>
+                <button class="suggestion" data-prompt="وش عندي اليوم؟"><span data-i18n="chat.s1">وش عندي اليوم؟</span><span class="hint" data-i18n="chat.s1.hint">جدول الحصص الحالي</span></button>
+                <button class="suggestion" data-prompt="أضف واجب الذكاء الاصطناعي يوم الأربعاء 11 مساءً"><span data-i18n="chat.s2">أضف تذكير</span><span class="hint" data-i18n="chat.s2.hint">واجب، اختبار، موعد</span></button>
+                <button class="suggestion" data-prompt="اقترح علي مواد مناسبة للفصل الجاي"><span data-i18n="chat.s3">اقتراح مواد</span><span class="hint" data-i18n="chat.s3.hint">حسب خطتك الأكاديمية</span></button>
+                <button class="suggestion" data-prompt="ما هي قواعد الانذار الأكاديمي؟"><span data-i18n="chat.s4">قواعد الجامعة</span><span class="hint" data-i18n="chat.s4.hint">من المستندات الرسمية</span></button>
               </div>
             </div>
           </div>
@@ -563,18 +193,18 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
             <div class="attachment-chip" id="attachChip">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               <span id="attachName"></span>
-              <button id="attachRemove" type="button" aria-label="إزالة">×</button>
+              <button id="attachRemove" type="button" data-i18n-aria="attach.remove" aria-label="إزالة">×</button>
             </div>
-            <textarea id="chatInput" placeholder="اكتب سؤالك… (Enter للإرسال، Shift+Enter لسطر جديد)" rows="1"></textarea>
+            <textarea id="chatInput" data-i18n-ph="chat.input.ph" placeholder="اكتب سؤالك… (Enter للإرسال، Shift+Enter لسطر جديد)" rows="1"></textarea>
             <div class="composer-bar">
               <div class="composer-actions">
-                <button class="tool-btn" id="attachBtn" title="إرفاق صورة" aria-label="إرفاق صورة">
+                <button class="tool-btn" id="attachBtn" data-i18n-aria="chat.attach" title="إرفاق صورة" aria-label="إرفاق صورة">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83L15.07 6.1"/></svg>
                 </button>
                 <input id="chatImgInput" type="file" accept="image/*" hidden />
               </div>
               <button class="send-btn" id="sendBtn">
-                إرسال
+                <span data-i18n="chat.send">إرسال</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
               </button>
             </div>
@@ -585,12 +215,12 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
       <section class="view" id="scheduleView">
         <div class="card">
           <div class="card-head">
-            <h4>الجدول الأسبوعي</h4>
+            <h4 data-i18n="schedule.view.title">الجدول الأسبوعي</h4>
             <div class="actions">
-              <button class="btn btn-ghost btn-sm" data-prompt="اعرض جدولي الأسبوعي">فتح بالشات</button>
+              <button class="btn btn-ghost btn-sm" data-prompt="اعرض جدولي الأسبوعي" data-i18n="schedule.open.chat">فتح بالشات</button>
               <button class="btn btn-primary btn-sm" id="uploadScheduleBtn2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                رفع صورة الجدول
+                <span data-i18n="schedule.upload.btn">رفع صورة الجدول</span>
               </button>
             </div>
           </div>
@@ -601,8 +231,8 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
       <section class="view" id="remindersView">
         <div class="card">
           <div class="card-head">
-            <h4>التذكيرات والواجبات</h4>
-            <button class="btn btn-primary btn-sm" data-prompt="أضف تذكير جديد">+ إضافة تذكير</button>
+            <h4 data-i18n="reminders.title">التذكيرات والواجبات</h4>
+            <button class="btn btn-primary btn-sm" data-prompt="أضف تذكير جديد" data-i18n="reminders.add">+ إضافة تذكير</button>
           </div>
           <div class="list" id="remListFull"></div>
         </div>
@@ -611,20 +241,20 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
       <section class="view" id="planView">
         <div class="card">
           <div class="card-head">
-            <h4>الخطة الأكاديمية</h4>
+            <h4 data-i18n="plan.title">الخطة الأكاديمية</h4>
             <div class="actions">
-              <button class="btn btn-ghost btn-sm" data-prompt="اقترح علي مواد مناسبة للفصل الجاي">اقتراح مواد</button>
+              <button class="btn btn-ghost btn-sm" data-prompt="اقترح علي مواد مناسبة للفصل الجاي" data-i18n="plan.suggest">اقتراح مواد</button>
               <button class="btn btn-primary btn-sm" id="uploadPlanBtn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                رفع صورة الخطة
+                <span data-i18n="plan.upload">رفع صورة الخطة</span>
               </button>
               <input id="planImgInput" type="file" accept="image/*" hidden />
             </div>
           </div>
           <div class="plan-summary" id="planSummary" style="display:none"></div>
-          <div class="section-label" id="planActiveLabel" hidden>جاري الدراسة</div>
+          <div class="section-label" id="planActiveLabel" hidden data-i18n="plan.active.label">جاري الدراسة</div>
           <div class="list" id="planActiveList"></div>
-          <div class="section-label" id="planRemainingLabel" hidden>المتبقية</div>
+          <div class="section-label" id="planRemainingLabel" hidden data-i18n="plan.remaining.label">المتبقية</div>
           <div class="list" id="planRemainingList"></div>
         </div>
       </section>
@@ -635,8 +265,8 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
 <div class="modal-bg" id="imgModal">
   <div class="modal">
     <div class="modal-head">
-      <h3 id="imgModalTitle">صورة المكان</h3>
-      <button class="icon-btn" id="imgModalClose" aria-label="إغلاق">✕</button>
+      <h3 id="imgModalTitle" data-i18n="modal.room.title">صورة المكان</h3>
+      <button class="icon-btn" id="imgModalClose" data-i18n-aria="modal.close" aria-label="إغلاق">✕</button>
     </div>
     <img class="preview" id="imgModalImg" alt="" />
   </div>
@@ -648,8 +278,8 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
     <div class="r-title" id="rTitle"></div>
     <div class="r-time" id="rTime"></div>
     <div class="r-actions">
-      <button class="r-done" id="rDoneBtn">تم ✓</button>
-      <button class="r-ok" id="rOkBtn">حسناً</button>
+      <button class="r-done" id="rDoneBtn" data-i18n="reminder.done">تم ✓</button>
+      <button class="r-ok" id="rOkBtn" data-i18n="reminder.ok">حسناً</button>
     </div>
     <div class="r-counter" id="rCounter"></div>
   </div>
@@ -658,695 +288,29 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
 <div class="toast" id="toast"></div>
 
 <div class="tweaks" id="tweaksPanel">
-  <h4>إعدادات المظهر <button id="tweaksClose">×</button></h4>
+  <h4><span data-i18n="tweaks.title">إعدادات المظهر</span> <button id="tweaksClose">×</button></h4>
   <div class="tweak-row">
-    <label>اللون الأساسي</label>
+    <label data-i18n="tweaks.color">اللون الأساسي</label>
     <div class="swatches" id="accentSwatches"></div>
   </div>
   <div class="tweak-row">
-    <label>الكثافة</label>
+    <label data-i18n="tweaks.density">الكثافة</label>
     <div class="seg" id="densitySeg">
-      <button data-val="0.9">مدمج</button>
-      <button data-val="1" class="on">عادي</button>
-      <button data-val="1.1">مريح</button>
+      <button data-val="0.9" data-i18n="tweaks.density.compact">مدمج</button>
+      <button data-val="1" class="on" data-i18n="tweaks.density.normal">عادي</button>
+      <button data-val="1.1" data-i18n="tweaks.density.comfort">مريح</button>
     </div>
   </div>
   <div class="tweak-row">
-    <label>الزوايا</label>
+    <label data-i18n="tweaks.corners">الزوايا</label>
     <div class="seg" id="radiusSeg">
-      <button data-val="10">حادة</button>
-      <button data-val="18" class="on">متوسطة</button>
-      <button data-val="26">دائرية</button>
+      <button data-val="10" data-i18n="tweaks.corners.sharp">حادة</button>
+      <button data-val="18" class="on" data-i18n="tweaks.corners.med">متوسطة</button>
+      <button data-val="26" data-i18n="tweaks.corners.round">دائرية</button>
     </div>
   </div>
 </div>
 
-<script>
-const BASE = (location.protocol === 'http:' || location.protocol === 'https:') && location.host && !location.host.includes('localhost:0')
-  ? location.origin
-  : 'http://127.0.0.1:8000';
-const TOKEN_KEY = 'student_assistant_token';
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-
-const state = {
-  token: localStorage.getItem(TOKEN_KEY) || '',
-  isSending: false,
-  notifInterval: null,
-  shownNotifs: new Set(),
-  reminderQueue: [],
-  currentReminderId: null,
-  pendingFile: null,
-  lastDays: [],
-  lastReminders: [],
-  lastPlan: {active:[],remaining:[],counts:{}},
-};
-
-const TWEAKS = /*EDITMODE-BEGIN*/{
-  "accent": "indigo",
-  "density": 1.1,
-  "radius": 18,
-  "theme": "dark"
-}/*EDITMODE-END*/;
-
-const ACCENTS = {
-  indigo:  { a:'235 91% 64%', a2:'268 86% 68%' },
-  blue:    { a:'215 90% 60%', a2:'195 90% 55%' },
-  emerald: { a:'160 80% 42%', a2:'180 75% 45%' },
-  rose:    { a:'350 85% 60%', a2:'330 80% 60%' },
-  amber:   { a:'30 95% 55%',  a2:'15 90% 58%' },
-  slate:   { a:'220 15% 45%', a2:'225 15% 55%' },
-};
-
-function applyTweaks(){
-  const ac = ACCENTS[TWEAKS.accent] || ACCENTS.indigo;
-  document.documentElement.style.setProperty('--accent', ac.a);
-  document.documentElement.style.setProperty('--accent-2', ac.a2);
-  document.documentElement.style.setProperty('--density', TWEAKS.density);
-  document.documentElement.style.setProperty('--radius', TWEAKS.radius+'px');
-  document.documentElement.dataset.theme = TWEAKS.theme;
-  const sun = '<path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/><circle cx="12" cy="12" r="5"/>';
-  const moon = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-  $('themeIcon').innerHTML = TWEAKS.theme === 'light' ? moon : sun;
-}
-function persistTweaks(patch){
-  Object.assign(TWEAKS, patch);
-  applyTweaks();
-  try{ window.parent.postMessage({type:'__edit_mode_set_keys', edits: patch}, '*'); }catch{}
-}
-applyTweaks();
-
-function headers(extra={}){
-  const out = {...extra};
-  if(state.token) out['Authorization'] = `Bearer ${state.token}`;
-  return out;
-}
-async function api(path, options={}){
-  const res = await fetch(BASE + path, options);
-  const txt = await res.text();
-  let data = null;
-  try{ data = txt ? JSON.parse(txt) : null; } catch{ data = txt; }
-  if(!res.ok) throw new Error((data && data.detail) || `Request failed (${res.status})`);
-  return data;
-}
-
-let toastTimer;
-function toast(msg, type=''){
-  const t = $('toast');
-  t.textContent = msg; t.className = 'toast show '+(type||'');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.classList.remove('show'), 3000);
-}
-
-function showAuth(msg='', err=false){
-  $('authWrap').style.display = 'grid';
-  $('app').classList.remove('show');
-  const m = $('authMsg');
-  m.textContent = msg; m.className = 'auth-msg' + (err?' err':'');
-}
-function showApp(){
-  $('authWrap').style.display = 'none';
-  $('app').classList.add('show');
-  if(!state.notifInterval){
-    checkDueReminders();
-    state.notifInterval = setInterval(checkDueReminders, 30000);
-  }
-}
-document.querySelectorAll('[data-auth-tab]').forEach(b => {
-  b.onclick = () => {
-    document.querySelectorAll('[data-auth-tab]').forEach(x => x.classList.toggle('on', x===b));
-    const tab = b.dataset.authTab;
-    $('loginForm').style.display = tab==='login' ? 'block' : 'none';
-    $('signupForm').style.display = tab==='signup' ? 'block' : 'none';
-    $('authMsg').textContent = '';
-  };
-});
-
-$('loginForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const btn = $('loginBtn');
-  btn.disabled = true;
-  $('authMsg').className = 'auth-msg'; $('authMsg').textContent = 'جاري تسجيل الدخول…';
-  try{
-    const data = await api('/auth/login', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ email:$('liEmail').value.trim(), password:$('liPass').value }),
-    });
-    state.token = data.access_token;
-    localStorage.setItem(TOKEN_KEY, state.token);
-    showApp();
-    await Promise.all([loadDashboard(), loadHistory()]);
-  }catch(err){
-    $('authMsg').className = 'auth-msg err'; $('authMsg').textContent = err.message;
-  }finally{ btn.disabled = false; }
-});
-
-$('signupForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const btn = $('signupBtn');
-  btn.disabled = true;
-  $('authMsg').className = 'auth-msg'; $('authMsg').textContent = 'جاري إنشاء الحساب…';
-  try{
-    await api('/auth/signup', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        name:$('suName').value.trim(),
-        email:$('suEmail').value.trim(),
-        password:$('suPass').value,
-        college:$('suCollege').value.trim() || null,
-        major:$('suMajor').value || null,
-        track:$('suTrack').value.trim() || null,
-      }),
-    });
-    $('authMsg').className = 'auth-msg'; $('authMsg').textContent = 'تم إنشاء الحساب! سجل دخول الآن.';
-    document.querySelector('[data-auth-tab="login"]').click();
-    $('liEmail').value = $('suEmail').value;
-  }catch(err){
-    $('authMsg').className = 'auth-msg err'; $('authMsg').textContent = err.message;
-  }finally{ btn.disabled = false; }
-});
-
-$('logoutBtn').onclick = () => {
-  state.token = '';
-  localStorage.removeItem(TOKEN_KEY);
-  clearInterval(state.notifInterval); state.notifInterval = null;
-  state.shownNotifs.clear(); state.reminderQueue = []; state.currentReminderId = null;
-  $('reminderBg').classList.remove('show');
-  showAuth('تم تسجيل الخروج');
-};
-
-$('clearChatBtn').onclick = async () => {
-  if(!confirm('هل أنت متأكد أنك تريد حذف جميع المحادثات؟ لا يمكن التراجع عن هذا الإجراء.')) return;
-  const btn = $('clearChatBtn');
-  btn.disabled = true;
-  try{
-    await api('/chat/history', { method: 'DELETE', headers: headers() });
-    await loadHistory();
-    toast('تم حذف المحادثات', 'ok');
-  }catch(err){
-    toast(err.message || 'تعذر حذف المحادثات', 'err');
-  }finally{
-    btn.disabled = false;
-  }
-};
-
-const PAGE_TITLES = {
-  dashboardView:'لوحة التحكم', chatView:'المحادثة',
-  scheduleView:'الجدول الأسبوعي', remindersView:'التذكيرات', planView:'الخطة الأكاديمية',
-};
-function switchView(viewId){
-  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === viewId));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === viewId));
-  $('pageTitle').textContent = PAGE_TITLES[viewId] || '';
-  if(window.innerWidth <= 760){
-    $('sidebar').classList.add('collapsed');
-    $('sbBackdrop').classList.remove('show');
-  }
-  if(viewId === 'scheduleView') renderWeekGrid('weekGridFull', state.lastDays);
-  if(viewId === 'remindersView') renderRemindersFull();
-}
-document.querySelectorAll('.nav-btn').forEach(b => b.onclick = () => switchView(b.dataset.view));
-document.body.addEventListener('click', (e) => {
-  const goBtn = e.target.closest('[data-go]');
-  if(goBtn) switchView(goBtn.dataset.go);
-});
-
-$('menuBtn').onclick = () => {
-  $('sidebar').classList.toggle('collapsed');
-  $('sbBackdrop').classList.toggle('show');
-};
-$('sbBackdrop').onclick = () => {
-  $('sidebar').classList.add('collapsed');
-  $('sbBackdrop').classList.remove('show');
-};
-function applyMobileSidebarState(){
-  if(window.innerWidth <= 760) $('sidebar').classList.add('collapsed');
-  else $('sidebar').classList.remove('collapsed');
-}
-window.addEventListener('resize', applyMobileSidebarState);
-
-$('themeBtn').onclick = () => {
-  persistTweaks({ theme: TWEAKS.theme === 'light' ? 'dark' : 'light' });
-};
-
-function initialOf(name){
-  const t = (name || '').trim();
-  return t ? t[0] : '؟';
-}
-
-function renderHeader(student){
-  $('pName').textContent = student.name || 'طالب';
-  const tags = [student.major, student.college].filter(Boolean).join(' • ');
-  $('pMajor').textContent = tags || '—';
-  $('avatar').textContent = initialOf(student.name);
-  const hr = new Date().getHours();
-  const greet = hr < 12 ? 'صباح الخير' : 'مساء الخير';
-  const first = (student.name || 'طالب').split(' ')[0];
-  $('greetEl').textContent = `${greet}، ${first} 👋`;
-}
-
-function lecHTML(item){
-  const code = item.course_code ? `<div class="code">${esc(item.course_code)}</div>` : '';
-  const room = item.room_text ? esc(item.room_text) : '—';
-  const roomBtn = item.image_url
-    ? `<button class="room-link" data-img="${esc(item.image_url)}" data-title="${esc(item.room_text || item.course_name || '')}">عرض القاعة</button>`
-    : '';
-  return `
-    <div class="lec">
-      ${code}
-      <div class="name">${esc(item.course_name || '')}</div>
-      <div class="meta-row">
-        <span>${esc(item.start_time || '--:--')} → ${esc(item.end_time || '--:--')}</span>
-        <span>${room}</span>
-      </div>
-      ${roomBtn}
-    </div>`;
-}
-
-function renderWeekGrid(targetId, days){
-  const el = $(targetId);
-  if(!el) return;
-  if(!Array.isArray(days) || !days.length){
-    el.innerHTML = `<div class="empty" style="grid-column:1/-1">لا يوجد جدول محفوظ بعد. ارفع صورة جدولك ليظهر هنا.</div>`;
-    return;
-  }
-  el.innerHTML = days.map(d => `
-    <div class="day">
-      <div class="day-head">
-        <strong>${esc(d.day_name_ar || '')}</strong>
-        <span class="day-pill">${(d.items||[]).length} حصة</span>
-      </div>
-      ${(d.items||[]).length ? d.items.map(lecHTML).join('') : `<div class="empty">لا حصص</div>`}
-    </div>`).join('');
-}
-
-function rowHTML(r){
-  const status = r.is_done ? 'done' : 'active';
-  const label = r.is_done ? 'منجز ✓' : 'نشط';
-  return `
-    <div class="row">
-      <div class="title">
-        <span>${esc(r.title || '')}</span>
-        <span class="status-pill ${status}">${label}</span>
-      </div>
-      <div class="meta-line">
-        <span>${esc(r.remind_at_text || '')}</span>
-        <span>${esc(r.notes || '')}</span>
-      </div>
-    </div>`;
-}
-
-function renderDashboard(data){
-  state.lastDays = data.week_schedule?.days || [];
-  state.lastReminders = data.recent_reminders || [];
-  state.lastPlan = { active: data.academic_plan_active || [], remaining: data.academic_plan_remaining || [], counts: data.counts || {} };
-
-  renderHeader(data.student || {});
-  $('mWeek').textContent = data.counts.week_classes ?? 0;
-  $('mAll').textContent = data.counts.all_classes ?? 0;
-  $('mRem').textContent = data.counts.active_reminders ?? 0;
-  $('mPlan').textContent = (data.counts.remaining_courses ?? 0) + (data.counts.active_courses ?? 0);
-
-  renderWeekGrid('weekGrid', state.lastDays);
-  const remEl = $('remListShort');
-  const rems = state.lastReminders.slice(0,4);
-  remEl.innerHTML = rems.length ? rems.map(rowHTML).join('') : `<div class="empty">لا توجد تذكيرات حالياً.</div>`;
-  renderPlan();
-}
-
-function renderPlan(){
-  const { active, remaining, counts } = state.lastPlan || {active:[],remaining:[],counts:{}};
-  const total = counts.plan_items || 0;
-  const ps = $('planSummary');
-  if(total){
-    ps.style.display = 'flex';
-    ps.innerHTML = `
-      <span>✅ مكتمل: <strong>${counts.completed_courses ?? 0}</strong></span>
-      <span>📖 جاري: <strong>${counts.active_courses ?? 0}</strong></span>
-      <span>📋 متبقي: <strong>${counts.remaining_courses ?? 0}</strong></span>
-      <span>المجموع: <strong>${total}</strong></span>`;
-  } else { ps.style.display = 'none'; }
-
-  $('planActiveLabel').hidden = !active.length;
-  $('planActiveList').innerHTML = active.map(it => `
-    <div class="row">
-      <div class="title">
-        <span>${esc(it.course_name || '')}</span>
-        <span class="status-pill in-progress">قيد الدراسة</span>
-      </div>
-      <div class="meta-line"><span>${esc(it.course_code || '')}</span><span>${esc(it.semester || '')}</span></div>
-    </div>`).join('');
-
-  $('planRemainingLabel').hidden = !remaining.length;
-  $('planRemainingList').innerHTML = remaining.map(it => `
-    <div class="row">
-      <div class="title">
-        <span>${esc(it.course_name || '')}</span>
-        <span class="status-pill remaining">متبقي</span>
-      </div>
-      <div class="meta-line"><span>${esc(it.course_code || '')}</span><span>${esc(it.semester || '')}</span></div>
-    </div>`).join('');
-
-  if(!active.length && !remaining.length){
-    $('planRemainingLabel').hidden = true;
-    $('planRemainingList').innerHTML = `<div class="empty">لا توجد مواد بالخطة بعد. ارفع صورة الخطة ليتم استخراجها.</div>`;
-  }
-}
-
-function renderRemindersFull(){
-  const list = state.lastReminders || [];
-  $('remListFull').innerHTML = list.length ? list.map(rowHTML).join('') : `<div class="empty">لا توجد تذكيرات. أضف واحدة من المحادثة.</div>`;
-}
-
-async function loadDashboard(){
-  try{
-    const data = await api('/dashboard/summary', { headers: headers() });
-    renderDashboard(data);
-  }catch(e){
-    if(String(e.message).includes('401')) {
-      state.token = ''; localStorage.removeItem(TOKEN_KEY);
-      showAuth('انتهت الجلسة، سجل دخول من جديد', true);
-    }
-  }
-}
-
-function metaHTML(meta){
-  if(!meta || typeof meta !== 'object') return '';
-  let html = '<div class="meta-group">';
-  let added = false;
-  if(Array.isArray(meta.items) && meta.items.length){
-    added = true;
-    html += meta.items.map(it => `
-      <div class="meta-card">
-        ${it.course_code ? `<div style="font-size:11px;color:var(--muted)">${esc(it.course_code)}</div>` : ''}
-        <h5>${esc(it.course_name || '')}</h5>
-        <div class="row-line"><span>${esc(it.start_time || '--:--')} → ${esc(it.end_time || '--:--')}</span><span>${esc(it.room_text || '')}</span></div>
-        ${it.image_url ? `<img class="room-img" src="${esc(it.image_url)}" alt="${esc(it.room_text||'')}" data-img="${esc(it.image_url)}" data-title="${esc(it.room_text||'')}" loading="lazy" />` : ''}
-      </div>`).join('');
-  }
-  if(Array.isArray(meta.reminders) && meta.reminders.length){
-    added = true;
-    html += meta.reminders.map(it => `
-      <div class="meta-card">
-        <h5>${esc(it.title || '')}</h5>
-        <div class="row-line"><span>${esc(it.remind_at_text || '')}</span><span>${it.is_done ? 'منجز ✓' : 'نشط'}</span></div>
-      </div>`).join('');
-  }
-  if(Array.isArray(meta.academic_plan) && meta.academic_plan.length){
-    added = true;
-    html += meta.academic_plan.map(it => `
-      <div class="meta-card">
-        <h5>${esc(it.course_name || '')}</h5>
-        <div class="row-line"><span>${esc(it.course_code || '')}</span><span>${esc(it.status || '')}</span></div>
-      </div>`).join('');
-  }
-  if(typeof meta.added === 'number'){
-    added = true;
-    html += `
-      <div class="meta-card">
-        <h5>ملخص الاستيراد</h5>
-        <div class="row-line"><span>المضاف</span><span>${esc(meta.added)}</span></div>
-        ${Array.isArray(meta.skipped) && meta.skipped.length ? `<div class="row-line"><span>متخطى</span><span>${esc(meta.skipped.length)}</span></div>` : ''}
-      </div>`;
-  }
-  html += '</div>';
-  return added ? html : '';
-}
-
-function clearWelcome(){ const w = $('chatWelcome'); if(w) w.remove(); }
-function addMessage(role, text, meta=null, isTyping=false){
-  clearWelcome();
-  const el = document.createElement('div');
-  el.className = `msg ${role}`;
-  const av = role === 'user' ? 'أ' : 'ج';
-  el.innerHTML = `
-    <div class="msg-avatar">${av}</div>
-    <div style="min-width:0;flex:1">
-      <div class="bubble">${isTyping ? '<div class="typing"><span></span><span></span><span></span></div>' : esc(text || '')}</div>
-      ${metaHTML(meta)}
-    </div>`;
-  $('chatList').appendChild(el);
-  $('chatList').scrollTop = $('chatList').scrollHeight;
-  return el;
-}
-
-async function loadHistory(){
-  try{
-    const hist = await api('/chat/history', { headers: headers() });
-    $('chatList').innerHTML = '';
-    if(!Array.isArray(hist) || !hist.length){
-      $('chatList').innerHTML = `
-        <div class="welcome" id="chatWelcome">
-          <div class="big">كيف أقدر أساعدك اليوم؟</div>
-          <p>اسأل عن جدولك أو خطتك، أضف تذكيرات، أو ارفع صورة الجدول.</p>
-          <div class="suggestion-grid">
-            <button class="suggestion" data-prompt="وش عندي اليوم؟">وش عندي اليوم؟<span class="hint">جدول الحصص الحالي</span></button>
-            <button class="suggestion" data-prompt="أضف واجب الذكاء الاصطناعي يوم الأربعاء 11 مساءً">أضف تذكير<span class="hint">واجب، اختبار، موعد</span></button>
-            <button class="suggestion" data-prompt="اقترح علي مواد مناسبة للفصل الجاي">اقتراح مواد<span class="hint">حسب خطتك الأكاديمية</span></button>
-            <button class="suggestion" data-prompt="ما هي قواعد الانذار الأكاديمي؟">قواعد الجامعة<span class="hint">من المستندات الرسمية</span></button>
-          </div>
-        </div>`;
-      return;
-    }
-    hist.forEach(m => {
-      let meta = null;
-      if(m.meta_json){ try{ meta = JSON.parse(m.meta_json); }catch{} }
-      addMessage(m.role === 'user' ? 'user' : 'assistant', m.content, meta);
-    });
-  }catch(e){}
-}
-
-function setSending(s){ state.isSending = s; $('sendBtn').disabled = s; }
-function setAttachment(file){
-  state.pendingFile = file || null;
-  const chip = $('attachChip');
-  if(file){ $('attachName').textContent = file.name; chip.classList.add('show'); }
-  else { chip.classList.remove('show'); $('chatImgInput').value = ''; }
-}
-
-async function sendMessage(prefilled){
-  if(state.isSending) return;
-  const file = state.pendingFile;
-  const raw = prefilled ?? $('chatInput').value;
-  const msg = (raw || '').trim();
-  if(!msg && !file) return;
-
-  switchView('chatView');
-  $('chatInput').value = ''; autoresize($('chatInput'));
-  setSending(true);
-
-  if(file){
-    addMessage('user', msg ? `${msg}\n[image: ${file.name}]` : `رفعت صورة: ${file.name}`);
-  } else {
-    addMessage('user', msg);
-  }
-  const typingEl = addMessage('assistant', '', null, true);
-
-  try{
-    let data;
-    if(file){
-      const form = new FormData();
-      form.append('message', msg);
-      form.append('file', file);
-      data = await api('/chat/with-image', { method:'POST', headers: headers(), body: form });
-    } else {
-      data = await api('/chat', {
-        method:'POST',
-        headers: headers({'Content-Type':'application/json'}),
-        body: JSON.stringify({ message: msg }),
-      });
-    }
-    typingEl.querySelector('.bubble').innerHTML = esc(data.text || '');
-    const wrap = document.createElement('div'); wrap.innerHTML = metaHTML(data.meta || null);
-    if(wrap.firstChild) typingEl.querySelector('div').appendChild(wrap.firstChild);
-    setAttachment(null);
-    loadDashboard().catch(()=>{});
-    checkDueReminders().catch(()=>{});
-  } catch(err){
-    typingEl.querySelector('.bubble').innerHTML = `<span style="color:#fca5a5">⚠️ ${esc(err.message)}</span>`;
-  } finally {
-    setSending(false);
-    $('chatList').scrollTop = $('chatList').scrollHeight;
-  }
-}
-
-function autoresize(t){
-  t.style.height = 'auto';
-  t.style.height = Math.min(t.scrollHeight, 160) + 'px';
-}
-$('chatInput').addEventListener('input', (e) => autoresize(e.target));
-$('chatInput').addEventListener('keydown', (e) => {
-  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
-});
-$('sendBtn').onclick = () => sendMessage();
-$('attachBtn').onclick = () => $('chatImgInput').click();
-$('chatImgInput').addEventListener('change', (e) => setAttachment(e.target.files?.[0] || null));
-$('attachRemove').onclick = () => setAttachment(null);
-
-document.body.addEventListener('click', (e) => {
-  const p = e.target.closest('[data-prompt]');
-  if(p){ const q = p.dataset.prompt; if(q) sendMessage(q); }
-  const ri = e.target.closest('[data-img]');
-  if(ri){ openImg(ri.dataset.img, ri.dataset.title); }
-});
-
-async function uploadFile(endpoint, file, label){
-  switchView('chatView');
-  addMessage('user', `${label}: ${file.name}`);
-  const t = addMessage('assistant', '', null, true);
-  try{
-    const form = new FormData(); form.append('file', file);
-    const data = await api(endpoint, { method:'POST', headers: headers(), body: form });
-    t.querySelector('.bubble').innerHTML = esc(data.text || '');
-    const wrap = document.createElement('div'); wrap.innerHTML = metaHTML(data.meta || null);
-    if(wrap.firstChild) t.querySelector('div').appendChild(wrap.firstChild);
-    loadDashboard().catch(()=>{});
-    loadHistory().catch(()=>{});
-    toast('تم الاستيراد بنجاح ✓');
-  } catch(err){
-    t.querySelector('.bubble').innerHTML = `<span style="color:#fca5a5">⚠️ ${esc(err.message)}</span>`;
-    toast('فشل الاستيراد: '+err.message, 'err');
-  }
-}
-function pickFile(input, endpoint, label){
-  input.value = '';
-  input.click();
-  input.onchange = () => {
-    const f = input.files?.[0]; if(!f) return;
-    uploadFile(endpoint, f, label);
-    input.value = '';
-  };
-}
-$('uploadScheduleBtn').onclick = () => pickFile($('scheduleImgInput'), '/chat/upload-schedule-image', 'رفع صورة جدول');
-$('uploadScheduleBtn2').onclick = () => pickFile($('scheduleImgInput'), '/chat/upload-schedule-image', 'رفع صورة جدول');
-$('uploadPlanBtn').onclick = () => pickFile($('planImgInput'), '/chat/upload-plan-image', 'رفع صورة خطة أكاديمية');
-
-function openImg(src, title){
-  $('imgModalImg').src = src;
-  $('imgModalTitle').textContent = title || 'صورة المكان';
-  $('imgModal').classList.add('show');
-}
-$('imgModalClose').onclick = () => { $('imgModal').classList.remove('show'); $('imgModalImg').src=''; };
-$('imgModal').addEventListener('click', (e) => { if(e.target === $('imgModal')) $('imgModalClose').click(); });
-
-function fmtAt(iso, fallback){
-  if(!iso) return fallback || '';
-  try{
-    const d = new Date(iso);
-    const now = new Date();
-    const isToday = d.toDateString() === now.toDateString();
-    const tomorrow = new Date(now); tomorrow.setDate(now.getDate()+1);
-    const isTom = d.toDateString() === tomorrow.toDateString();
-    const t = d.toLocaleTimeString('ar-SA', {hour:'2-digit',minute:'2-digit'});
-    if(isToday) return `اليوم ${t}`;
-    if(isTom) return `غداً ${t}`;
-    return d.toLocaleDateString('ar-SA',{weekday:'short',month:'short',day:'numeric'}) + ' ' + t;
-  }catch{ return fallback || iso; }
-}
-function showNextReminder(){
-  if(!state.reminderQueue.length){
-    $('reminderBg').classList.remove('show'); state.currentReminderId = null; return;
-  }
-  const r = state.reminderQueue.shift();
-  state.currentReminderId = r.reminder_id;
-  $('rTitle').textContent = r.title || '';
-  $('rTime').textContent = fmtAt(r.remind_at, r.remind_at_text) + (r.notes ? '\n'+r.notes : '');
-  $('rCounter').textContent = state.reminderQueue.length ? `+${state.reminderQueue.length} تذكيرات أخرى` : '';
-  $('reminderBg').classList.add('show');
-}
-$('rDoneBtn').onclick = async () => {
-  const id = state.currentReminderId;
-  state.currentReminderId = null;
-  showNextReminder();
-  if(id != null){
-    try{ await api(`/dashboard/reminders/${id}/done`, { method:'POST', headers: headers() }); loadDashboard().catch(()=>{}); }catch{}
-  }
-};
-$('rOkBtn').onclick = () => { state.currentReminderId = null; showNextReminder(); };
-async function checkDueReminders(){
-  if(!state.token) return;
-  try{
-    const data = await api('/dashboard/reminders/due', { headers: headers() });
-    (data.reminders || []).forEach(r => {
-      if(state.shownNotifs.has(r.reminder_id)) return;
-      state.shownNotifs.add(r.reminder_id);
-      const wasIdle = !state.reminderQueue.length && state.currentReminderId === null;
-      state.reminderQueue.push(r);
-      if(wasIdle) showNextReminder();
-    });
-  }catch{}
-}
-
-async function pingHealth(){
-  try{
-    const h = await api('/health');
-    const ok = h?.status === 'ok';
-    $('healthDot').classList.toggle('bad', !ok);
-    $('healthLabel').textContent = ok ? 'API متصل' : 'الخادم غير متصل';
-  }catch{
-    $('healthDot').classList.add('bad');
-    $('healthLabel').textContent = 'API غير متاح';
-  }
-}
-
-const accentEntries = Object.keys(ACCENTS);
-function renderAccents(){
-  $('accentSwatches').innerHTML = accentEntries.map(name => {
-    const c = ACCENTS[name];
-    return `<button class="swatch ${name===TWEAKS.accent?'on':''}" data-accent="${name}"
-      style="background:linear-gradient(135deg,hsl(${c.a}),hsl(${c.a2}))"></button>`;
-  }).join('');
-  $('accentSwatches').querySelectorAll('.swatch').forEach(b => b.onclick = () => {
-    persistTweaks({ accent: b.dataset.accent });
-    renderAccents();
-  });
-}
-renderAccents();
-$('densitySeg').querySelectorAll('button').forEach(b => {
-  b.classList.toggle('on', parseFloat(b.dataset.val) === TWEAKS.density);
-  b.onclick = () => {
-    persistTweaks({ density: parseFloat(b.dataset.val) });
-    $('densitySeg').querySelectorAll('button').forEach(x => x.classList.toggle('on', x===b));
-  };
-});
-$('radiusSeg').querySelectorAll('button').forEach(b => {
-  b.classList.toggle('on', parseInt(b.dataset.val) === TWEAKS.radius);
-  b.onclick = () => {
-    persistTweaks({ radius: parseInt(b.dataset.val) });
-    $('radiusSeg').querySelectorAll('button').forEach(x => x.classList.toggle('on', x===b));
-  };
-});
-
-window.addEventListener('message', (e) => {
-  const t = e.data?.type;
-  if(t === '__activate_edit_mode'){
-    $('tweaksPanel').classList.add('show');
-    $('tweaksBtn').style.display = 'grid';
-  } else if(t === '__deactivate_edit_mode'){
-    $('tweaksPanel').classList.remove('show');
-  }
-});
-$('tweaksBtn').onclick = () => $('tweaksPanel').classList.toggle('show');
-$('tweaksClose').onclick = () => {
-  $('tweaksPanel').classList.remove('show');
-  try{ window.parent.postMessage({type:'__edit_mode_dismissed'}, '*'); }catch{}
-};
-try{ window.parent.postMessage({type:'__edit_mode_available'}, '*'); }catch{}
-
-async function init(){
-  applyMobileSidebarState();
-  pingHealth();
-  if(state.token){
-    showApp();
-    try{ await Promise.all([loadHistory(), loadDashboard()]); }
-    catch{ state.token=''; localStorage.removeItem(TOKEN_KEY); showAuth('انتهت الجلسة، سجل دخول'); }
-  } else {
-    showAuth('');
-  }
-}
-init();
-</script>
+<script src="app.js"></script>
 </body>
 </html>

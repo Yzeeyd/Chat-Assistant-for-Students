@@ -1,4 +1,5 @@
 import json
+import re as _re
 from datetime import datetime, time
 from typing import Iterable
 
@@ -6,6 +7,23 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.db import models
+
+_SEMESTER_ORDER = {
+    'الأول': 1, 'الثاني': 2, 'الثالث': 3, 'الرابع': 4,
+    'الخامس': 5, 'السادس': 6, 'السابع': 7, 'الثامن': 8,
+}
+_ELECTIVE_RE = _re.compile(r'اختياري\s+(\d+)')
+
+
+def _plan_sort_key(item) -> tuple:
+    sem = (item.semester or '').strip()
+    if sem in _SEMESTER_ORDER:
+        return (_SEMESTER_ORDER[sem], item.course_code or '')
+    m = _ELECTIVE_RE.search(sem)
+    if m:
+        # University reqs (e.g. اختياري 8-8 → 17) sort before specialization (e.g. اختياري 18-18 → 27)
+        return (9 + int(m.group(1)), item.course_code or '')
+    return (100, item.course_code or '')
 
 
 # ---------------------------------------------------------------------------
@@ -236,6 +254,16 @@ def list_due_reminders(db: Session, user_id: int) -> list[models.Reminder]:
     return [r for r in candidates if r.remind_at <= now]
 
 
+def delete_reminder(db: Session, reminder_id: int, user_id: int) -> bool:
+    deleted = (
+        db.query(models.Reminder)
+        .filter(models.Reminder.id == reminder_id, models.Reminder.user_id == user_id)
+        .delete()
+    )
+    db.commit()
+    return bool(deleted)
+
+
 def mark_reminder_done(db: Session, reminder_id: int, user_id: int) -> models.Reminder | None:
     item = (
         db.query(models.Reminder)
@@ -321,12 +349,12 @@ def clear_academic_plan(db: Session, user_id: int) -> int:
 
 
 def list_academic_plan_items(db: Session, user_id: int) -> list[models.AcademicPlanItem]:
-    return (
+    items = (
         db.query(models.AcademicPlanItem)
         .filter(models.AcademicPlanItem.user_id == user_id)
-        .order_by(models.AcademicPlanItem.semester, models.AcademicPlanItem.course_code)
         .all()
     )
+    return sorted(items, key=_plan_sort_key)
 
 
 def auto_close_requirement_groups(db: Session, user_id: int) -> int:
@@ -351,8 +379,11 @@ def auto_close_requirement_groups(db: Session, user_id: int) -> int:
         available_credits = int(match.group(2))
         if required_credits != available_credits:
             continue
+        n = len(group_items)
+        fallback = required_credits / n if n else 0
         completed_credits = sum(
-            (item.credits or 0) for item in group_items if item.status == 'completed'
+            (item.credits if item.credits is not None else fallback)
+            for item in group_items if item.status == 'completed'
         )
         if completed_credits >= required_credits:
             for item in group_items:
@@ -365,10 +396,33 @@ def auto_close_requirement_groups(db: Session, user_id: int) -> int:
     return closed
 
 
+def update_academic_plan_item_status(
+    db: Session,
+    user_id: int,
+    status: str,
+    course_code: str | None = None,
+    course_name: str | None = None,
+) -> models.AcademicPlanItem | None:
+    q = db.query(models.AcademicPlanItem).filter(models.AcademicPlanItem.user_id == user_id)
+    if course_code:
+        item = q.filter(models.AcademicPlanItem.course_code == course_code.strip()).first()
+    elif course_name:
+        item = q.filter(models.AcademicPlanItem.course_name == course_name.strip()).first()
+    else:
+        return None
+    if not item:
+        return None
+    item.status = status.strip().lower()
+    db.commit()
+    db.refresh(item)
+    return item
+
+
 def recommend_courses_from_plan(db: Session, user_id: int, limit: int = 3) -> list[models.AcademicPlanItem]:
+    auto_close_requirement_groups(db, user_id)
     items = list_academic_plan_items(db, user_id)
-    completed_codes = {i.course_code for i in items if i.course_code and i.status == 'completed'}
-    planned = [i for i in items if i.status in {'planned', 'in_progress'} and i.course_code not in completed_codes]
+    excluded_codes = {i.course_code for i in items if i.course_code and i.status in {'completed', 'in_progress'}}
+    planned = [i for i in items if i.status == 'planned' and i.course_code not in excluded_codes]
     return planned[:max(limit, 1)]
 
 
