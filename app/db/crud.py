@@ -379,8 +379,11 @@ def auto_close_requirement_groups(db: Session, user_id: int) -> int:
         available_credits = int(match.group(2))
         if required_credits != available_credits:
             continue
+        n = len(group_items)
+        fallback = required_credits / n if n else 0
         completed_credits = sum(
-            (item.credits or 0) for item in group_items if item.status == 'completed'
+            (item.credits if item.credits is not None else fallback)
+            for item in group_items if item.status == 'completed'
         )
         if completed_credits >= required_credits:
             for item in group_items:
@@ -393,10 +396,33 @@ def auto_close_requirement_groups(db: Session, user_id: int) -> int:
     return closed
 
 
+def update_academic_plan_item_status(
+    db: Session,
+    user_id: int,
+    status: str,
+    course_code: str | None = None,
+    course_name: str | None = None,
+) -> models.AcademicPlanItem | None:
+    q = db.query(models.AcademicPlanItem).filter(models.AcademicPlanItem.user_id == user_id)
+    if course_code:
+        item = q.filter(models.AcademicPlanItem.course_code == course_code.strip()).first()
+    elif course_name:
+        item = q.filter(models.AcademicPlanItem.course_name == course_name.strip()).first()
+    else:
+        return None
+    if not item:
+        return None
+    item.status = status.strip().lower()
+    db.commit()
+    db.refresh(item)
+    return item
+
+
 def recommend_courses_from_plan(db: Session, user_id: int, limit: int = 3) -> list[models.AcademicPlanItem]:
+    auto_close_requirement_groups(db, user_id)
     items = list_academic_plan_items(db, user_id)
-    completed_codes = {i.course_code for i in items if i.course_code and i.status == 'completed'}
-    planned = [i for i in items if i.status in {'planned', 'in_progress'} and i.course_code not in completed_codes]
+    excluded_codes = {i.course_code for i in items if i.course_code and i.status in {'completed', 'in_progress'}}
+    planned = [i for i in items if i.status == 'planned' and i.course_code not in excluded_codes]
     return planned[:max(limit, 1)]
 
 

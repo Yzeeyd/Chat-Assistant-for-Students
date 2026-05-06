@@ -3,3 +3,4 @@ app/__pycache__/
 *.pyc
 student_assistant.db
 example
+.env

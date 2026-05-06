@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Pre-create runtime directories (named volumes will mount over these at run time)
-RUN mkdir -p uploads/rooms uploads/assignments
+RUN mkdir -p uploads/rooms
 
 EXPOSE 8000
 

@@ -260,8 +260,24 @@ TOOL_DEFINITIONS = [
     },
     {
         'type': 'function',
+        'name': 'update_academic_plan_item_status',
+        'description': 'Update the status of a specific course in the academic plan. Use when the student says they have completed a course, are currently taking it, or want to reset it to planned.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'course_code': {'type': ['string', 'null'], 'description': 'Course code e.g. "SALM 101". Provide this or course_name.'},
+                'course_name': {'type': ['string', 'null'], 'description': 'Course name. Provide this or course_code.'},
+                'status': {'type': 'string', 'description': 'New status: completed, in_progress, or planned'},
+            },
+            'required': ['course_code', 'course_name', 'status'],
+            'additionalProperties': False,
+        },
+        'strict': True,
+    },
+    {
+        'type': 'function',
         'name': 'recommend_courses',
-        'description': 'Recommend courses based on the saved academic plan and current schedule.',
+        'description': 'Recommend planned (not yet taken) courses based on the saved academic plan. Returns only courses with status "planned" — these are courses the student has not started yet and should consider taking in upcoming semesters.',
         'parameters': {
             'type': 'object',
             'properties': {'limit': {'type': ['integer', 'null']}},
@@ -513,6 +529,17 @@ def execute_tool(name: str, args: dict[str, Any], db: Session, user: models.User
     if name == 'get_academic_plan':
         items = crud.list_academic_plan_items(db, user.id)
         return {'ok': True, 'academic_plan': _serialize_plan(items)}
+
+    if name == 'update_academic_plan_item_status':
+        new_status = str(args.get('status') or '').strip().lower()
+        if new_status not in {'completed', 'in_progress', 'planned'}:
+            return {'ok': False, 'error': 'status must be completed, in_progress, or planned'}
+        course_code = str(args.get('course_code') or '').strip() or None
+        course_name = str(args.get('course_name') or '').strip() or None
+        item = crud.update_academic_plan_item_status(db, user.id, course_code=course_code, course_name=course_name, status=new_status)
+        if not item:
+            return {'ok': False, 'error': 'Course not found in academic plan'}
+        return {'ok': True, 'academic_plan': _serialize_plan([item])}
 
     if name == 'recommend_courses':
         items = crud.recommend_courses_from_plan(db, user.id, limit=int(args.get('limit') or 3))
