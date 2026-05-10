@@ -198,7 +198,7 @@ Saving rules:
 - Use bulk_add_academic_plan_items for all items in one call.
 - Keep course_code exactly as visible (e.g. CS 461, MH 423, IT 112).
 - Keep course_name exactly as visible.
-- If credits (ساعات) are shown inside the cell or can be identified from the reference plan text, save them.
+- Credits (ساعات) MUST be saved — read from inside each cell, the reference plan text, or common university defaults (typically 3 ساعات). Do NOT leave credits null. Typical values: 1, 2, 3.
 - Clear the old academic plan first (clear_academic_plan) when the prompt says to replace/update/save the new plan.
 - After saving, reply briefly in Arabic: total courses saved and a breakdown by status (مكتملة / جاري / متبقية).
 """.strip()
@@ -218,7 +218,7 @@ Saving rules:
 - Keep course_code exactly as written (e.g. "CS 461", "MH 113", "ARAB 101").
 - Keep course_name exactly as written.
 - Save credit hours (ساعات) — usually a number 1–4 shown next to the course code or name.
-- Do NOT call clear_academic_plan (fresh account, nothing to clear).
+- Do NOT call clear_academic_plan unless the user explicitly says to replace/reset the plan. If updating missing fields (e.g. adding credits to existing courses), just call bulk_add_academic_plan_items — the merge logic updates fields without changing status.
 - Use bulk_add_academic_plan_items. Split into multiple calls if the plan is large.
 - After saving, reply briefly in Arabic: total courses saved and breakdown by semester.
 """.strip()
@@ -296,6 +296,8 @@ def _build_chat_prompt(user: models.User | None = None) -> str:
 
     profile_lines: list[str] = []
     if user:
+        if user.name:
+            profile_lines.append(f'- الاسم: {user.name}')
         if user.college:
             profile_lines.append(f'- الكلية: {user.college}')
         if user.major:
