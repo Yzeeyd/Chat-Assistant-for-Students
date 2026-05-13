@@ -23,6 +23,7 @@ def _run_migrations() -> None:
             try:
                 conn.execute(text(sql))
                 conn.commit()
+                print(f"[migration] applied: {sql[:70]}")
             except Exception:
                 pass  # column already exists or table doesn't exist yet
 
@@ -30,7 +31,9 @@ def _run_migrations() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    print("[startup] DB tables ready")
     _run_migrations()
+    print(f"[startup] {APP_NAME} is ready")
     yield
 
 

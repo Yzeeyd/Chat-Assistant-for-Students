@@ -26,17 +26,17 @@
       <button data-auth-tab="signup" data-i18n="auth.signup">إنشاء حساب</button>
     </div>
     <form id="loginForm" class="auth-form">
-      <div class="field"><label data-i18n="auth.email">البريد الإلكتروني</label><input id="liEmail" type="email" placeholder="example@university.edu.sa" autocomplete="email" required /></div>
-      <div class="field"><label data-i18n="auth.password">كلمة المرور</label><input id="liPass" type="password" data-i18n-ph="auth.pass.ph" placeholder="••••••••" autocomplete="current-password" required /></div>
+      <div class="field"><label for="liEmail" data-i18n="auth.email">البريد الإلكتروني</label><input id="liEmail" type="email" placeholder="example@university.edu.sa" autocomplete="email" required /></div>
+      <div class="field"><label for="liPass" data-i18n="auth.password">كلمة المرور</label><input id="liPass" type="password" data-i18n-ph="auth.pass.ph" placeholder="••••••••" autocomplete="current-password" required /></div>
       <button type="submit" class="btn btn-primary btn-block" id="loginBtn" data-i18n="auth.login.btn">دخول</button>
     </form>
     <form id="signupForm" class="auth-form" style="display:none">
-      <div class="field"><label data-i18n="auth.fullname">الاسم الكامل</label><input id="suName" data-i18n-ph="auth.name.ph" placeholder="اسمك" required /></div>
-      <div class="field"><label data-i18n="auth.email">البريد الإلكتروني</label><input id="suEmail" type="email" placeholder="example@university.edu.sa" required /></div>
-      <div class="field"><label data-i18n="auth.password">كلمة المرور</label><input id="suPass" type="password" data-i18n-ph="auth.pass.min" placeholder="6 أحرف على الأقل" minlength="6" required /></div>
+      <div class="field"><label for="suName" data-i18n="auth.fullname">الاسم الكامل</label><input id="suName" data-i18n-ph="auth.name.ph" placeholder="اسمك" required /></div>
+      <div class="field"><label for="suEmail" data-i18n="auth.email">البريد الإلكتروني</label><input id="suEmail" type="email" placeholder="example@university.edu.sa" required /></div>
+      <div class="field"><label for="suPass" data-i18n="auth.password">كلمة المرور</label><input id="suPass" type="password" data-i18n-ph="auth.pass.min" placeholder="6 أحرف على الأقل" minlength="6" required /></div>
       <div class="field-row">
-        <div class="field"><label data-i18n="auth.college">الكلية</label><input id="suCollege" data-i18n-ph="auth.college.ph" placeholder="كلية الحاسب" /></div>
-        <div class="field"><label data-i18n="auth.major">التخصص</label>
+        <div class="field"><label for="suCollege" data-i18n="auth.college">الكلية</label><input id="suCollege" data-i18n-ph="auth.college.ph" placeholder="كلية الحاسب" /></div>
+        <div class="field"><label for="suMajor" data-i18n="auth.major">التخصص</label>
           <select id="suMajor">
             <option value="" data-i18n="auth.major.choose">اختر التخصص</option>
             <option value="CS" data-i18n="auth.major.cs">علوم الحاسب — CS</option>
@@ -47,7 +47,7 @@
           </select>
         </div>
       </div>
-      <div class="field"><label><span data-i18n="auth.track">المسار</span> <span style="color:var(--muted);font-weight:500" data-i18n="auth.track.opt">(اختياري)</span></label><input id="suTrack" data-i18n-ph="auth.track.ph" placeholder="مثل: شبكات، أمن معلومات" /></div>
+      <div class="field"><label for="suTrack"><span data-i18n="auth.track">المسار</span> <span style="color:var(--muted);font-weight:500" data-i18n="auth.track.opt">(اختياري)</span></label><input id="suTrack" data-i18n-ph="auth.track.ph" placeholder="مثل: شبكات، أمن معلومات" /></div>
       <button type="submit" class="btn btn-primary btn-block" id="signupBtn" data-i18n="auth.signup.btn">إنشاء الحساب</button>
     </form>
     <div class="auth-msg" id="authMsg"></div>
@@ -71,7 +71,7 @@
         <div class="pmajor" id="pMajor">—</div>
       </div>
     </div>
-    <div class="nav">
+    <nav class="nav" aria-label="القوائم" data-i18n-aria="nav.label">
       <div class="nav-label" data-i18n="nav.label">القوائم</div>
       <button class="nav-btn active" data-view="dashboardView">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>
@@ -93,7 +93,7 @@
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         <span data-i18n="nav.plan">الخطة الأكاديمية</span>
       </button>
-    </div>
+    </nav>
     <div class="nav-spacer"></div>
     <div class="health-pill" id="healthPill">
       <span class="health-dot" id="healthDot"></span>
@@ -272,7 +272,7 @@
   </div>
 </div>
 
-<div class="reminder-bg" id="reminderBg" role="dialog" aria-modal="true">
+<div class="reminder-bg" id="reminderBg" role="dialog" aria-modal="true" aria-labelledby="rTitle">
   <div class="reminder-card">
     <div class="bell">🔔</div>
     <div class="r-title" id="rTitle"></div>
@@ -285,7 +285,7 @@
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <div class="tweaks" id="tweaksPanel">
   <h4><span data-i18n="tweaks.title">إعدادات المظهر</span> <button id="tweaksClose">×</button></h4>

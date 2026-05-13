@@ -82,6 +82,7 @@ def mark_done(reminder_id: int, db: Session = Depends(get_db), user: models.User
 def summary(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)) -> dict:
     all_items = crud.get_all_schedule(db, user.id)
     reminders = crud.list_reminders(db, user.id, include_done=False)
+    crud.auto_close_requirement_groups(db, user.id)
     plan_items = crud.list_academic_plan_items(db, user.id)
 
     completed  = [x for x in plan_items if (x.status or '').strip().lower() == 'completed']
@@ -132,6 +133,17 @@ def summary(db: Session = Depends(get_db), user: models.User = Depends(get_curre
                 'is_done': bool(r.is_done),
             }
             for r in reminders[:6]
+        ],
+        'academic_plan_completed': [
+            {
+                'item_id': x.id,
+                'course_code': x.course_code,
+                'course_name': x.course_name,
+                'credits': x.credits,
+                'semester': x.semester,
+                'status': x.status,
+            }
+            for x in completed
         ],
         'academic_plan_active': [
             {
