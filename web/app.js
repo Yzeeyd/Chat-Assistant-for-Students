@@ -173,6 +173,10 @@ function applyLang(){
 }
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 
+const MAX_FILE_MB = 10;
+const MAX_FILE_SIZE = MAX_FILE_MB * 1024 * 1024;
+const EMAIL_RX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const state = {
   token: localStorage.getItem(TOKEN_KEY) || '',
   isSending: false,
@@ -234,12 +238,23 @@ function headers(extra={}){
   return out;
 }
 async function api(path, options={}){
-  const res = await fetch(BASE + path, options);
-  const txt = await res.text();
-  let data = null;
-  try{ data = txt ? JSON.parse(txt) : null; } catch{ data = txt; }
-  if(!res.ok) throw new Error((data && data.detail) || `Request failed (${res.status})`);
-  return data;
+  const timeoutMs = options._timeout ?? 30000;
+  const { _timeout: _t, ...fetchOpts } = options;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try{
+    const res = await fetch(BASE + path, { ...fetchOpts, signal: controller.signal });
+    const txt = await res.text();
+    let data = null;
+    try{ data = txt ? JSON.parse(txt) : null; } catch{ data = txt; }
+    if(!res.ok) throw new Error((data && data.detail) || `Request failed (${res.status})`);
+    return data;
+  }catch(err){
+    if(err.name === 'AbortError') throw new Error(lang === 'ar' ? 'انتهت مهلة الاتصال، حاول مجدداً' : 'Request timed out, please try again');
+    throw err;
+  }finally{
+    clearTimeout(timer);
+  }
 }
 
 let toastTimer;
@@ -300,6 +315,11 @@ $('signupForm').addEventListener('submit', async (e) => {
   const btn = $('signupBtn');
   btn.disabled = true;
   $('authMsg').className = 'auth-msg'; $('authMsg').textContent = t('auth.signing.up');
+  if(!EMAIL_RX.test($('suEmail').value.trim())){
+    $('authMsg').className = 'auth-msg err';
+    $('authMsg').textContent = lang === 'ar' ? 'البريد الإلكتروني غير صحيح' : 'Invalid email address';
+    btn.disabled = false; return;
+  }
   try{
     await api('/auth/signup', {
       method:'POST',
@@ -385,8 +405,8 @@ $('themeBtn').onclick = () => {
 };
 
 function initialOf(name){
-  const t = (name || '').trim();
-  return t ? t[0] : '؟';
+  const s = (name || '').trim();
+  return s ? s[0] : (lang === 'ar' ? '؟' : '?');
 }
 
 function renderHeader(student){
@@ -550,7 +570,7 @@ function metaHTML(meta){
     html += meta.reminders.map(it => `
       <div class="meta-card">
         <h5>${esc(it.title || '')}</h5>
-        <div class="row-line"><span>${esc(it.remind_at_text || '')}</span><span>${it.is_done ? 'منجز ✓' : 'نشط'}</span></div>
+        <div class="row-line"><span>${esc(it.remind_at_text || '')}</span><span>${it.is_done ? t('status.done') : t('status.active')}</span></div>
       </div>`).join('');
   }
   if(Array.isArray(meta.academic_plan) && meta.academic_plan.length){
@@ -629,12 +649,21 @@ async function loadHistory(){
   }
 }
 
-function setSending(s){ state.isSending = s; $('sendBtn').disabled = s; }
+function updateSendBtn(){
+  $('sendBtn').disabled = state.isSending || (!$('chatInput').value.trim() && !state.pendingFile);
+}
+function setSending(s){ state.isSending = s; updateSendBtn(); }
 function setAttachment(file){
+  if(file && file.size > MAX_FILE_SIZE){
+    toast(lang === 'ar' ? `الملف أكبر من ${MAX_FILE_MB} ميجابايت` : `File exceeds ${MAX_FILE_MB} MB`, 'err');
+    $('chatImgInput').value = '';
+    return;
+  }
   state.pendingFile = file || null;
   const chip = $('attachChip');
   if(file){ $('attachName').textContent = file.name; chip.classList.add('show'); }
   else { chip.classList.remove('show'); $('chatImgInput').value = ''; }
+  updateSendBtn();
 }
 
 async function sendMessage(prefilled){
@@ -661,9 +690,10 @@ async function sendMessage(prefilled){
       const form = new FormData();
       form.append('message', msg);
       form.append('file', file);
-      data = await api('/chat/with-image', { method:'POST', headers: headers(), body: form });
+      data = await api('/chat/with-image', { _timeout: 120000, method:'POST', headers: headers(), body: form });
     } else {
       data = await api('/chat', {
+        _timeout: 90000,
         method:'POST',
         headers: headers({'Content-Type':'application/json'}),
         body: JSON.stringify({ message: msg }),
@@ -673,8 +703,8 @@ async function sendMessage(prefilled){
     const wrap = document.createElement('div'); wrap.innerHTML = metaHTML(data.meta || null);
     if(wrap.firstChild) typingEl.querySelector('.msg-content').appendChild(wrap.firstChild);
     setAttachment(null);
-    loadDashboard().catch(()=>{});
-    checkDueReminders().catch(()=>{});
+    loadDashboard().catch(err => console.warn('[chat] dashboard reload', err));
+    checkDueReminders().catch(err => console.warn('[chat] reminder check', err));
   } catch(err){
     typingEl.querySelector('.bubble').innerHTML = `<span style="color:#fca5a5">⚠️ ${esc(err.message)}</span>`;
   } finally {
@@ -687,7 +717,7 @@ function autoresize(t){
   t.style.height = 'auto';
   t.style.height = Math.min(t.scrollHeight, 160) + 'px';
 }
-$('chatInput').addEventListener('input', (e) => autoresize(e.target));
+$('chatInput').addEventListener('input', (e) => { autoresize(e.target); updateSendBtn(); });
 $('chatInput').addEventListener('keydown', (e) => {
   if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
 });
@@ -700,7 +730,7 @@ document.body.addEventListener('click', async (e) => {
   const p = e.target.closest('[data-prompt]');
   if(p){ const q = p.dataset.prompt; if(q) sendMessage(q); }
   const ri = e.target.closest('[data-img]');
-  if(ri){ openImg(ri.dataset.img, ri.dataset.title); }
+  if(ri){ _lastRoomTrigger = ri; openImg(ri.dataset.img, ri.dataset.title); }
   const delBtn = e.target.closest('[data-del-rid]');
   if(delBtn){
     const rid = delBtn.dataset.delRid;
@@ -720,19 +750,19 @@ document.body.addEventListener('click', async (e) => {
 async function uploadFile(endpoint, file, label){
   switchView('chatView');
   addMessage('user', `${label}: ${file.name}`);
-  const t = addMessage('assistant', '', null, true);
+  const typingEl = addMessage('assistant', '', null, true);
   try{
     const form = new FormData(); form.append('file', file);
-    const data = await api(endpoint, { method:'POST', headers: headers(), body: form });
-    t.querySelector('.bubble').innerHTML = renderMd(data.text || '');
+    const data = await api(endpoint, { _timeout: 120000, method:'POST', headers: headers(), body: form });
+    typingEl.querySelector('.bubble').innerHTML = renderMd(data.text || '');
     const wrap = document.createElement('div'); wrap.innerHTML = metaHTML(data.meta || null);
-    if(wrap.firstChild) t.querySelector('.msg-content').appendChild(wrap.firstChild);
-    loadDashboard().catch(()=>{});
-    loadHistory().catch(()=>{});
+    if(wrap.firstChild) typingEl.querySelector('.msg-content').appendChild(wrap.firstChild);
+    loadDashboard().catch(err => console.warn('[upload] dashboard reload', err));
+    loadHistory().catch(err => console.warn('[upload] history reload', err));
     toast(t('toast.import.ok'));
   } catch(err){
-    t.querySelector('.bubble').innerHTML = `<span style="color:#fca5a5">⚠️ ${esc(err.message)}</span>`;
-    toast(t('toast.import.err')+err.message, 'err');
+    typingEl.querySelector('.bubble').innerHTML = `<span style="color:#fca5a5">⚠️ ${esc(err.message)}</span>`;
+    toast(t('toast.import.err') + err.message, 'err');
   }
 }
 function pickFile(input, endpoint, label){
@@ -740,6 +770,10 @@ function pickFile(input, endpoint, label){
   input.click();
   input.onchange = () => {
     const f = input.files?.[0]; if(!f) return;
+    if(f.size > MAX_FILE_SIZE){
+      toast(lang === 'ar' ? `الملف أكبر من ${MAX_FILE_MB} ميجابايت` : `File exceeds ${MAX_FILE_MB} MB`, 'err');
+      input.value = ''; return;
+    }
     uploadFile(endpoint, f, label);
     input.value = '';
   };
@@ -748,12 +782,18 @@ $('uploadScheduleBtn').onclick = () => pickFile($('scheduleImgInput'), '/chat/up
 $('uploadScheduleBtn2').onclick = () => pickFile($('scheduleImgInput'), '/chat/upload-schedule-image', 'رفع صورة جدول');
 $('uploadPlanBtn').onclick = () => pickFile($('planImgInput'), '/chat/upload-plan-image', 'رفع صورة خطة أكاديمية');
 
+let _lastRoomTrigger = null;
 function openImg(src, title){
   $('imgModalImg').src = src;
   $('imgModalTitle').textContent = title || t('modal.room.title');
   $('imgModal').classList.add('show');
+  requestAnimationFrame(() => $('imgModalClose').focus());
 }
-$('imgModalClose').onclick = () => { $('imgModal').classList.remove('show'); $('imgModalImg').src=''; };
+$('imgModalClose').onclick = () => {
+  $('imgModal').classList.remove('show');
+  $('imgModalImg').src = '';
+  if(_lastRoomTrigger){ _lastRoomTrigger.focus(); _lastRoomTrigger = null; }
+};
 $('imgModal').addEventListener('click', (e) => { if(e.target === $('imgModal')) $('imgModalClose').click(); });
 
 function fmtAt(iso, fallback){
@@ -796,6 +836,7 @@ function showNextReminder(){
   $('rTime').textContent = fmtAt(r.remind_at, r.remind_at_text) + (r.notes ? '\n'+r.notes : '');
   $('rCounter').textContent = state.reminderQueue.length ? t('reminder.more').replace('{n}', state.reminderQueue.length) : '';
   $('reminderBg').classList.add('show');
+  requestAnimationFrame(() => $('rDoneBtn').focus());
   playReminderSound();
 }
 $('rDoneBtn').onclick = async () => {
@@ -803,7 +844,10 @@ $('rDoneBtn').onclick = async () => {
   state.currentReminderId = null;
   showNextReminder();
   if(id != null){
-    try{ await api(`/dashboard/reminders/${id}/done`, { method:'POST', headers: headers() }); loadDashboard().catch(()=>{}); }catch{}
+    try{
+      await api(`/dashboard/reminders/${id}/done`, { method:'POST', headers: headers() });
+      loadDashboard().catch(err => console.warn('[reminders]', err));
+    }catch(err){ console.warn('[reminder done]', err); }
   }
 };
 $('rOkBtn').onclick = () => { state.currentReminderId = null; showNextReminder(); };
@@ -818,7 +862,7 @@ async function checkDueReminders(){
       state.reminderQueue.push(r);
       if(wasIdle) showNextReminder();
     });
-  }catch{}
+  }catch(err){ console.warn('[reminders check]', err); }
 }
 
 async function pingHealth(){
@@ -884,6 +928,8 @@ async function init(){
   applyMobileSidebarState();
   applyLang();
   pingHealth();
+  setInterval(pingHealth, 60000);
+  updateSendBtn();
   if(state.token){
     try{
       await Promise.all([loadHistory(), loadDashboard()]);

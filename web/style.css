@@ -46,6 +46,9 @@ html[data-theme="light"] body{
 button{font-family:inherit}
 input,select,textarea{font-family:inherit;color:inherit}
 
+/* Global focus indicator — WCAG 2.1 SC 2.4.7 */
+:focus-visible{outline:2px solid hsl(var(--accent));outline-offset:2px;border-radius:4px}
+
 .auth-wrap{min-height:100dvh;display:grid;place-items:center;padding:24px}
 .auth-card{
   width:min(440px,100%);
@@ -111,6 +114,7 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
   background:linear-gradient(180deg, hsl(var(--accent)/.06), transparent 30%), var(--panel-2);
   backdrop-filter:blur(14px);
   padding:18px;display:flex;flex-direction:column;gap:14px;overflow:auto;
+  scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent;
 }
 .brand-block{display:flex;align-items:center;gap:10px;padding:10px 4px}
 .brand-block .name{font-weight:800;font-size:16px;letter-spacing:-.01em}
@@ -247,7 +251,7 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
 
 .chat-shell{display:grid;grid-template-rows:1fr auto;gap:12px;height:calc(100dvh - 120px);min-height:480px}
 .chat-card{padding:14px;display:flex;flex-direction:column;min-height:0}
-.chat-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:14px;padding:6px 4px;scroll-behavior:smooth}
+.chat-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:14px;padding:6px 4px;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
 .chat-list::-webkit-scrollbar{width:8px}
 .chat-list::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px}
 .welcome{margin:auto;text-align:center;max-width:520px;padding:28px 16px;color:var(--text-dim)}
@@ -350,9 +354,13 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
   .split{grid-template-columns:1fr}
   .week-grid{grid-template-columns:repeat(3,1fr)}
 }
+@media (max-width:900px){
+  .app.show{grid-template-columns:220px 1fr}
+  .sidebar{padding:14px}
+}
 @media (max-width:760px){
   .app.show{grid-template-columns:1fr}
-  .sidebar{position:fixed;inset:0 0 0 auto;width:78%;max-width:300px;z-index:80;transform:translateX(0);transition:transform .25s;box-shadow:0 0 60px rgba(0,0,0,.5)}
+  .sidebar{position:fixed;inset:0 0 0 auto;width:min(280px,90%);z-index:80;transform:translateX(0);transition:transform .25s;box-shadow:0 0 60px rgba(0,0,0,.5)}
   .sidebar.collapsed{transform:translateX(100%)}
   .topbar .menu-btn{display:grid}
   .week-grid{grid-template-columns:1fr 1fr}
@@ -371,4 +379,7 @@ html[data-theme="light"] .btn-danger{color:#b91c1c}
   .hero .cta{width:100%}
   .hero .cta .btn{flex:1}
 }
-@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important;transition:none !important}
+  html{scroll-behavior:auto}
+}
