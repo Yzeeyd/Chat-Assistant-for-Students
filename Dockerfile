@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 # تثبيت الأدوات اللازمة لبناء المكتبات (مثل OpenCV أو التشفير)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        gcc libffi-dev curl \
+        gcc libffi-dev curl pkg-config default-libmysqlclient-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
