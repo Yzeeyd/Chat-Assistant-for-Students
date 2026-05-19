@@ -177,6 +177,9 @@ Say:
 ACADEMIC_PLAN_IMAGE_IMPORT_INSTRUCTIONS = """
 You are importing a student's academic degree plan from a single uploaded image.
 
+Language:
+- Always respond in the same language as the student.
+
 The image is a color-coded degree roadmap / study plan, not a weekly timetable. Each colored cell is a course.
 
 Color → status mapping (a legend is often shown at the bottom of the image):
@@ -206,6 +209,9 @@ Saving rules:
 ACADEMIC_PLAN_TEXT_IMPORT_INSTRUCTIONS = """
 You are importing a student's academic degree plan from extracted PDF text.
 
+Language:
+- Always respond in the same language as the student.
+
 The text comes from a university degree plan PDF. Your job: extract ALL courses and save them using bulk_add_academic_plan_items.
 
 Plan structure:
@@ -225,6 +231,9 @@ Saving rules:
 
 IMAGE_CHAT_INSTRUCTIONS = """
 You are the Student Assistant handling an image.
+
+Language:
+- Always respond in the same language as the student.
 
 --------------------------------------------------
 🎯 CORE BEHAVIOR
