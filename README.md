@@ -1,229 +1,532 @@
-<p align="center">
-  <a href="./README.md">🇬🇧 English</a> | <a href="./README_ar.md">🇸🇦 العربية</a>
-</p>
+```markdown
+# Student Assistant System
 
-<h1 align="center">Student Assistant System</h1>
+An AI-powered university assistant built with **Python, FastAPI, OpenAI models, and tool calling** to help students manage schedules, academic plans, reminders, grades, and university information through a conversational interface.
 
-<p align="center">
-  AI-powered assistant for students: manage your schedule, academic plan, reminders, and get answers to university policy questions — all through a conversational chat interface.
-</p>
+The system uses a **modular AI architecture with specialized operating modes** for text conversations, image understanding, timetable extraction, academic-plan processing, and university policy questions.
 
 ---
 
 ## Overview
 
-A multi-agent FastAPI backend paired with a bilingual (Arabic/English) single-page web app. Students can:
+The Student Assistant System allows university students to interact with academic services using natural language.
 
-- **Upload a timetable photo** → AI extracts and saves the weekly schedule
-- **Upload a degree-plan image** → AI parses the color-coded semester grid
-- **Chat naturally** to add reminders, query the schedule, or get course recommendations
-- **Ask university questions** answered from official PDF documents
+Students can:
+
+- Ask questions about their schedule
+- Upload timetable images
+- Extract and save class schedules from images
+- Upload academic-plan images
+- Track completed and remaining courses
+- Add reminders and assignments
+- Track grades and absences
+- Ask questions about university rules and regulations
+- Interact with the system in Arabic or English
+
+The backend is built using **FastAPI**, while AI tasks are handled through the **OpenAI API** with structured tool calling.
 
 ---
 
-## Prerequisites
+## Architecture
 
-- Python 3.11 or newer
-- An [OpenAI API key](https://platform.openai.com/api-keys)
-- `pip` (bundled with Python)
+```text
+                        User
+                          |
+                          v
+                     FastAPI API
+                          |
+                          v
+                  Request Classification
+                          |
+          +---------------+----------------+
+          |               |                |
+          v               v                v
+      Text Chat       Image Input     University Rules
+          |               |                |
+          v               v                v
+     Chat Mode       Vision Modes       Rules Mode
+                          |
+                 +--------+--------+
+                 |                 |
+                 v                 v
+           Schedule Import    Academic Plan Import
 
----
-
-## Quickstart (local)
-
-```bash
-# 1. Clone the repo
-git clone <your-repo-url>
-cd Chat-Assistant-for-Students
-
-# 2. Create and activate a virtual environment
-python -m venv .venv
-.venv\Scripts\activate        # Windows
-# source .venv/bin/activate   # macOS / Linux
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Configure environment variables
-copy .env.example .env        # Windows
-# cp .env.example .env        # macOS / Linux
-# Then open .env and set OPENAI_API_KEY and JWT_SECRET
-
-# 5. Run the server
-python -m uvicorn app.main:app --reload
+                          |
+                          v
+                    AI Runtime
+                          |
+                          v
+                    Tool Calling
+                          |
+          +---------------+----------------+
+          |               |                |
+          v               v                v
+       Schedule        Reminders       Academic Plan
+       Database          Grades           Rules
+       Absences        Assignments       Documents
 ```
 
-Open your browser at **http://127.0.0.1:8000/**
+The project uses a **single AI runtime** with multiple specialized modes rather than independent agents.
 
-- Swagger API docs: http://127.0.0.1:8000/docs *(set `ENABLE_DOCS=false` in production)*
+Each mode uses different system instructions and behavior depending on the requested task.
 
 ---
 
-## Docker Quickstart
+## AI Modes
 
-```bash
-# Build and start
-docker-compose up --build
+The AI runtime supports several specialized modes:
 
-# Stop
-docker-compose down
+| Mode | Purpose |
+|---|---|
+| `MODE_CHAT` | General student assistant |
+| `MODE_IMAGE_CHAT` | General image understanding |
+| `MODE_SCHEDULE_IMPORT` | Extract timetable information from images |
+| `MODE_PLAN_IMPORT_IMAGE` | Extract academic plans from images |
+| `MODE_PLAN_IMPORT_TEXT` | Import academic plans from text/PDF content |
+| `MODE_RULES` | Answer questions using university documents |
+
+The system selects the appropriate mode depending on the user's request.
+
+---
+
+## Tool Calling
+
+The language model can call application tools to interact with student data.
+
+Examples include:
+
+- Retrieve student schedule
+- Save schedule sessions
+- Clear an existing schedule
+- Add reminders
+- Track assignments
+- Record grades
+- Record absences
+- Retrieve academic-plan information
+- Search university rules
+- Update student information
+
+The AI runtime executes tool calls and returns their results back to the model before generating the final response.
+
+```text
+User Request
+     |
+     v
+Language Model
+     |
+     v
+Tool Call
+     |
+     v
+Application Logic
+     |
+     v
+Database / Documents
+     |
+     v
+Tool Result
+     |
+     v
+Language Model
+     |
+     v
+Final Response
 ```
 
-The container runs on **port 8000** and persists data across restarts using Docker volumes:
+---
 
-| Volume | Contents |
-|--------|----------|
-| `db_data` | SQLite database |
-| `uploads_data` | Uploaded classroom photos |
+## Vision and Image Processing
 
-> **Note:** Set `DATABASE_URL` in `docker-compose.yml` or `.env` if you want MySQL instead of SQLite.
+The project supports multimodal image inputs.
+
+Images are sent to a vision-capable AI model for tasks such as:
+
+### Timetable Extraction
+
+Students can upload an image of their university timetable.
+
+The system extracts information such as:
+
+- Course code
+- Course name
+- Day
+- Start time
+- End time
+- Classroom
+- Instructor
+- Credit hours
+
+The extracted sessions can then be saved to the student's account.
+
+### Academic Plan Extraction
+
+Students can also upload an image of their academic degree plan.
+
+The system extracts:
+
+- Course codes
+- Course names
+- Semester information
+- Credit hours
+- Course status
+
+The extracted academic plan is stored and can later be queried conversationally.
+
+### General Image Understanding
+
+Users can upload other images and ask questions about their contents without saving the information.
 
 ---
 
-## Environment Variables
+## University Rules
 
-Copy `.env.example` to `.env` and fill in the values.
+The system can answer university policy questions using available university documents.
 
-| Variable | Required | Default | Description |
-|----------|:--------:|---------|-------------|
-| `OPENAI_API_KEY` | **Yes** | — | Your OpenAI secret key |
-| `JWT_SECRET` | **Yes** | — | Any long random string — change before deploying |
-| `DATABASE_URL` | No | SQLite | See `.env.example` for MySQL format |
-| `OPENAI_MODEL` | No | `gpt-4o-mini` | Text agent model |
-| `OPENAI_VISION_MODEL` | No | `gpt-4o` | Vision/OCR model (higher cost) |
-| `CHAT_MEMORY_MESSAGES` | No | `20` | Past messages included in each AI request |
-| `JWT_EXPIRE_MIN` | No | `1440` | Token expiry in minutes (1440 = 24 h) |
-| `ENABLE_DOCS` | No | `true` | Set `false` to hide `/docs` in production |
-| `CORS_ORIGINS` | No | `*` | Set to your domain in production |
+Examples include:
+
+- Attendance policies
+- Absence limits
+- Academic warnings
+- Registration rules
+- Withdrawal policies
+- Student rights
+- Grading regulations
+
+The AI is instructed to search the available university documents before answering policy-related questions.
+
+This reduces unsupported answers and helps ground responses in university information.
+
+---
+
+## Backend
+
+The backend is built using **FastAPI**.
+
+Main API functionality includes:
+
+```text
+POST   /auth/signup
+POST   /auth/login
+
+POST   /chat
+POST   /chat/with-image
+POST   /chat/upload-schedule-image
+POST   /chat/upload-plan-image
+POST   /chat/university-rules
+
+GET    /chat/history
+DELETE /chat/history
+
+GET    /dashboard/summary
+GET    /dashboard/reminders/due
+POST   /dashboard/reminders/{id}/done
+DELETE /dashboard/reminders/{id}
+
+GET    /health
+```
+
+FastAPI also provides interactive API documentation through Swagger.
+
+```text
+/docs
+```
+
+---
+
+## Authentication
+
+The application supports user authentication using:
+
+- JWT access tokens
+- Password hashing
+- Authenticated API routes
+
+Each student's academic data is associated with their own account.
+
+---
+
+## Database
+
+The system uses **SQLAlchemy** for database operations.
+
+Supported data includes:
+
+- Users
+- Schedules
+- Academic plans
+- Reminders
+- Assignments
+- Grades
+- Absences
+- Conversation history
+
+The application supports SQLite by default and can also be configured to use MySQL.
+
+---
+
+## Conversation Memory
+
+Recent conversation messages are stored and provided back to the AI model to maintain conversational context.
+
+The number of stored messages can be configured through an environment variable.
+
+```env
+CHAT_MEMORY_MESSAGES=20
+```
 
 ---
 
 ## Project Structure
 
-```
+```text
 Chat-Assistant-for-Students/
+│
 ├── app/
-│   ├── main.py                        # FastAPI entry point, startup, CORS
+│   ├── main.py
+│   │
 │   ├── api/
-│   │   ├── routes_auth.py             # POST /auth/signup, /auth/login
-│   │   ├── routes_chat.py             # POST /chat, /chat/with-image, uploads
-│   │   ├── routes_dashboard.py        # GET /dashboard/summary, reminders
-│   │   └── schemas.py                 # Pydantic request/response schemas
+│   │   ├── routes_auth.py
+│   │   ├── routes_chat.py
+│   │   ├── routes_dashboard.py
+│   │   └── schemas.py
+│   │
 │   ├── core/
-│   │   ├── config.py                  # Loads .env, exposes typed settings
-│   │   └── security.py                # JWT creation/verification, password hashing
+│   │   ├── config.py
+│   │   └── security.py
+│   │
 │   ├── db/
-│   │   ├── models.py                  # SQLAlchemy ORM models
-│   │   ├── crud.py                    # Database CRUD operations
-│   │   └── session.py                 # Engine and session factory
+│   │   ├── models.py
+│   │   ├── crud.py
+│   │   └── session.py
+│   │
 │   ├── services/
-│   │   ├── ai/runtime.py              # 5 agent modes + tool-calling loop
-│   │   ├── tools/registry.py          # 19 tool definitions and executors
-│   │   ├── docs.py                    # PDF/text loader for doc/ folder
-│   │   └── schedule_parser.py         # Arabic day/time parsing utilities
-│   └── utils/schedule.py              # Room image lookup, day-of-week helpers
-├── doc/                               # University PDFs (regulations, FAQ, etc.)
-│   └── plans/                         # Degree plan PDFs per major (CS_plan.pdf, etc.)
+│   │   ├── ai/
+│   │   │   └── runtime.py
+│   │   │
+│   │   ├── tools/
+│   │   │   └── registry.py
+│   │   │
+│   │   ├── docs.py
+│   │   └── schedule_parser.py
+│   │
+│   └── utils/
+│       └── schedule.py
+│
+├── doc/
+│   └── plans/
+│
 ├── uploads/
-│   └── rooms/                         # Classroom photos (matched by room code)
-├── web/                               # Frontend SPA (index.html, style.css, app.js)
-├── .env.example                       # Template — copy to .env and fill in values
-├── requirements.txt
+│   └── rooms/
+│
+├── web/
+│
 ├── Dockerfile
 ├── docker-compose.yml
+├── requirements.txt
+├── .env.example
 └── README.md
-```
-
----
-
-## API Routes
-
-| Method | Route | Description |
-|--------|-------|-------------|
-| `POST` | `/auth/signup` | Register a new user account |
-| `POST` | `/auth/login` | Log in, returns a JWT access token |
-| `GET` | `/chat/history` | Fetch recent conversation messages |
-| `DELETE` | `/chat/history` | Clear conversation history |
-| `POST` | `/chat` | General-purpose AI assistant |
-| `POST` | `/chat/with-image` | Image-aware assistant (auto-routes to schedule/plan agent) |
-| `POST` | `/chat/upload-schedule-image` | Extract and save a weekly schedule from a photo |
-| `POST` | `/chat/upload-plan-image` | Extract and save a degree plan from a photo |
-| `POST` | `/chat/university-rules` | Answer policy questions from official PDF documents |
-| `GET` | `/dashboard/summary` | Student data summary (schedule, reminders, plan stats) |
-| `GET` | `/dashboard/reminders/due` | Due reminders (remind_at ≤ now) |
-| `POST` | `/dashboard/reminders/{id}/done` | Mark a reminder as complete |
-| `DELETE` | `/dashboard/reminders/{id}` | Delete a reminder |
-| `GET` | `/health` | Health check — returns `{"status": "ok"}` |
-
----
-
-## Agent Architecture
-
-The system uses **5 specialized AI agent modes**, all sharing the same tool set:
-
-| Mode | Model | Forced Tools | Purpose |
-|------|-------|:------------:|---------|
-| `MODE_CHAT` | gpt-4o-mini | No | General assistant: schedule, reminders, plan |
-| `MODE_IMAGE_CHAT` | gpt-4o | No | Answer questions about arbitrary images |
-| `MODE_SCHEDULE_IMPORT` | gpt-4o | Yes | Extract class sessions from timetable photos |
-| `MODE_PLAN_IMPORT_IMAGE` | gpt-4o | Yes | Extract degree plan from color-coded grid photos |
-| `MODE_RULES` | gpt-4o-mini | Yes | Answer university policy questions from PDFs |
-
-Each agent runs a tool-calling loop (max 6–8 rounds) until the model stops calling tools.
-
----
-
-## Adding University Documents
-
-Drop PDF files into the `doc/` folder. The university rules agent reads and searches them automatically — no database seeding needed.
-
-For degree plan auto-import on signup, name files `doc/plans/{MAJOR}_plan.pdf` (e.g., `CS_plan.pdf`, `IT_plan.pdf`).
-
----
-
-## Troubleshooting
-
-| Problem | Solution |
-|---------|----------|
-| `sqlite3.OperationalError: database is locked` | Another process has the DB open. Stop it and restart. |
-| `openai.AuthenticationError` | Check that `OPENAI_API_KEY` is set and valid in `.env`. |
-| `429 Too Many Requests` from OpenAI | You have hit your rate limit. Wait and retry, or upgrade your plan. |
-| Image upload fails silently | Make sure the file is under 10 MB and is a PNG/JPG/WEBP. |
-| Schedule image not parsed correctly | Try a cleaner photo with higher contrast and visible column headers. |
-| Port 8000 already in use | Run `uvicorn app.main:app --reload --port 8001` and update `BASE` in `web/app.js`. |
-
----
-
-## Suggested Tests
-
-The `tests/` directory is currently empty. Recommended tests to add with `pytest` + `httpx`:
-
-```
-tests/
-├── test_auth.py          # signup, login, duplicate email, bad password
-├── test_chat.py          # chat endpoint returns text, history is stored
-├── test_dashboard.py     # summary returns correct structure, reminders CRUD
-└── test_schedule.py      # parse_day, parse_time for Arabic time strings
-```
-
-Install test dependencies:
-```bash
-pip install pytest httpx
-pytest tests/
 ```
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | FastAPI + Uvicorn |
-| Database | SQLite (default) / MySQL (optional) |
-| ORM | SQLAlchemy |
-| Authentication | JWT (python-jose) + pbkdf2_sha256 (passlib) |
-| AI | OpenAI API — gpt-4o-mini (text), gpt-4o (vision) |
-| PDF Parsing | PyMuPDF + pypdf |
-| Frontend | Vanilla HTML/CSS/JS — no build step required |
-| Language | Python 3.11+ |
-| Containerization | Docker + Docker Compose |
+### Backend
+
+- Python
+- FastAPI
+- Uvicorn
+- Pydantic
+
+### Artificial Intelligence
+
+- OpenAI API
+- LLM applications
+- Vision-capable models
+- Tool calling
+- Prompt engineering
+- Structured AI workflows
+
+### Database
+
+- SQLAlchemy
+- SQLite
+- MySQL
+
+### Security
+
+- JWT Authentication
+- Password hashing
+
+### Document Processing
+
+- PyMuPDF
+- pypdf
+
+### Deployment
+
+- Docker
+- Docker Compose
+
+### Frontend
+
+- HTML
+- CSS
+- JavaScript
+
+---
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Yzeeyd/Chat-Assistant-for-Students.git
+cd Chat-Assistant-for-Students
+```
+
+Create a virtual environment:
+
+```bash
+python -m venv .venv
+```
+
+Activate it on Windows:
+
+```bash
+.venv\Scripts\activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Environment Variables
+
+Copy the example environment file:
+
+```bash
+copy .env.example .env
+```
+
+Configure the required variables:
+
+```env
+OPENAI_API_KEY=your_openai_api_key
+JWT_SECRET=your_secret_key
+```
+
+Optional configuration:
+
+```env
+DATABASE_URL=
+OPENAI_MODEL=
+OPENAI_VISION_MODEL=
+CHAT_MEMORY_MESSAGES=20
+ENABLE_DOCS=true
+```
+
+---
+
+## Run Locally
+
+Start the FastAPI server:
+
+```bash
+python -m uvicorn app.main:app --reload
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000
+```
+
+API documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+---
+
+## Run with Docker
+
+Build and start the application:
+
+```bash
+docker-compose up --build
+```
+
+Stop the containers:
+
+```bash
+docker-compose down
+```
+
+---
+
+## What This Project Demonstrates
+
+This project demonstrates practical experience with:
+
+- Building LLM-powered applications
+- FastAPI backend development
+- OpenAI API integration
+- AI tool calling
+- Multimodal image input
+- Vision-based information extraction
+- Prompt-based task specialization
+- Request routing
+- Database-backed AI applications
+- Authentication
+- Document-grounded responses
+- Docker containerization
+- Conversational application design
+
+---
+
+## Current Architecture Limitation
+
+The current AI system uses a **shared runtime with specialized modes**.
+
+It should not be considered a fully independent multi-agent system because the modes share:
+
+- The same AI runtime
+- The same tool execution loop
+- A common tool registry
+
+A future version may separate these responsibilities into independent agents with explicit orchestration and handoffs.
+
+---
+
+## Future Improvements
+
+Possible future improvements include:
+
+- Separate specialized AI agents
+- Router agent with explicit agent handoffs
+- Retrieval-Augmented Generation (RAG)
+- Vector database integration
+- Automated AI evaluation
+- Unit and integration testing
+- Improved observability and logging
+- CI/CD pipeline
+- Production cloud deployment
+- Response quality monitoring
+
+---
+
+## Author
+
+**Yazeed Mohammed Alanazi**
+
+Computer Science student specializing in Artificial Intelligence.
+
+GitHub:  
+https://github.com/Yzeeyd
+```
