@@ -1,4 +1,3 @@
-```markdown
 # Student Assistant System
 
 An AI-powered university assistant built with **Python, FastAPI, OpenAI models, and tool calling** to help students manage schedules, academic plans, reminders, grades, and university information through a conversational interface.
@@ -29,7 +28,6 @@ The backend is built using **FastAPI**, while AI tasks are handled through the *
 
 ## Architecture
 
-```text
                         User
                           |
                           v
@@ -64,7 +62,7 @@ The backend is built using **FastAPI**, while AI tasks are handled through the *
        Schedule        Reminders       Academic Plan
        Database          Grades           Rules
        Absences        Assignments       Documents
-```
+
 
 The project uses a **single AI runtime** with multiple specialized modes rather than independent agents.
 
@@ -518,15 +516,3 @@ Possible future improvements include:
 - CI/CD pipeline
 - Production cloud deployment
 - Response quality monitoring
-
----
-
-## Author
-
-**Yazeed Mohammed Alanazi**
-
-Computer Science student specializing in Artificial Intelligence.
-
-GitHub:  
-https://github.com/Yzeeyd
-```
